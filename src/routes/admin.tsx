@@ -36,6 +36,7 @@ import { BrokerageAdmin } from "@/components/admin/brokerage-admin";
 import { KycAdmin } from "@/components/admin/kyc-admin";
 import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
+import { adminGateActive, clearAdminGate } from "@/lib/adminGate";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — MyAfriart" }] }),
@@ -46,6 +47,7 @@ const MEDIA = ["oil", "watercolor", "pastel", "sculpture", "photograph", "print"
 
 function Admin() {
   const navigate = useNavigate();
+  const gate = adminGateActive();
   const [ready, setReady] = useState(false);
   const [authed, setAuthed] = useState(false);
   useEffect(() => {
@@ -57,15 +59,20 @@ function Admin() {
     return () => sub.subscription.unsubscribe();
   }, []);
   useEffect(() => {
-    if (ready && !authed) navigate({ to: "/login" });
-  }, [ready, authed, navigate]);
+    if (ready && !authed && !gate) navigate({ to: "/login" });
+  }, [ready, authed, gate, navigate]);
 
   const checkAdmin = useServerFn(checkIsAdmin);
   const { data: roleData, isLoading: roleLoading } = useQuery({
     queryKey: ["isAdmin"],
     queryFn: () => checkAdmin(),
-    enabled: authed,
+    enabled: authed && !gate,
   });
+
+  // Uniform tester gate grants admin client-side without a Supabase session.
+  if (gate) {
+    return <AdminInner />;
+  }
 
   if (!ready || !authed || roleLoading) {
     return (
@@ -137,7 +144,11 @@ function AdminInner() {
             </Link>
             <span className="font-medium">Admin</span>
             <button
-              onClick={() => supabase.auth.signOut()}
+              onClick={() => {
+                clearAdminGate();
+                void supabase.auth.signOut();
+                window.location.href = "/login";
+              }}
               className="text-muted-foreground hover:text-foreground"
             >
               Sign out

