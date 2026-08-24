@@ -1,0 +1,571 @@
+=== ArtStage Playwright e2e summary ===
+Command: PLAYWRIGHT_NO_SERVER=1 npx playwright test --reporter=list
+Base URL / server: http://localhost:5399 (Vite already running)
+Date: 2026-07-18T00:40:45Z
+
+IMPORTANT: This run executed under CURSOR_SANDBOX=seatbelt.
+All failures are browser launch failures (kill EPERM / SIGABRT), NOT app assertion failures.
+An unsandboxed re-run with required_permissions:[all] is required for a valid result.
+
+Running 34 tests using 1 worker
+  28 failed
+  6 skipped
+
+--- Tail of full reporter output ---
+
+
+    Error Context: test-results/mobile-and-links-primary-n-fb764--the-correct-catalogue-lane-desktop/error-context.md
+
+  27) [desktop] › e2e/mobile-and-links.spec.ts:258:3 › primary navigation links › Search by chips switch catalogue scope 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-jZmeb0 --remote-debugging-pipe --no-startup-window
+    <launched> pid=9195
+    [pid=9195] <process did exit: exitCode=null, signal=SIGABRT>
+    [pid=9195] starting temporary directories cleanup
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-jZmeb0 --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9195
+      - [pid=9195] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9195] starting temporary directories cleanup
+      - [pid=9195] <gracefully close start>
+      - [pid=9195] <kill>
+      - [pid=9195] <skipped force kill spawnedProcess.killed=false processClosed=true>
+      - [pid=9195] finished temporary directories cleanup
+      - [pid=9195] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-primary-n-7a35a-hips-switch-catalogue-scope-desktop/error-context.md
+
+  28) [desktop] › e2e/mobile-and-links.spec.ts:273:3 › footer legal sheets › Privacy / FAQ / Contact open sheet content 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-6KU06D --remote-debugging-pipe --no-startup-window
+    <launched> pid=9197
+    [pid=9197] <process did exit: exitCode=null, signal=SIGABRT>
+    [pid=9197] starting temporary directories cleanup
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-6KU06D --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9197
+      - [pid=9197] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9197] starting temporary directories cleanup
+      - [pid=9197] <gracefully close start>
+      - [pid=9197] <kill>
+      - [pid=9197] <skipped force kill spawnedProcess.killed=false processClosed=true>
+      - [pid=9197] finished temporary directories cleanup
+      - [pid=9197] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-footer-le-c6ace--Contact-open-sheet-content-desktop/error-context.md
+
+  28 failed
+    [iphone-390] › e2e/mobile-and-links.spec.ts:21:3 › mobile landing layout › lands at the top — hero visible, no auto-scroll past catalogue 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:29:3 › mobile landing layout › country filter shows readable option labels (not bare checkboxes) 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:46:3 › mobile landing layout › country filter narrows catalogue results 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:57:3 › mobile landing layout › filter chips open usable panels on phone 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:74:3 › mobile landing layout › no horizontal overflow at 390px 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:83:3 › mobile landing layout › mobile Stage a room bottom nav reaches studio or login 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:97:3 › primary navigation links › logo and Discover return home with hero 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:109:3 › primary navigation links › Sign in opens the login page 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:118:3 › primary navigation links › Art Lounge / Stage a room links reach their routes 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:130:3 › primary navigation links › direct routes render expected content 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:153:3 › primary navigation links › mock artwork card opens piece detail with matching title 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:173:3 › primary navigation links › mock artist card opens artist detail 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:191:3 › primary navigation links › stable short-code deep links resolve mock content 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:204:3 › primary navigation links › editorial panes Explore reach wired destinations 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:248:3 › primary navigation links › scope links focus the correct catalogue lane 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:258:3 › primary navigation links › Search by chips switch catalogue scope 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:273:3 › footer legal sheets › Privacy / FAQ / Contact open sheet content 
+    [desktop] › e2e/mobile-and-links.spec.ts:97:3 › primary navigation links › logo and Discover return home with hero 
+    [desktop] › e2e/mobile-and-links.spec.ts:109:3 › primary navigation links › Sign in opens the login page 
+    [desktop] › e2e/mobile-and-links.spec.ts:118:3 › primary navigation links › Art Lounge / Stage a room links reach their routes 
+    [desktop] › e2e/mobile-and-links.spec.ts:130:3 › primary navigation links › direct routes render expected content 
+    [desktop] › e2e/mobile-and-links.spec.ts:153:3 › primary navigation links › mock artwork card opens piece detail with matching title 
+    [desktop] › e2e/mobile-and-links.spec.ts:173:3 › primary navigation links › mock artist card opens artist detail 
+    [desktop] › e2e/mobile-and-links.spec.ts:191:3 › primary navigation links › stable short-code deep links resolve mock content 
+    [desktop] › e2e/mobile-and-links.spec.ts:204:3 › primary navigation links › editorial panes Explore reach wired destinations 
+    [desktop] › e2e/mobile-and-links.spec.ts:248:3 › primary navigation links › scope links focus the correct catalogue lane 
+    [desktop] › e2e/mobile-and-links.spec.ts:258:3 › primary navigation links › Search by chips switch catalogue scope 
+    [desktop] › e2e/mobile-and-links.spec.ts:273:3 › footer legal sheets › Privacy / FAQ / Contact open sheet content 
+  6 skipped
+
+=== Full list reporter output ===
+
+Running 34 tests using 1 worker
+
+(node:9156) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   1 [iphone-390] › e2e/mobile-and-links.spec.ts:21:3 › mobile landing layout › lands at the top — hero visible, no auto-scroll past catalogue (1ms)
+(node:9157) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   2 [iphone-390] › e2e/mobile-and-links.spec.ts:29:3 › mobile landing layout › country filter shows readable option labels (not bare checkboxes) (1ms)
+(node:9158) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   3 [iphone-390] › e2e/mobile-and-links.spec.ts:46:3 › mobile landing layout › country filter narrows catalogue results (1ms)
+(node:9160) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   4 [iphone-390] › e2e/mobile-and-links.spec.ts:57:3 › mobile landing layout › filter chips open usable panels on phone (1ms)
+(node:9161) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   5 [iphone-390] › e2e/mobile-and-links.spec.ts:74:3 › mobile landing layout › no horizontal overflow at 390px (1ms)
+(node:9162) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   6 [iphone-390] › e2e/mobile-and-links.spec.ts:83:3 › mobile landing layout › mobile Stage a room bottom nav reaches studio or login (1ms)
+(node:9163) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   7 [iphone-390] › e2e/mobile-and-links.spec.ts:97:3 › primary navigation links › logo and Discover return home with hero (0ms)
+(node:9164) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   8 [iphone-390] › e2e/mobile-and-links.spec.ts:109:3 › primary navigation links › Sign in opens the login page (0ms)
+(node:9165) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘   9 [iphone-390] › e2e/mobile-and-links.spec.ts:118:3 › primary navigation links › Art Lounge / Stage a room links reach their routes (0ms)
+(node:9166) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  10 [iphone-390] › e2e/mobile-and-links.spec.ts:130:3 › primary navigation links › direct routes render expected content (0ms)
+(node:9167) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  11 [iphone-390] › e2e/mobile-and-links.spec.ts:153:3 › primary navigation links › mock artwork card opens piece detail with matching title (0ms)
+(node:9169) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  12 [iphone-390] › e2e/mobile-and-links.spec.ts:173:3 › primary navigation links › mock artist card opens artist detail (0ms)
+(node:9170) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  13 [iphone-390] › e2e/mobile-and-links.spec.ts:191:3 › primary navigation links › stable short-code deep links resolve mock content (0ms)
+(node:9171) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  14 [iphone-390] › e2e/mobile-and-links.spec.ts:204:3 › primary navigation links › editorial panes Explore reach wired destinations (0ms)
+(node:9172) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  15 [iphone-390] › e2e/mobile-and-links.spec.ts:248:3 › primary navigation links › scope links focus the correct catalogue lane (0ms)
+(node:9173) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  16 [iphone-390] › e2e/mobile-and-links.spec.ts:258:3 › primary navigation links › Search by chips switch catalogue scope (0ms)
+(node:9174) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  17 [iphone-390] › e2e/mobile-and-links.spec.ts:273:3 › footer legal sheets › Privacy / FAQ / Contact open sheet content (0ms)
+(node:9175) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  -  18 [desktop] › e2e/mobile-and-links.spec.ts:21:3 › mobile landing layout › lands at the top — hero visible, no auto-scroll past catalogue
+  -  19 [desktop] › e2e/mobile-and-links.spec.ts:29:3 › mobile landing layout › country filter shows readable option labels (not bare checkboxes)
+  -  20 [desktop] › e2e/mobile-and-links.spec.ts:46:3 › mobile landing layout › country filter narrows catalogue results
+  -  21 [desktop] › e2e/mobile-and-links.spec.ts:57:3 › mobile landing layout › filter chips open usable panels on phone
+  -  22 [desktop] › e2e/mobile-and-links.spec.ts:74:3 › mobile landing layout › no horizontal overflow at 390px
+  -  23 [desktop] › e2e/mobile-and-links.spec.ts:83:3 › mobile landing layout › mobile Stage a room bottom nav reaches studio or login
+  ✘  24 [desktop] › e2e/mobile-and-links.spec.ts:97:3 › primary navigation links › logo and Discover return home with hero (0ms)
+(node:9177) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  25 [desktop] › e2e/mobile-and-links.spec.ts:109:3 › primary navigation links › Sign in opens the login page (0ms)
+(node:9179) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  26 [desktop] › e2e/mobile-and-links.spec.ts:118:3 › primary navigation links › Art Lounge / Stage a room links reach their routes (0ms)
+(node:9181) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  27 [desktop] › e2e/mobile-and-links.spec.ts:130:3 › primary navigation links › direct routes render expected content (0ms)
+(node:9183) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  28 [desktop] › e2e/mobile-and-links.spec.ts:153:3 › primary navigation links › mock artwork card opens piece detail with matching title (0ms)
+(node:9185) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  29 [desktop] › e2e/mobile-and-links.spec.ts:173:3 › primary navigation links › mock artist card opens artist detail (0ms)
+(node:9187) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  30 [desktop] › e2e/mobile-and-links.spec.ts:191:3 › primary navigation links › stable short-code deep links resolve mock content (0ms)
+(node:9189) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  31 [desktop] › e2e/mobile-and-links.spec.ts:204:3 › primary navigation links › editorial panes Explore reach wired destinations (1ms)
+(node:9191) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  32 [desktop] › e2e/mobile-and-links.spec.ts:248:3 › primary navigation links › scope links focus the correct catalogue lane (1ms)
+(node:9193) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  33 [desktop] › e2e/mobile-and-links.spec.ts:258:3 › primary navigation links › Search by chips switch catalogue scope (1ms)
+(node:9196) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ✘  34 [desktop] › e2e/mobile-and-links.spec.ts:273:3 › footer legal sheets › Privacy / FAQ / Contact open sheet content (0ms)
+
+
+  1) [iphone-390] › e2e/mobile-and-links.spec.ts:21:3 › mobile landing layout › lands at the top — hero visible, no auto-scroll past catalogue 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-mobile-la-d33ae--auto-scroll-past-catalogue-iphone-390/error-context.md
+
+  2) [iphone-390] › e2e/mobile-and-links.spec.ts:29:3 › mobile landing layout › country filter shows readable option labels (not bare checkboxes) 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-mobile-la-2efb3-labels-not-bare-checkboxes--iphone-390/error-context.md
+
+  3) [iphone-390] › e2e/mobile-and-links.spec.ts:46:3 › mobile landing layout › country filter narrows catalogue results 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-mobile-la-d5351-r-narrows-catalogue-results-iphone-390/error-context.md
+
+  4) [iphone-390] › e2e/mobile-and-links.spec.ts:57:3 › mobile landing layout › filter chips open usable panels on phone 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-mobile-la-5d695-open-usable-panels-on-phone-iphone-390/error-context.md
+
+  5) [iphone-390] › e2e/mobile-and-links.spec.ts:74:3 › mobile landing layout › no horizontal overflow at 390px 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-mobile-la-c9810-orizontal-overflow-at-390px-iphone-390/error-context.md
+
+  6) [iphone-390] › e2e/mobile-and-links.spec.ts:83:3 › mobile landing layout › mobile Stage a room bottom nav reaches studio or login 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-mobile-la-c24b9-nav-reaches-studio-or-login-iphone-390/error-context.md
+
+  7) [iphone-390] › e2e/mobile-and-links.spec.ts:97:3 › primary navigation links › logo and Discover return home with hero 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-primary-n-da6a5-cover-return-home-with-hero-iphone-390/error-context.md
+
+  8) [iphone-390] › e2e/mobile-and-links.spec.ts:109:3 › primary navigation links › Sign in opens the login page 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-primary-n-18473-ign-in-opens-the-login-page-iphone-390/error-context.md
+
+  9) [iphone-390] › e2e/mobile-and-links.spec.ts:118:3 › primary navigation links › Art Lounge / Stage a room links reach their routes 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-primary-n-e3213-om-links-reach-their-routes-iphone-390/error-context.md
+
+  10) [iphone-390] › e2e/mobile-and-links.spec.ts:130:3 › primary navigation links › direct routes render expected content 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-primary-n-c75e3-tes-render-expected-content-iphone-390/error-context.md
+
+  11) [iphone-390] › e2e/mobile-and-links.spec.ts:153:3 › primary navigation links › mock artwork card opens piece detail with matching title 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-primary-n-56d00--detail-with-matching-title-iphone-390/error-context.md
+
+  12) [iphone-390] › e2e/mobile-and-links.spec.ts:173:3 › primary navigation links › mock artist card opens artist detail 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-primary-n-2b6d1-st-card-opens-artist-detail-iphone-390/error-context.md
+
+  13) [iphone-390] › e2e/mobile-and-links.spec.ts:191:3 › primary navigation links › stable short-code deep links resolve mock content 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-primary-n-54754--links-resolve-mock-content-iphone-390/error-context.md
+
+  14) [iphone-390] › e2e/mobile-and-links.spec.ts:204:3 › primary navigation links › editorial panes Explore reach wired destinations 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-primary-n-fb2a7-re-reach-wired-destinations-iphone-390/error-context.md
+
+  15) [iphone-390] › e2e/mobile-and-links.spec.ts:248:3 › primary navigation links › scope links focus the correct catalogue lane 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-primary-n-fb764--the-correct-catalogue-lane-iphone-390/error-context.md
+
+  16) [iphone-390] › e2e/mobile-and-links.spec.ts:258:3 › primary navigation links › Search by chips switch catalogue scope 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-primary-n-7a35a-hips-switch-catalogue-scope-iphone-390/error-context.md
+
+  17) [iphone-390] › e2e/mobile-and-links.spec.ts:273:3 › footer legal sheets › Privacy / FAQ / Contact open sheet content 
+
+    Error: browserType.launch: Unsupported webkit channel "chrome"
+
+    Error Context: test-results/mobile-and-links-footer-le-c6ace--Contact-open-sheet-content-iphone-390/error-context.md
+
+  18) [desktop] › e2e/mobile-and-links.spec.ts:97:3 › primary navigation links › logo and Discover return home with hero 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-wT8h5T --remote-debugging-pipe --no-startup-window
+    <launched> pid=9176
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-wT8h5T --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9176
+      - [pid=9176] <gracefully close start>
+      - [pid=9176] <kill>
+      - [pid=9176] <will force kill>
+      - [pid=9176] exception while trying to kill process: Error: kill EPERM
+      - [pid=9176] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9176] starting temporary directories cleanup
+      - [pid=9176] finished temporary directories cleanup
+      - [pid=9176] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-primary-n-da6a5-cover-return-home-with-hero-desktop/error-context.md
+
+  19) [desktop] › e2e/mobile-and-links.spec.ts:109:3 › primary navigation links › Sign in opens the login page 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-OxCVNM --remote-debugging-pipe --no-startup-window
+    <launched> pid=9178
+    [pid=9178] <process did exit: exitCode=null, signal=SIGABRT>
+    [pid=9178] starting temporary directories cleanup
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-OxCVNM --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9178
+      - [pid=9178] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9178] starting temporary directories cleanup
+      - [pid=9178] <gracefully close start>
+      - [pid=9178] <kill>
+      - [pid=9178] <skipped force kill spawnedProcess.killed=false processClosed=true>
+      - [pid=9178] finished temporary directories cleanup
+      - [pid=9178] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-primary-n-18473-ign-in-opens-the-login-page-desktop/error-context.md
+
+  20) [desktop] › e2e/mobile-and-links.spec.ts:118:3 › primary navigation links › Art Lounge / Stage a room links reach their routes 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-m2PAKY --remote-debugging-pipe --no-startup-window
+    <launched> pid=9180
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-m2PAKY --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9180
+      - [pid=9180] <gracefully close start>
+      - [pid=9180] <kill>
+      - [pid=9180] <will force kill>
+      - [pid=9180] exception while trying to kill process: Error: kill EPERM
+      - [pid=9180] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9180] starting temporary directories cleanup
+      - [pid=9180] finished temporary directories cleanup
+      - [pid=9180] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-primary-n-e3213-om-links-reach-their-routes-desktop/error-context.md
+
+  21) [desktop] › e2e/mobile-and-links.spec.ts:130:3 › primary navigation links › direct routes render expected content 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-zk49MO --remote-debugging-pipe --no-startup-window
+    <launched> pid=9182
+    [pid=9182] <process did exit: exitCode=null, signal=SIGABRT>
+    [pid=9182] starting temporary directories cleanup
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-zk49MO --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9182
+      - [pid=9182] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9182] starting temporary directories cleanup
+      - [pid=9182] <gracefully close start>
+      - [pid=9182] <kill>
+      - [pid=9182] <skipped force kill spawnedProcess.killed=false processClosed=true>
+      - [pid=9182] finished temporary directories cleanup
+      - [pid=9182] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-primary-n-c75e3-tes-render-expected-content-desktop/error-context.md
+
+  22) [desktop] › e2e/mobile-and-links.spec.ts:153:3 › primary navigation links › mock artwork card opens piece detail with matching title 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-D3FbYD --remote-debugging-pipe --no-startup-window
+    <launched> pid=9184
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-D3FbYD --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9184
+      - [pid=9184] <gracefully close start>
+      - [pid=9184] <kill>
+      - [pid=9184] <will force kill>
+      - [pid=9184] exception while trying to kill process: Error: kill EPERM
+      - [pid=9184] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9184] starting temporary directories cleanup
+      - [pid=9184] finished temporary directories cleanup
+      - [pid=9184] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-primary-n-56d00--detail-with-matching-title-desktop/error-context.md
+
+  23) [desktop] › e2e/mobile-and-links.spec.ts:173:3 › primary navigation links › mock artist card opens artist detail 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-V5PgFp --remote-debugging-pipe --no-startup-window
+    <launched> pid=9186
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-V5PgFp --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9186
+      - [pid=9186] <gracefully close start>
+      - [pid=9186] <kill>
+      - [pid=9186] <will force kill>
+      - [pid=9186] exception while trying to kill process: Error: kill EPERM
+      - [pid=9186] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9186] starting temporary directories cleanup
+      - [pid=9186] finished temporary directories cleanup
+      - [pid=9186] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-primary-n-2b6d1-st-card-opens-artist-detail-desktop/error-context.md
+
+  24) [desktop] › e2e/mobile-and-links.spec.ts:191:3 › primary navigation links › stable short-code deep links resolve mock content 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-KRsvRO --remote-debugging-pipe --no-startup-window
+    <launched> pid=9188
+    [pid=9188] <process did exit: exitCode=null, signal=SIGABRT>
+    [pid=9188] starting temporary directories cleanup
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-KRsvRO --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9188
+      - [pid=9188] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9188] starting temporary directories cleanup
+      - [pid=9188] <gracefully close start>
+      - [pid=9188] <kill>
+      - [pid=9188] <skipped force kill spawnedProcess.killed=false processClosed=true>
+      - [pid=9188] finished temporary directories cleanup
+      - [pid=9188] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-primary-n-54754--links-resolve-mock-content-desktop/error-context.md
+
+  25) [desktop] › e2e/mobile-and-links.spec.ts:204:3 › primary navigation links › editorial panes Explore reach wired destinations 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-wHQWrZ --remote-debugging-pipe --no-startup-window
+    <launched> pid=9190
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-wHQWrZ --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9190
+      - [pid=9190] <gracefully close start>
+      - [pid=9190] <kill>
+      - [pid=9190] <will force kill>
+      - [pid=9190] exception while trying to kill process: Error: kill EPERM
+      - [pid=9190] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9190] starting temporary directories cleanup
+      - [pid=9190] finished temporary directories cleanup
+      - [pid=9190] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-primary-n-fb2a7-re-reach-wired-destinations-desktop/error-context.md
+
+  26) [desktop] › e2e/mobile-and-links.spec.ts:248:3 › primary navigation links › scope links focus the correct catalogue lane 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-fFmV2O --remote-debugging-pipe --no-startup-window
+    <launched> pid=9192
+    [pid=9192] <process did exit: exitCode=null, signal=SIGABRT>
+    [pid=9192] starting temporary directories cleanup
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-fFmV2O --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9192
+      - [pid=9192] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9192] starting temporary directories cleanup
+      - [pid=9192] <gracefully close start>
+      - [pid=9192] <kill>
+      - [pid=9192] <skipped force kill spawnedProcess.killed=false processClosed=true>
+      - [pid=9192] finished temporary directories cleanup
+      - [pid=9192] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-primary-n-fb764--the-correct-catalogue-lane-desktop/error-context.md
+
+  27) [desktop] › e2e/mobile-and-links.spec.ts:258:3 › primary navigation links › Search by chips switch catalogue scope 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-jZmeb0 --remote-debugging-pipe --no-startup-window
+    <launched> pid=9195
+    [pid=9195] <process did exit: exitCode=null, signal=SIGABRT>
+    [pid=9195] starting temporary directories cleanup
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-jZmeb0 --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9195
+      - [pid=9195] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9195] starting temporary directories cleanup
+      - [pid=9195] <gracefully close start>
+      - [pid=9195] <kill>
+      - [pid=9195] <skipped force kill spawnedProcess.killed=false processClosed=true>
+      - [pid=9195] finished temporary directories cleanup
+      - [pid=9195] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-primary-n-7a35a-hips-switch-catalogue-scope-desktop/error-context.md
+
+  28) [desktop] › e2e/mobile-and-links.spec.ts:273:3 › footer legal sheets › Privacy / FAQ / Contact open sheet content 
+
+    Error: browserType.launch: Target page, context or browser has been closed
+    Browser logs:
+
+    <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-6KU06D --remote-debugging-pipe --no-startup-window
+    <launched> pid=9197
+    [pid=9197] <process did exit: exitCode=null, signal=SIGABRT>
+    [pid=9197] starting temporary directories cleanup
+    Call log:
+      - <launching> /Applications/Google Chrome.app/Contents/MacOS/Google Chrome --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-edgeupdater --disable-extensions --disable-features=AvoidUnnecessaryBeforeUnloadCheckSync,BoundaryEventDispatchTracksNodeRemoval,DestroyProfileOnBrowserClose,DialMediaRouteProvider,GlobalMediaControls,HttpsUpgrades,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate,AutoDeElevate,RenderDocument,OptimizationHints,msForceBrowserSignIn,msEdgeUpdateLaunchServicesPreferredVersion --enable-features=CDPScreenshotNewSurface --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --edge-skip-compat-layer-relaunch --disable-infobars --disable-search-engine-choice-screen --disable-sync --enable-unsafe-swiftshader --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --user-data-dir=/var/folders/th/lpqv9q2x71x450xsn249prt40000gn/T/playwright_chromiumdev_profile-6KU06D --remote-debugging-pipe --no-startup-window
+      - <launched> pid=9197
+      - [pid=9197] <process did exit: exitCode=null, signal=SIGABRT>
+      - [pid=9197] starting temporary directories cleanup
+      - [pid=9197] <gracefully close start>
+      - [pid=9197] <kill>
+      - [pid=9197] <skipped force kill spawnedProcess.killed=false processClosed=true>
+      - [pid=9197] finished temporary directories cleanup
+      - [pid=9197] <gracefully close end>
+
+
+    Error Context: test-results/mobile-and-links-footer-le-c6ace--Contact-open-sheet-content-desktop/error-context.md
+
+  28 failed
+    [iphone-390] › e2e/mobile-and-links.spec.ts:21:3 › mobile landing layout › lands at the top — hero visible, no auto-scroll past catalogue 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:29:3 › mobile landing layout › country filter shows readable option labels (not bare checkboxes) 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:46:3 › mobile landing layout › country filter narrows catalogue results 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:57:3 › mobile landing layout › filter chips open usable panels on phone 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:74:3 › mobile landing layout › no horizontal overflow at 390px 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:83:3 › mobile landing layout › mobile Stage a room bottom nav reaches studio or login 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:97:3 › primary navigation links › logo and Discover return home with hero 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:109:3 › primary navigation links › Sign in opens the login page 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:118:3 › primary navigation links › Art Lounge / Stage a room links reach their routes 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:130:3 › primary navigation links › direct routes render expected content 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:153:3 › primary navigation links › mock artwork card opens piece detail with matching title 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:173:3 › primary navigation links › mock artist card opens artist detail 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:191:3 › primary navigation links › stable short-code deep links resolve mock content 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:204:3 › primary navigation links › editorial panes Explore reach wired destinations 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:248:3 › primary navigation links › scope links focus the correct catalogue lane 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:258:3 › primary navigation links › Search by chips switch catalogue scope 
+    [iphone-390] › e2e/mobile-and-links.spec.ts:273:3 › footer legal sheets › Privacy / FAQ / Contact open sheet content 
+    [desktop] › e2e/mobile-and-links.spec.ts:97:3 › primary navigation links › logo and Discover return home with hero 
+    [desktop] › e2e/mobile-and-links.spec.ts:109:3 › primary navigation links › Sign in opens the login page 
+    [desktop] › e2e/mobile-and-links.spec.ts:118:3 › primary navigation links › Art Lounge / Stage a room links reach their routes 
+    [desktop] › e2e/mobile-and-links.spec.ts:130:3 › primary navigation links › direct routes render expected content 
+    [desktop] › e2e/mobile-and-links.spec.ts:153:3 › primary navigation links › mock artwork card opens piece detail with matching title 
+    [desktop] › e2e/mobile-and-links.spec.ts:173:3 › primary navigation links › mock artist card opens artist detail 
+    [desktop] › e2e/mobile-and-links.spec.ts:191:3 › primary navigation links › stable short-code deep links resolve mock content 
+    [desktop] › e2e/mobile-and-links.spec.ts:204:3 › primary navigation links › editorial panes Explore reach wired destinations 
+    [desktop] › e2e/mobile-and-links.spec.ts:248:3 › primary navigation links › scope links focus the correct catalogue lane 
+    [desktop] › e2e/mobile-and-links.spec.ts:258:3 › primary navigation links › Search by chips switch catalogue scope 
+    [desktop] › e2e/mobile-and-links.spec.ts:273:3 › footer legal sheets › Privacy / FAQ / Contact open sheet content 
+  6 skipped

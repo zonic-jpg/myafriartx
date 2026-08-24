@@ -1,0 +1,1 @@
+ALTER TABLE public.artists ADD COLUMN IF NOT EXISTS country TEXT, ADD COLUMN IF NOT EXISTS alma_mater TEXT;

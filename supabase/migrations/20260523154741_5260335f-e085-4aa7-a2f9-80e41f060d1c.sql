@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "artworks_public_read" ON storage.objects;

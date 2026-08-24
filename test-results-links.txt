@@ -1,0 +1,19 @@
+PASS 200 /
+PASS 200 /login
+PASS 200 /lounge
+PASS 200 /auction
+PASS 200 /studio
+PASS 200 /collateral
+PASS 200 /verification
+PASS 200 /disputes
+PASS 200 /notify
+PASS 200 /renders
+PASS 200 /admin
+PASS 200 /verify/cert/TEST-CODE
+PASS 200 /piece/PCE-M001
+PASS 200 /artist/ART-M001
+PASS 200 /?scope=artists&focus=artists
+PASS 200 /?scope=artworks&focus=artworks
+PASS 200 /?countries=%5B%22Nigeria%22%5D
+
+17 pass, 0 fail — OK

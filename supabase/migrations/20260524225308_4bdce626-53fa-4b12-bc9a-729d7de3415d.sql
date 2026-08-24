@@ -1,0 +1,1 @@
+ALTER TABLE public.landing_panes ADD COLUMN IF NOT EXISTS image_url_mobile text;
