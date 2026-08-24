@@ -1,0 +1,638 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>MyAfriart — Business Capabilities</title>
+<style>
+  @page { size: A4; margin: 22mm 18mm; }
+  :root { --ink: #1c1917; --muted: #57534e; --accent: #92400e; --rule: #e7e5e4; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink); font-size: 10.5pt; line-height: 1.55; margin: 0;
+  }
+  h1 {
+    font-size: 21pt; line-height: 1.2; letter-spacing: -0.01em;
+    border-bottom: 3px solid var(--accent); padding-bottom: 10px; margin: 0 0 6px;
+  }
+  h1 + p strong { color: var(--muted); font-weight: 600; }
+  h2 {
+    font-size: 14.5pt; color: var(--accent); margin: 26px 0 8px;
+    page-break-after: avoid; border-bottom: 1px solid var(--rule); padding-bottom: 4px;
+  }
+  h3 { font-size: 11.5pt; margin: 18px 0 6px; page-break-after: avoid; }
+  p { margin: 6px 0; }
+  ul, ol { margin: 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  table {
+    border-collapse: collapse; width: 100%; margin: 8px 0 12px;
+    font-size: 9.5pt; page-break-inside: avoid;
+  }
+  th {
+    text-align: left; background: #faf7f2; color: var(--accent);
+    border: 1px solid var(--rule); padding: 6px 9px; font-size: 9pt;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  td { border: 1px solid var(--rule); padding: 6px 9px; vertical-align: top; }
+  blockquote {
+    margin: 14px 0; padding: 12px 16px; background: #faf7f2;
+    border-left: 4px solid var(--accent); font-size: 11.5pt; font-style: italic;
+  }
+  blockquote p { margin: 0; }
+  code {
+    font-family: "SF Mono", Menlo, monospace; font-size: 9pt;
+    background: #f5f5f4; padding: 1px 4px; border-radius: 3px;
+  }
+  hr { border: 0; border-top: 1px solid var(--rule); margin: 20px 0; }
+  strong { font-weight: 700; }
+</style>
+</head>
+<body><h1>MyAfriart / ArtStage — Business Capabilities Document</h1>
+<p><strong>Version:</strong> 1.0 · <strong>Date:</strong> 16 July 2026 · <strong>Status:</strong> Production build v4 (Ship-Complete + Compliance)</p>
+<hr>
+<h2>1. Executive Summary</h2>
+<p>MyAfriart is a full-stack marketplace and services platform for African art. It combines
+four revenue-generating businesses on one codebase:</p>
+<ol>
+<li><strong>A curated marketplace</strong> — direct sales of catalogued works</li>
+<li><strong>A timed auction house</strong> — run to international auction standards</li>
+<li><strong>A brokered private-sale floor</strong> (&quot;the Sale Lounge&quot;) — with escrow and certification</li>
+<li><strong>An art-backed collateral registry</strong> — the foundation for art-secured lending</li>
+</ol>
+<p>These are wrapped in a trust infrastructure (identity verification, escrow, provenance,
+certificates, disputes) that most regional competitors do not have. <strong>The trust layer is
+the moat</strong>: anyone can list art online; very few platforms can make a stranger-to-stranger
+₦5m art transaction feel safe.</p>
+<hr>
+<h2>2. Capability Map</h2>
+<h3>2.1 Discovery &amp; Catalogue</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Curated catalogue</td>
+<td>Browsable inventory of artworks and artists with country allocation controls</td>
+</tr>
+<tr>
+<td>Piece detail pages</td>
+<td>Short-code addressed pages with price, medium, palette, provenance status, view counts</td>
+</tr>
+<tr>
+<td>Artist profiles</td>
+<td>Biography, portfolio, country and era metadata</td>
+</tr>
+<tr>
+<td>AI concierge chat</td>
+<td>On-site assistant that guides visitors to artists, auctions, and tools</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>Zero-friction top of funnel.</strong> Every artwork has a shareable URL with rich metadata —
+each piece page is a landing page for social and search traffic.</li>
+<li><strong>Merchandising control.</strong> Country-allocation settings let the business shape the
+catalogue mix (e.g. 40% Nigerian, 20% Ghanaian) without engineering involvement.</li>
+<li><strong>View-count analytics</strong> on pieces and artists tell you what to acquire, promote, and
+price up — inventory decisions driven by demand data, not guesswork.</li>
+</ul>
+<h3>2.2 AI Room Staging (the Studio)</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Room staging</td>
+<td>Buyer uploads a photo of their wall; AI places any artwork at true scale</td>
+</tr>
+<tr>
+<td>Device-aware rendering</td>
+<td>Output sized for the buyer&#39;s actual room and screen</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>Converts hesitation into purchase.</strong> The #1 objection in online art buying is
+<em>&quot;will it suit my space?&quot;</em> Staging answers it visually before the buyer has to imagine anything.</li>
+<li><strong>Differentiator with pull marketing built in.</strong> Staged-room images are inherently
+shareable — every render a buyer posts is an advert with your artwork in it.</li>
+<li><strong>Upsell surface.</strong> Staging sessions reveal wall size and taste; that data feeds
+recommendations and notification reels.</li>
+</ul>
+<h3>2.3 Live Timed Auctions</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Timed lots</td>
+<td>Server-persisted auction lots with estimates, reserves, and countdowns</td>
+</tr>
+<tr>
+<td>Bid-increment ladder</td>
+<td>Standard ascending increments (₦5k → ₦250k bands), enforced server-side</td>
+</tr>
+<tr>
+<td>Anti-sniping soft close</td>
+<td>Bids in the final 2 minutes extend the lot — same rules as Christie&#39;s/Sotheby&#39;s timed sales</td>
+</tr>
+<tr>
+<td>Hidden reserves</td>
+<td>Reserve status shown, amount concealed — industry standard</td>
+</tr>
+<tr>
+<td>Buyer&#39;s premium</td>
+<td>20% premium calculated on the hammer price</td>
+</tr>
+<tr>
+<td>Automated settlement</td>
+<td>Cron-driven closing: sold if reserve met, passed if not</td>
+</tr>
+<tr>
+<td>Unpaid-winner handling</td>
+<td>Winners get a 72-hour payment deadline; unpaid lots automatically relist</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>Price discovery + urgency = higher realised prices.</strong> Auctions routinely clear above
+fixed-price listings for desirable works; the soft close specifically prevents snipers
+from suppressing final prices.</li>
+<li><strong>The buyer&#39;s premium is a 20% revenue line</strong> on every hammer, on top of any seller commission.</li>
+<li><strong>Credibility with consignors.</strong> Running recognisably professional rules (increments,
+reserves, premiums) is what convinces serious collectors and estates to consign
+through you rather than ship to Lagos/London auction houses.</li>
+<li><strong>Zero manual settlement labour.</strong> Expired lots settle themselves; unpaid winners are
+automatically cycled out — no staff chasing deadbeat bidders before relisting.</li>
+</ul>
+<h3>2.4 Direct Sales (&quot;Buy Now&quot;)</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>One-click checkout</td>
+<td>Buy now on any priced piece via Paystack (cards, bank, USSD)</td>
+</tr>
+<tr>
+<td>Payment verification</td>
+<td>Dual confirmation: redirect callback + signed webhook</td>
+</tr>
+<tr>
+<td>Automatic fulfilment</td>
+<td>Successful payment marks the work sold and writes a provenance event atomically</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>Captures the impulse buyer</strong> who won&#39;t wait for an auction or negotiate in the Lounge.</li>
+<li><strong>Paystack coverage means Nigerian buyers pay how they actually pay</strong> — cards, transfers,
+USSD — not just international rails.</li>
+<li><strong>No phantom sales, no lost payments.</strong> The webhook + idempotency architecture means a
+payment is either fully recorded (sold + provenance + receipt) or not at all. This is
+the difference between a marketplace and a spreadsheet with a payment link.</li>
+</ul>
+<h3>2.5 The Sale Lounge (Private Sales Floor)</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Members-only floor</td>
+<td>Sign-in gated listing board: &quot;selling&quot; and &quot;looking for&quot; posts</td>
+</tr>
+<tr>
+<td>Private messaging</td>
+<td>Real-time buyer–seller threads per listing</td>
+</tr>
+<tr>
+<td>Brokerage on demand</td>
+<td>Either party can request MyAfriart brokerage at a configurable fee (default 5%)</td>
+</tr>
+<tr>
+<td>Escrow payments</td>
+<td>Buyers pay into escrow; funds held until admin release on confirmed delivery</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>Serves the market segment that hates public prices.</strong> High-value African art trades
+privately; the Lounge digitises the WhatsApp-and-handshake market you&#39;re competing with.</li>
+<li><strong>Brokerage fee income on peer-to-peer deals</strong> you didn&#39;t source — the platform monetises
+transactions between members.</li>
+<li><strong>Escrow is the conversion unlock.</strong> Strangers don&#39;t wire ₦3m to strangers. Held funds
+with platform release is what turns lurkers into transactors — and every escrow deal
+passes through your fee gate.</li>
+<li><strong>Network effects.</strong> Every buyer post (&quot;looking for mid-century Yoruba bronze&quot;) is
+demand data and a reason for sellers to join.</li>
+</ul>
+<h3>2.6 Brokerage, Certification &amp; Public Verification</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Brokerage workflow</td>
+<td>Admin-managed pipeline: requested → verified → in transit → delivered → certified</td>
+</tr>
+<tr>
+<td>PDF certificates</td>
+<td>Branded Certificates of Authenticity generated per brokered transaction</td>
+</tr>
+<tr>
+<td>Certificate registry</td>
+<td>Every certificate gets a unique verify code stored server-side</td>
+</tr>
+<tr>
+<td>Public verification</td>
+<td>Anyone can check a certificate at <code>/verify/cert/{code}</code> — no account needed</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>The certificate is a product, not paperwork.</strong> Authentication + delivery monitoring +
+certification is a service worth its brokerage fee on its own.</li>
+<li><strong>Public verification makes your certificates liquid.</strong> A collector reselling a
+MyAfriart-certified work can point any future buyer at the verify URL. Your paper
+travels with the artwork forever — and every verification is a branded touchpoint with
+someone new who is, by definition, an art buyer.</li>
+<li><strong>Forgery defence.</strong> Codes are server-registered and revocable; a faked PDF fails the
+public check. This protects the brand from the fraud that plagues the art trade.</li>
+</ul>
+<h3>2.7 Provenance Ledger</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Ownership chain</td>
+<td>Immutable event log per artwork: sales, transfers, certifications</td>
+</tr>
+<tr>
+<td>Automatic recording</td>
+<td>Every fulfilled payment writes a provenance event in the same transaction</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>Provenance is price.</strong> Documented history materially raises resale value — works
+sold through MyAfriart become worth more <em>because</em> they were sold through MyAfriart,
+which is a structural reason for sellers to prefer your platform.</li>
+<li><strong>Future secondary-market royalties.</strong> A tracked ownership chain is the prerequisite
+for artist resale royalties — a program that would be a first-mover differentiator for
+African artists and a press story on its own.</li>
+</ul>
+<h3>2.8 Art-Backed Collateral Registry</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Collateral portal</td>
+<td>Verified members pledge works with appraised value and requested loan amount</td>
+</tr>
+<tr>
+<td>Authentication workflow</td>
+<td>Admin pipeline: pending → authenticated → active → released/rejected</td>
+</tr>
+<tr>
+<td>Lien flags</td>
+<td>Pledged artworks are marked and cannot be sold until the lien is released</td>
+</tr>
+<tr>
+<td>KYC gate</td>
+<td>Pledging is hard-blocked without a verified identity</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>Opens an entirely new category.</strong> Art-as-collateral is a multi-billion-dollar business
+globally (Sotheby&#39;s Financial, Athena Art Finance) and effectively non-existent for
+African art. This is the platform&#39;s expansion story for investors.</li>
+<li><strong>Deepens lock-in.</strong> A collector with a pledged work is a multi-year relationship,
+not a one-off transaction.</li>
+<li><strong>Lien registry prevents double-spending fraud</strong> — a pledged work physically cannot be
+sold or re-pledged through the platform. That integrity is what a lending partner
+(bank, credit fund) will require before putting capital behind the product.</li>
+<li><strong>Decision point:</strong> the platform is built as the <em>registry and workflow</em>; whether
+MyAfriart lends its own capital, brokers to a partner lender, or charges
+registry/authentication fees is a business-model choice the code already supports.</li>
+</ul>
+<h3>2.9 Identity Verification (KYC)</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Member verification</td>
+<td>NIN, passport, driver&#39;s licence, or voter&#39;s card + document upload</td>
+</tr>
+<tr>
+<td>Secure document handling</td>
+<td>Private storage, magic-byte file validation, admin-only 10-minute signed URLs</td>
+</tr>
+<tr>
+<td>Review queue</td>
+<td>Admin approve/reject with mandatory rejection reasons; members can resubmit</td>
+</tr>
+<tr>
+<td>Risk-based enforcement</td>
+<td>Required for all collateral pledging and for escrow payments ≥ ₦500,000 (tunable)</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>Regulatory survival.</strong> Art dealing + payments + lending sits inside Nigeria&#39;s AML/CFT
+perimeter (SCUML registration for art dealers). Demonstrable KYC is what keeps the
+platform bankable — payment processors and lending partners will ask for exactly this.</li>
+<li><strong>Fraud cost avoidance.</strong> Verified identities on high-value flows cut chargeback fraud,
+stolen-art pledging, and money-laundering exposure — losses that would otherwise come
+straight off the bottom line.</li>
+<li><strong>Risk-based friction.</strong> Casual buyers browse and buy small without paperwork; only
+high-value and lending flows demand verification. Compliance without killing conversion.</li>
+<li><strong>Trust as marketing.</strong> &quot;Verified members&quot; is now a claim the platform can truthfully make.</li>
+</ul>
+<h3>2.10 Dispute Resolution</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Member dispute filing</td>
+<td>Any completed payment can be disputed in-app with a reasoned claim</td>
+</tr>
+<tr>
+<td>Escrow freeze</td>
+<td>Opening a dispute instantly freezes any held escrow funds</td>
+</tr>
+<tr>
+<td>Atomic resolution</td>
+<td>Admin resolves with one action: refund escrow + mark payment refunded in a single transaction</td>
+</tr>
+<tr>
+<td>Audit trail</td>
+<td>Every dispute records who opened it, why, who resolved it, and the outcome</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>Keeps conflict inside the house.</strong> Without in-app recourse, an unhappy buyer&#39;s next
+stops are their bank (chargeback — you lose the money <em>and</em> pay the penalty) or social
+media (you lose the brand). A dispute button is dramatically cheaper than either.</li>
+<li><strong>Escrow freeze protects the platform&#39;s credibility</strong> — no seller gets paid out while a
+delivery is contested, so &quot;escrow&quot; means what buyers think it means.</li>
+<li><strong>The audit trail is your defence file</strong> for payment-processor investigations and any
+future regulatory review.</li>
+</ul>
+<h3>2.11 Notifications &amp; Sample Reels</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Preference-based reels</td>
+<td>Members receive curated artwork reels matched to stated tastes</td>
+</tr>
+<tr>
+<td>Frequency capping</td>
+<td>Admin-controlled maximum sends per week</td>
+</tr>
+<tr>
+<td>Sponsor slots</td>
+<td>Weighted sponsor panes can be sold into reels</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>Owned re-engagement channel</strong> — reactivates dormant members without paying for ads.</li>
+<li><strong>Sponsor panes are sellable ad inventory</strong> inside a high-intent, art-only audience.</li>
+<li><strong>Frequency caps protect the asset</strong> — the channel stays valuable because it isn&#39;t spammed.</li>
+</ul>
+<h3>2.12 Content Studio (No-Code Site Management)</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Visual page editor</td>
+<td>Admins edit headline copy and hero imagery per page with live preview</td>
+</tr>
+<tr>
+<td>Device-aware media</td>
+<td>Uploads auto-generate mobile/tablet/desktop sizes</td>
+</tr>
+<tr>
+<td>Server persistence</td>
+<td>Published content stored centrally; live for all visitors instantly</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>Marketing moves at marketing speed.</strong> Campaign copy, seasonal heroes, and message
+tests ship in minutes with zero engineering cost per change.</li>
+<li><strong>No agency dependency</strong> for routine site updates.</li>
+</ul>
+<h3>2.13 Admin Operations Suite</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Unified console</td>
+<td>Fifteen operational tabs: catalogue, artists, styles, panes, allocation, transactions, analytics, brokerage, collateral, KYC, disputes, content, settings</td>
+</tr>
+<tr>
+<td>Role-gated access</td>
+<td>Admin role enforced server-side on every operation</td>
+</tr>
+<tr>
+<td>Transaction lookup</td>
+<td>Every payment, brokerage deal, and pledge is traceable by short code</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>One person can run the platform.</strong> All daily operations — approving pledges, reviewing
+IDs, resolving disputes, issuing certificates, editing the site — live in a single console.
+Headcount scales with transaction volume, not with feature count.</li>
+<li><strong>Every money-touching action is attributable</strong> to a named admin — the internal-controls
+posture investors and auditors expect.</li>
+</ul>
+<h3>2.14 Trust &amp; Security Infrastructure (Invisible but Priced-In)</h3>
+<table>
+<thead>
+<tr>
+<th>Functionality</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Webhook integrity</td>
+<td>HMAC-SHA512 signature verification + idempotent event log — payments can&#39;t be spoofed or double-processed</td>
+</tr>
+<tr>
+<td>Rate limiting</td>
+<td>120 requests/minute per IP on all APIs — scraping and abuse throttled</td>
+</tr>
+<tr>
+<td>Row-level security</td>
+<td>Database-enforced access: members see their own data, admins see everything, nobody sees more</td>
+</tr>
+<tr>
+<td>Malware-scanned uploads</td>
+<td>Magic-byte validation on all uploads; optional VirusTotal scanning</td>
+</tr>
+<tr>
+<td>Aggressive audit gate</td>
+<td>59-check hostile audit script (<code>npm run audit:aggressive</code>) runs tests, build, secret scans, and security assertions — currently 100/100</td>
+</tr>
+</tbody></table>
+<p><strong>Business benefits</strong></p>
+<ul>
+<li><strong>This is what &quot;production-grade&quot; means commercially:</strong> the platform can pass a payment
+processor&#39;s onboarding review, a partner bank&#39;s technical due diligence, and an
+acquirer&#39;s security questionnaire. Each of those gates unlocks revenue the features
+alone cannot.</li>
+<li><strong>The audit gate keeps it that way</strong> — every future release must pass the same 59
+hostile checks before it ships, so quality is enforced, not aspirational.</li>
+</ul>
+<hr>
+<h2>3. Revenue Model Summary</h2>
+<table>
+<thead>
+<tr>
+<th>Revenue stream</th>
+<th>Powered by</th>
+<th>Mechanics</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Buyer&#39;s premium</td>
+<td>Auctions</td>
+<td>20% on every hammer price</td>
+</tr>
+<tr>
+<td>Direct sale margin/commission</td>
+<td>Buy Now checkout</td>
+<td>Platform-set pricing on catalogue works</td>
+</tr>
+<tr>
+<td>Brokerage fees</td>
+<td>Sale Lounge</td>
+<td>Default 5% (admin-tunable) on brokered private sales</td>
+</tr>
+<tr>
+<td>Escrow-enabled deal flow</td>
+<td>Escrow + disputes</td>
+<td>Trust layer converts P2P deals that would otherwise die</td>
+</tr>
+<tr>
+<td>Certification services</td>
+<td>Certificate registry</td>
+<td>Authentication + certification as a paid service</td>
+</tr>
+<tr>
+<td>Collateral/registry fees</td>
+<td>Collateral portal + liens</td>
+<td>Authentication fees today; lending margin or partner-referral fees tomorrow</td>
+</tr>
+<tr>
+<td>Sponsor inventory</td>
+<td>Notification reels</td>
+<td>Weighted sponsor slots in curated reels</td>
+</tr>
+</tbody></table>
+<p><strong>Compounding effect:</strong> each trust capability raises the ceiling on the others. KYC makes
+escrow safe at higher values → escrow makes the Lounge liquid → Lounge volume feeds
+brokerage and certification → certificates and provenance raise resale values → higher
+values justify collateral lending → lending locks in the collectors who consign the best
+auction lots.</p>
+<hr>
+<h2>4. Compliance &amp; Risk Posture</h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Identity verification</td>
+<td>Live — risk-based (collateral: always; escrow ≥ ₦500k)</td>
+</tr>
+<tr>
+<td>AML surface</td>
+<td>KYC records + full payment audit trail + attributable admin actions</td>
+</tr>
+<tr>
+<td>Payment integrity</td>
+<td>Signed webhooks, idempotent processing, atomic fulfilment</td>
+</tr>
+<tr>
+<td>Buyer protection</td>
+<td>Escrow, freeze-on-dispute, atomic refunds</td>
+</tr>
+<tr>
+<td>Honest marketing</td>
+<td>Copy audited — no &quot;verified&quot; claims beyond what the platform enforces</td>
+</tr>
+<tr>
+<td>Data protection</td>
+<td>Private KYC storage, time-limited signed URLs, RLS throughout</td>
+</tr>
+</tbody></table>
+<p><strong>Open items requiring business (not engineering) action:</strong></p>
+<ol>
+<li><strong>Paystack live credentials</strong> and production webhook registration — turns payments on.</li>
+<li><strong>SCUML/regulatory registration</strong> as an art dealer — legal counsel task.</li>
+<li><strong>Lending model decision</strong> — own capital vs. partner lender vs. registry-fees-only.</li>
+<li><strong>Insurance</strong> for works in transit under brokerage — negotiate a carrier partnership.</li>
+</ol>
+<hr>
+<h2>5. One-Line Positioning</h2>
+<blockquote>
+<p><strong>MyAfriart is the only platform where African art can be discovered, staged on your
+wall, bought, auctioned, brokered, certified, verified, and borrowed against — with
+bank-grade trust infrastructure under every transaction.</strong></p>
+</blockquote>
+</body>
+</html>

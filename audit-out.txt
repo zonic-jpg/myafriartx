@@ -1,0 +1,77 @@
+
+> audit:aggressive
+> node scripts/aggressive-audit.mjs
+
+PASS supabase/migrations/20260716000001_ship_complete.sql
+PASS src/routes/api/webhooks/paystack.ts
+PASS src/routes/api/cron/auctions.ts
+PASS src/routes/verify.cert.$code.tsx
+PASS src/lib/escrow.functions.ts
+PASS src/lib/provenance.functions.ts
+PASS src/lib/content-studio.functions.ts
+PASS src/lib/rate-limit.server.ts
+PASS src/lib/payments-core.server.ts
+PASS tests/auction-engine.test.ts
+PASS docs/PRODUCTION_BUILD.md
+PASS migration: escrow_holds
+PASS migration: certificate_registry
+PASS migration: provenance_events
+PASS migration: payment_webhook_events
+PASS migration: payment_disputes
+PASS migration: fulfill_payment_record RPC
+PASS migration: register_certificate RPC
+PASS migration: auction payment deadline
+PASS migration: artwork lien flag
+PASS auction: server lots
+PASS auction: no SEED
+PASS payments: RPC fulfillment
+PASS webhook: HMAC verify
+PASS webhook: idempotency log
+PASS cron: auction settlement
+PASS content-studio: app_settings
+PASS content-studio: no localStorage publish
+PASS lounge: escrow CTA
+PASS lounge: honest member copy
+PASS cert verify page
+PASS brokerage: registry RPC
+PASS collateral: lien on artwork
+PASS piece: pledged guard
+PASS rate limit middleware
+PASS supabase/migrations/20260716000002_kyc_disputes.sql
+PASS src/lib/kyc.functions.ts
+PASS src/lib/disputes.functions.ts
+PASS src/routes/verification.tsx
+PASS src/routes/disputes.tsx
+PASS src/components/admin/kyc-admin.tsx
+PASS src/components/admin/disputes-admin.tsx
+PASS kyc: private storage bucket
+PASS kyc: verified RPC
+PASS disputes: atomic resolution RPC
+PASS disputes: one open dispute per payment
+PASS kyc: magic-byte doc validation
+PASS kyc: signed URL doc access
+PASS kyc: review only from pending
+PASS collateral: KYC gate
+PASS escrow: KYC threshold gate
+PASS disputes: payer-only opening
+PASS disputes: escrow freeze on open
+PASS admin: kyc + disputes tabs
+PASS mobile: no auto-scroll past hero on default landing
+PASS mobile: filter panel stacks below header row on phones
+PASS e2e: playwright mobile+links suite present
+PASS mock catalogue: deep-linkable short codes
+PASS e2e: fetch-based link checker present
+PASS e2e: iphone-390 project configured
+PASS env: CRON_SECRET
+PASS no obvious secrets in source
+PASS unit tests
+PASS e2e: all primary links return correct content
+WARN e2e: playwright skipped — Chrome blocked in sandbox; link gate still enforced. Run `npm run test:e2e` unsandboxed locally/CI.
+PASS verify:production
+PASS production build
+
+═══════════════════════════════════════
+Aggressive audit: 66 pass, 0 fail, 1 warn
+Score: 100/100 — SHIP
+═══════════════════════════════════════
+
