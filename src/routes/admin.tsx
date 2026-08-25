@@ -37,6 +37,7 @@ import { KycAdmin } from "@/components/admin/kyc-admin";
 import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
 import { adminGateActive, clearAdminGate } from "@/lib/adminGate";
+import { AdminTesterQueue } from "@/components/admin/AdminTesterQueue";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — MyAfriart" }] }),
@@ -133,6 +134,7 @@ function AdminInner() {
 
   return (
     <div className="min-h-screen bg-background">
+      <AdminTesterQueue />
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="font-display text-xl">

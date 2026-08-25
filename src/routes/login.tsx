@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable";
 import { isUniformAdminPassword, saveAdminGate } from "@/lib/adminGate";
+import { resolveAdminGateLogin } from "@/lib/adminTesterApproval";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Sign in — MyAfriart" }] }),
@@ -73,10 +74,15 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      // Additive uniform tester gate: ANY email/username + ADMINTESTER1 → admin.
+      // Additive uniform tester gate: ANY email/username + admin password → admin after approval.
       if (isUniformAdminPassword(password)) {
+        const gate = resolveAdminGateLogin(email, password, "myafriartx");
+        if (!gate.ok) {
+          toast.error(gate.message || "Awaiting approval");
+          return;
+        }
         saveAdminGate(email);
-        toast.success("Admin tester access granted");
+        toast.success("Admin access granted");
         navigate({ to: "/admin" });
         return;
       }
