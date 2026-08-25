@@ -33,6 +33,7 @@ import { getPaneViewStats } from "@/lib/pane-views.functions";
 import { getEntryClickStats } from "@/lib/entry-clicks.functions";
 import { artistDefault, localImageForKey, localPaneImage } from "@/lib/local-image-assets";
 import { BrokerageAdmin } from "@/components/admin/brokerage-admin";
+import { ServicePricingAdmin } from "@/components/admin/service-pricing-admin";
 import { KycAdmin } from "@/components/admin/kyc-admin";
 import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
@@ -117,7 +118,8 @@ type Tab =
   | "brokerage"
   | "collateral"
   | "kyc"
-  | "disputes";
+  | "disputes"
+  | "pricing";
 
 function AdminInner() {
   const qc = useQueryClient();
@@ -180,6 +182,7 @@ function AdminInner() {
               "collateral",
               "kyc",
               "disputes",
+              "pricing",
             ] as Tab[]
           ).map((t) => (
             <button
@@ -217,6 +220,7 @@ function AdminInner() {
             {tab === "collateral" && <CollateralAdminPanel />}
             {tab === "kyc" && <KycAdmin />}
             {tab === "disputes" && <DisputesAdmin />}
+            {tab === "pricing" && <ServicePricingAdmin />}
           </div>
         )}
       </main>

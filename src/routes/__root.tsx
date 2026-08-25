@@ -59,14 +59,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "MyAfriart — Discover African Art" },
+      { title: "MyAfriArtX — Discover African Art" },
       {
         name: "description",
         content:
           "MyAfriart is a curated marketplace and discovery platform for African art. Explore artists, artworks, and stage pieces in your space with our artstage room tool.",
       },
-      { property: "og:title", content: "MyAfriart — Discover African Art" },
-      { name: "twitter:title", content: "MyAfriart — Discover African Art" },
+      { property: "og:title", content: "MyAfriArtX — Discover African Art" },
+      { name: "twitter:title", content: "MyAfriArtX — Discover African Art" },
       {
         property: "og:description",
         content:

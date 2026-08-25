@@ -6,12 +6,14 @@ import viteReact from "@vitejs/plugin-react";
 
 // ── ADDITIVE static / SPA build for GitHub Pages ─────────────────────────────
 // This config is used ONLY for the public static demo at
-// https://zonic-jpg.github.io/myafriart/ . It does NOT touch the SSR/Supabase
+// https://zonic-jpg.github.io/myafriartx/ . It does NOT touch the SSR/Supabase
 // production path (vite.config.ts + server.mjs), which is built with the normal
 // `npm run build`. Here we turn on TanStack Start SPA mode (prerender an app
-// shell that hydrates + client-routes) and serve everything under the /myafriart/
+// shell that hydrates + client-routes) and serve everything under the /myafriartx/
 // subpath. Backend/server-fn calls degrade to the app's built-in local mock data.
-const BASE = "/myafriart/";
+// NOTE: base is "/myafriartx/" (our app) — intentionally distinct from the
+// unrelated legacy myafriart.netlify.app site.
+const BASE = "/myafriartx/";
 
 export default defineConfig({
   base: BASE,
