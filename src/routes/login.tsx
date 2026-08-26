@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { lovable } from "@/integrations/lovable";
-import { isUniformAdminPassword, saveAdminGate } from "@/lib/adminGate";
+import { isUniformAdminPassword, saveAdminGate, isOwnerEmail } from "@/lib/adminGate";
 import { resolveAdminGateLogin } from "@/lib/adminTesterApproval";
 
 export const Route = createFileRoute("/login")({
@@ -83,7 +83,7 @@ function LoginPage() {
         }
         saveAdminGate(email);
         toast.success("Admin access granted");
-        navigate({ to: "/admin" });
+        navigate({ to: isOwnerEmail(email) ? "/admin#admintester-queue" : "/admin" });
         return;
       }
       if (mode === "signup") {

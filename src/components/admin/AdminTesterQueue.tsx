@@ -15,7 +15,7 @@ export function AdminTesterQueue() {
   const bump = () => setTick((n) => n + 1);
 
   return (
-    <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50/50 p-4 text-sm" key={tick}>
+    <div id="admintester-queue" className="mb-6 rounded-lg border border-amber-200 bg-amber-50/50 p-4 text-sm scroll-mt-24" key={tick}>
       <h2 className="font-semibold">ADMINTESTER approvals</h2>
       <p className="text-muted-foreground text-xs mt-1">{AWAITING_MSG}</p>
       {pending.length === 0 ? (
