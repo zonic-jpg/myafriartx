@@ -1,7 +1,12 @@
-# MyAfriArtX — static SPA on Netlify (TanStack Start SPA mode)
+# MyAfriArtX — static SPA on Netlify (prebuilt dist/client in repo)
 [build]
-  command = "test -f dist/client/index.html || (npx vite build --config vite.config.netlify.ts && cp dist/client/_shell.html dist/client/index.html && cp dist/client/_shell.html dist/client/404.html)"
+  command = "echo 'Publishing prebuilt dist/client'"
   publish = "dist/client"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
 
 [build.environment]
   NODE_VERSION = "20"
