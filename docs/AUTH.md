@@ -1,15 +1,27 @@
-# MyAfriArtX auth
+# MyAfriArtX auth — Zonic orbit standard (5 rules)
 
-Orbit standard: [MyYangaX AUTH.md](https://github.com/zonic-jpg/myyangax/blob/main/AUTH.md)
+See MyYangaX `AUTH.md` for the full orbit standard.
 
-## ADMINTESTER approval
+## Rule 1 — Owner always in
 
-Passwords (case-insensitive): `ADMINTESTER1`, `admin123`, `rubbaxadmin1`
+`oadeagbo@gmail.com` → owner + admin immediately via admin-password gate or normal auth.
 
-- First login on `/login` → **PENDING** until owner approves
-- Owner queue: `/admin` → **ADMINTESTER approvals** banner
-- Module: `src/lib/adminTesterApproval.ts`
+## Rule 2 — ADMINTESTER queue
 
-## Owner
+Any other email + admin password → **PENDING** with awaiting-approval message.
 
-- `oadeagbo@gmail.com` — never pending
+## Rule 3 — Owner queue on login
+
+Owner admin-password login → `/admin#admintester-queue`.
+
+## Rule 4 — Approved = full access
+
+Approved testers get full admin studio (upload, edit, catalogue, all features).
+
+## Rule 5 — Owner allocates rights
+
+Owner manages allocations, featured content, and admin permissions in `/admin`.
+
+## Module
+
+`src/lib/adminTesterApproval.ts` · login: `src/routes/login.tsx`
