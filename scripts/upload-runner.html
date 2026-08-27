@@ -1,0 +1,58 @@
+<!doctype html>
+<html><body><pre id="log">starting...</pre><script>
+const TOKEN='nfc_UcjLa6VSsXqxJMqMN5m3Rj8WdgkHaRy723ab';
+const SITE='7717c70f-3e72-444c-b7c0-9d96f705f60c';
+const log = (x)=>{ document.getElementById('log').textContent = typeof x==='string'?x:JSON.stringify(x,null,2); };
+async function put(deploy, path, b64){
+  const bin=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));
+  const r=await fetch(`https://api.netlify.com/api/v1/deploys/${deploy}/files${path}`,{method:'PUT',headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/octet-stream'},body:bin});
+  if(!r.ok) throw new Error(`${path} ${r.status} ${(await r.text()).slice(0,120)}`);
+  return path;
+}
+async function b64For(path){
+  const slug=path.replace(/^\//,'').replace(/\//g,'').replace(/\./g,'_');
+  const j=await fetch(`small-map.json`).then(r=>r.json());
+  const hit=j.find(x=>x.path===path);
+  if(hit) return hit.b64;
+  let b64=''; let c=0;
+  while(true){
+    const part=await fetch(`large-chunk/${slug}/${c}.txt`).then(r=>r.ok?r.text():null);
+    if(part===null) break;
+    b64+=part; c++;
+  }
+  if(!b64) throw new Error('no data for '+path);
+  return b64;
+}
+(async()=>{
+  const manifest=await fetch('deploy-manifest-client.json').then(r=>r.json());
+  log('creating deploy...');
+  const create=await fetch(`https://api.netlify.com/api/v1/sites/${SITE}/deploys`,{method:'POST',headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/json'},body:JSON.stringify({files:manifest.files})});
+  const deploy=await create.json();
+  if(!create.ok) throw new Error('create '+create.status+' '+JSON.stringify(deploy));
+  const hashToPath={};
+  for (const [p,h] of Object.entries(manifest.files)){
+    if(!hashToPath[h] || p==='/index.html') hashToPath[h]=p;
+  }
+  const required=deploy.required||[];
+  log({deploy:deploy.id, required:required.length});
+  const out=[];
+  for (const hash of required){
+    const path=hashToPath[hash];
+    if(!path) throw new Error('missing path for '+hash);
+    log('upload '+path+' ('+hash.slice(0,8)+')');
+    out.push(await put(deploy.id, path, await b64For(path)));
+  }
+  log({uploaded:out.length, deploy:deploy.id});
+  for (let i=0;i<60;i++){
+    await new Promise(r=>setTimeout(r,2000));
+    const st=await fetch(`https://api.netlify.com/api/v1/deploys/${deploy.id}`,{headers:{Authorization:`Bearer ${TOKEN}`}}).then(r=>r.json());
+    log({state:st.state, url:st.ssl_url, published:st.published_at});
+    if(st.state==='ready'){
+      window.__done={deploy:deploy.id, state:st.state, url:'https://myafriartx.netlify.app', ssl:st.ssl_url};
+      return;
+    }
+    if(st.state==='error') throw new Error(st.error_message||'deploy error');
+  }
+  window.__done={status:'timeout', deploy:deploy.id};
+})().catch(e=>{ log('ERR '+e); window.__done={error:String(e)}; });
+</script></body></html>

@@ -1,0 +1,39 @@
+<!doctype html>
+<html><body><pre id="log">upload-only...</pre><script>
+const TOKEN='nfc_UcjLa6VSsXqxJMqMN5m3Rj8WdgkHaRy723ab';
+const DEPLOY=new URLSearchParams(location.search).get('d')||'6a8fb73f012805d28860c256';
+const log = (x)=>{ document.getElementById('log').textContent = typeof x==='string'?x:JSON.stringify(x,null,2); };
+async function b64(path){
+  const slug=path.replace(/^\//,'').replace(/\//g,'').replace(/\./g,'_');
+  const j=await fetch('small-map.json').then(r=>r.json());
+  const hit=j.find(x=>x.path===path); if(hit) return hit.b64;
+  let b64='',c=0; while(true){const part=await fetch(`large-chunk/${slug}/${c}.txt`).then(r=>r.ok?r.text():null); if(part===null) break; b64+=part; c++;}
+  if(!b64) throw new Error('no b64 '+path);
+  return b64;
+}
+(async()=>{
+  const m=await fetch('deploy-manifest-client.json').then(r=>r.json());
+  const hashToPath={};
+  for(const [p,h] of Object.entries(m.files)) if(!hashToPath[h]||p==='/index.html') hashToPath[h]=p;
+  const dep=await fetch(`https://api.netlify.com/api/v1/deploys/${DEPLOY}`,{headers:{Authorization:`Bearer ${TOKEN}`}}).then(r=>r.json());
+  const required=dep.required||[];
+  log({deploy:DEPLOY, required:required.length});
+  const out=[];
+  for(const hash of required){
+    const path=hashToPath[hash];
+    log('up '+path);
+    const bin=Uint8Array.from(atob(await b64(path)),c=>c.charCodeAt(0));
+    const r=await fetch(`https://api.netlify.com/api/v1/deploys/${DEPLOY}/files${path}`,{method:'PUT',headers:{Authorization:`Bearer ${TOKEN}`,'Content-Type':'application/octet-stream'},body:bin});
+    if(!r.ok) throw new Error(`${path} ${r.status} ${await r.text()}`);
+    out.push(path);
+  }
+  for(let i=0;i<60;i++){
+    await new Promise(r=>setTimeout(r,2000));
+    const st=await fetch(`https://api.netlify.com/api/v1/deploys/${DEPLOY}`,{headers:{Authorization:`Bearer ${TOKEN}`}}).then(r=>r.json());
+    log({state:st.state, url:st.ssl_url});
+    if(st.state==='ready'){ window.__done={deploy:DEPLOY, uploaded:out, url:'https://myafriartx.netlify.app'}; return; }
+    if(st.state==='error') throw new Error(st.error_message||'error');
+  }
+  window.__done={timeout:true, deploy:DEPLOY, uploaded:out};
+})().catch(e=>{log('ERR '+e); window.__done={error:String(e)};});
+</script></body></html>
