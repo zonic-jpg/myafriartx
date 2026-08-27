@@ -1,0 +1,1 @@
+import{r as s}from"./index-DXa1z8xM.js";const o="myafriart_session_id";function n(){const t=new Uint8Array(16);return crypto.getRandomValues(t),Array.from(t,r=>r.toString(16).padStart(2,"0")).join("")}function i(){const[t,r]=s.useState("");return s.useEffect(()=>{let e=localStorage.getItem(o);e||(e=n(),localStorage.setItem(o,e)),r(e)},[]),t}export{i as u};

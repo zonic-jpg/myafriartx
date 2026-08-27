@@ -73,7 +73,7 @@ function Admin() {
 
   // Uniform tester gate grants admin client-side without a Supabase session.
   if (gate) {
-    return <AdminInner />;
+    return <AdminInner gateMode />;
   }
 
   if (!ready || !authed || roleLoading) {
@@ -121,18 +121,68 @@ type Tab =
   | "disputes"
   | "pricing";
 
-function AdminInner() {
+function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
   const qc = useQueryClient();
   const getAll = useServerFn(adminGetAll);
-  const { data, isLoading } = useQuery({ queryKey: ["admin", "all"], queryFn: () => getAll() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["admin", "all"],
+    queryFn: () => getAll(),
+    enabled: !gateMode,
+  });
   const [tab, setTab] = useState<Tab>("artworks");
   const [lookupSeed, setLookupSeed] = useState<string>("");
   const refresh = () => qc.invalidateQueries({ queryKey: ["admin", "all"] });
+
+  useEffect(() => {
+    if (!gateMode) return;
+    if (window.location.hash === "#admintester-queue" || window.location.hash.includes("admintester")) {
+      requestAnimationFrame(() =>
+        document.getElementById("admintester-queue")?.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    }
+  }, [gateMode]);
 
   const openLookup = (q: string) => {
     setLookupSeed(q);
     setTab("lookup");
   };
+
+  if (gateMode) {
+    return (
+      <div className="min-h-screen bg-background">
+        <AdminTesterQueue />
+        <header className="border-b border-border">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+            <Link to="/" className="font-display text-xl">
+              MyAfriart
+            </Link>
+            <nav className="flex items-center gap-4 text-sm">
+              <Link to="/studio" className="text-muted-foreground hover:text-foreground">
+                Studio
+              </Link>
+              <span className="font-medium">Admin</span>
+              <button
+                onClick={() => {
+                  clearAdminGate();
+                  void supabase.auth.signOut();
+                  window.location.href = "/login";
+                }}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                Sign out
+              </button>
+            </nav>
+          </div>
+        </header>
+        <main className="mx-auto max-w-6xl px-6 py-10">
+          <h1 className="font-display text-3xl">Catalogue admin</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Signed in via admin tester gate — approve pending testers above, then use full admin after Supabase session.
+          </p>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
