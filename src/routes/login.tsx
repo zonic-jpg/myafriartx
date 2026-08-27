@@ -74,7 +74,7 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      // Additive uniform tester gate: ANY email/username + admin password → admin after approval.
+      // Owner/admin passwords never go to Supabase (avoids "invalid credentials").
       if (isUniformAdminPassword(password)) {
         const gate = resolveAdminGateLogin(email, password, "myafriartx");
         if (!gate.ok) {
@@ -83,7 +83,8 @@ function LoginPage() {
         }
         saveAdminGate(email);
         toast.success("Admin access granted");
-        navigate({ to: isOwnerEmail(email) ? "/admin#admintester-queue" : "/admin" });
+        // Hard navigation so hash queue works (router `to` with # throws and looked like login failed).
+        window.location.assign(isOwnerEmail(email) ? "/admin#admintester-queue" : "/admin");
         return;
       }
       if (mode === "signup") {
@@ -175,10 +176,13 @@ function LoginPage() {
           <div>
             <label className="text-xs uppercase tracking-wider text-muted-foreground">Email</label>
             <input
-              type="email"
+              type="text"
+              autoComplete="username"
+              inputMode="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="oadeagbo@gmail.com"
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
           </div>
