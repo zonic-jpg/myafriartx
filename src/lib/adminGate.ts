@@ -54,6 +54,17 @@ export function adminGateRole(): "owner" | "admin" | null {
   }
 }
 
+export function adminGateEmail(): string | null {
+  try {
+    const raw = localStorage.getItem(GATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { email?: string };
+    return parsed?.email ? String(parsed.email) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function clearAdminGate(): void {
   try {
     localStorage.removeItem(GATE_KEY);
