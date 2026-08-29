@@ -39,6 +39,8 @@ import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
 import { adminGateActive, adminGateEmail, adminGateRole, clearAdminGate } from "@/lib/adminGate";
 import { AdminTesterQueue } from "@/components/admin/AdminTesterQueue";
+import { LOCAL_MOCK_ARTISTS, LOCAL_MOCK_ARTWORKS } from "@/lib/mock-catalogue";
+import { publicPaneAssets } from "@/lib/local-image-assets";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — MyAfriart" }] }),
@@ -47,18 +49,63 @@ export const Route = createFileRoute("/admin")({
 
 const MEDIA = ["oil", "watercolor", "pastel", "sculpture", "photograph", "print", "mixed_media"];
 
+function localGateAdminData() {
+  const artists = LOCAL_MOCK_ARTISTS;
+  const artworks = LOCAL_MOCK_ARTWORKS;
+  const panes = Object.entries(publicPaneAssets).map(([pane_id, image_url], i) => ({
+    id: `local-pane-${pane_id}`,
+    pane_id,
+    kicker: String(pane_id).replace(/_/g, " "),
+    title: String(pane_id).replace(/_/g, " "),
+    summary: "Soft-session local pane",
+    reveal: "",
+    subtitle: null,
+    body: null,
+    cta_label: "Explore",
+    cta_href: `/${pane_id === "stage" ? "studio" : pane_id === "piece" ? "" : pane_id}`,
+    image_url,
+    image_url_mobile: image_url,
+    status: "published",
+    sort_order: i,
+    is_active: true,
+  }));
+  return {
+    artists,
+    artworks,
+    styles: [],
+    renders: [],
+    panes,
+    settings: { mock_catalogue_enabled: true },
+  };
+}
+
 function Admin() {
   const navigate = useNavigate();
-  const gate = adminGateActive();
+  // Soft owner/admin gate must survive remounts and auth-null races (AdSpot pattern).
+  const [gate, setGate] = useState(() =>
+    typeof window !== "undefined" ? adminGateActive() : false,
+  );
   const [ready, setReady] = useState(false);
   const [authed, setAuthed] = useState(false);
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
+    const syncGate = () => setGate(adminGateActive());
+    syncGate();
+    window.addEventListener("storage", syncGate);
+    window.addEventListener("focus", syncGate);
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setAuthed(!!s);
+      syncGate();
+    });
     supabase.auth.getSession().then(({ data }) => {
       setAuthed(!!data.session);
+      syncGate();
       setReady(true);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      window.removeEventListener("storage", syncGate);
+      window.removeEventListener("focus", syncGate);
+      sub.subscription.unsubscribe();
+    };
   }, []);
   useEffect(() => {
     if (ready && !authed && !gate) navigate({ to: "/login" });
@@ -69,9 +116,10 @@ function Admin() {
     queryKey: ["isAdmin"],
     queryFn: () => checkAdmin(),
     enabled: authed && !gate,
+    retry: false,
   });
 
-  // Uniform tester gate grants admin client-side without a Supabase session.
+  // Uniform tester gate grants full admin client-side without a Supabase session.
   if (gate) {
     return <AdminInner gateMode />;
   }
@@ -111,6 +159,7 @@ type Tab =
   | "styles"
   | "renders"
   | "panes"
+  | "media"
   | "allocation"
   | "lookup"
   | "transactions"
@@ -124,14 +173,20 @@ type Tab =
 function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
   const qc = useQueryClient();
   const getAll = useServerFn(adminGetAll);
-  const { data, isLoading } = useQuery({
+  const { data: serverData, isLoading } = useQuery({
     queryKey: ["admin", "all"],
     queryFn: () => getAll(),
     enabled: !gateMode,
+    retry: false,
   });
-  const [tab, setTab] = useState<Tab>("artworks");
+  const [localData] = useState(() => localGateAdminData());
+  const data = gateMode ? localData : serverData;
+  const [tab, setTab] = useState<Tab>(gateMode ? "artists" : "artworks");
   const [lookupSeed, setLookupSeed] = useState<string>("");
-  const refresh = () => qc.invalidateQueries({ queryKey: ["admin", "all"] });
+  const refresh = () => {
+    if (gateMode) return;
+    qc.invalidateQueries({ queryKey: ["admin", "all"] });
+  };
 
   useEffect(() => {
     if (!gateMode) return;
@@ -147,52 +202,17 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
     setTab("lookup");
   };
 
-  if (gateMode) {
-    const gateRole = adminGateRole();
-    const gateEmail = adminGateEmail() || "admin";
-    const isOwner = gateRole === "owner";
-    return (
-      <div className="min-h-screen bg-background" id="root" data-auth-role={gateRole || "admin"}>
-        <AdminTesterQueue />
-        <header className="border-b border-border">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link to="/" className="font-display text-xl">
-              MyAfriart
-            </Link>
-            <nav className="flex items-center gap-4 text-sm">
-              <Link to="/studio" className="text-muted-foreground hover:text-foreground">
-                Studio
-              </Link>
-              <span className="font-medium">Admin</span>
-              <button
-                onClick={() => {
-                  clearAdminGate();
-                  void supabase.auth.signOut();
-                  window.location.href = "/login";
-                }}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                Sign out
-              </button>
-            </nav>
-          </div>
-        </header>
-        <main className="mx-auto max-w-6xl px-6 py-10">
-          <h1 className="font-display text-3xl">Catalogue admin</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Signed in as <b>{gateEmail}</b>
-            {isOwner ? " · Super admin" : " · Admin"}.{" "}
-            {isOwner
-              ? "Approve pending ADMINTESTER requests above. You have owner/superadmin access."
-              : "Approved tester — full admin studio access after catalogue session sync."}
-          </p>
-        </main>
-      </div>
-    );
-  }
+  const gateRole = gateMode ? adminGateRole() : null;
+  const gateEmail = gateMode ? adminGateEmail() || "admin" : null;
+  const isOwner = gateRole === "owner";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div
+      className="min-h-screen bg-background"
+      id="root"
+      data-auth-role={gateMode ? gateRole || "admin" : "supabase-admin"}
+      data-gate-mode={gateMode ? "1" : "0"}
+    >
       <AdminTesterQueue />
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -203,11 +223,15 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
             <Link to="/studio" className="text-muted-foreground hover:text-foreground">
               Studio
             </Link>
+            <Link to="/blog" className="text-muted-foreground hover:text-foreground">
+              Blog
+            </Link>
             <span className="font-medium">Admin</span>
             <button
+              type="button"
               onClick={() => {
                 clearAdminGate();
-                void supabase.auth.signOut();
+                void supabase.auth.signOut().catch(() => undefined);
                 window.location.href = "/login";
               }}
               className="text-muted-foreground hover:text-foreground"
@@ -220,6 +244,13 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
 
       <main className="mx-auto max-w-6xl px-6 py-10">
         <h1 className="font-display text-3xl">Catalogue admin</h1>
+        {gateMode && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Signed in as <b>{gateEmail}</b>
+            {isOwner ? " · Super admin" : " · Admin"} (soft session). Full catalogue tools below —
+            clicking tabs never clears this session.
+          </p>
+        )}
 
         <div className="mt-6 flex flex-wrap gap-1 border-b border-border">
           {(
@@ -231,6 +262,7 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
               "styles",
               "renders",
               "panes",
+              "media",
               "allocation",
               "lookup",
               "transactions",
@@ -244,6 +276,7 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
           ).map((t) => (
             <button
               key={t}
+              type="button"
               onClick={() => setTab(t)}
               className={`-mb-px border-b-2 px-4 py-2 text-sm capitalize ${tab === t ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
             >
@@ -252,22 +285,23 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
           ))}
         </div>
 
-        {isLoading ? (
+        {!gateMode && isLoading ? (
           <div className="py-10 text-sm text-muted-foreground">Loading…</div>
         ) : (
           <div className="py-6">
             {tab === "studio" && <ContentStudio />}
-            {tab === "settings" && <SettingsAdmin data={data!} onChange={refresh} />}
-            {tab === "artworks" && (
-              <ArtworksAdmin data={data!} onChange={refresh} onLookup={openLookup} />
+            {tab === "settings" && data && <SettingsAdmin data={data} onChange={refresh} />}
+            {tab === "artworks" && data && (
+              <ArtworksAdmin data={data} onChange={refresh} onLookup={openLookup} />
             )}
-            {tab === "artists" && (
-              <ArtistsAdmin data={data!} onChange={refresh} onLookup={openLookup} />
+            {tab === "artists" && data && (
+              <ArtistsAdmin data={data} onChange={refresh} onLookup={openLookup} />
             )}
-            {tab === "styles" && <StylesAdmin data={data!} onChange={refresh} />}
-            {tab === "renders" && <RendersAdmin data={data!} onChange={refresh} />}
-            {tab === "panes" && <PanesAdmin data={data!} onChange={refresh} />}
-            {tab === "allocation" && <AllocationAdmin data={data!} />}
+            {tab === "styles" && data && <StylesAdmin data={data} onChange={refresh} />}
+            {tab === "renders" && data && <RendersAdmin data={data} onChange={refresh} />}
+            {tab === "panes" && data && <PanesAdmin data={data} onChange={refresh} />}
+            {tab === "media" && data && <MediaAuditAdmin data={data} />}
+            {tab === "allocation" && data && <AllocationAdmin data={data} />}
             {tab === "lookup" && (
               <LookupAdmin seed={lookupSeed} onSeedConsumed={() => setLookupSeed("")} />
             )}
@@ -1179,6 +1213,109 @@ function RendersAdmin({ data, onChange }: { data: any; onChange: () => void }) {
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+/* ---------- Media audit ---------- */
+function MediaAuditAdmin({ data }: { data: any }) {
+  const rows = [
+    ...(data.panes ?? []).map((p: any) => ({
+      kind: "pane",
+      id: p.pane_id || p.id,
+      label: p.title || p.pane_id || p.id,
+      url: p.image_url || localPaneImage(p.pane_id),
+      mobile: p.image_url_mobile || null,
+    })),
+    ...(data.artworks ?? []).slice(0, 80).map((a: any) => ({
+      kind: "artwork",
+      id: a.short_code || a.id,
+      label: a.title || a.id,
+      url: a.image_url || localImageForKey(a.id || a.title),
+      mobile: null,
+    })),
+    ...(data.artists ?? []).slice(0, 40).map((a: any) => ({
+      kind: "artist",
+      id: a.short_code || a.id,
+      label: a.name || a.id,
+      url: a.portrait_url || artistDefault,
+      mobile: null,
+    })),
+  ];
+
+  const [status, setStatus] = useState<Record<string, "ok" | "broken" | "checking">>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    const next: Record<string, "ok" | "broken" | "checking"> = {};
+    rows.forEach((r) => {
+      next[`${r.kind}:${r.id}`] = "checking";
+    });
+    setStatus(next);
+    rows.forEach((r) => {
+      const key = `${r.kind}:${r.id}`;
+      const img = new Image();
+      img.onload = () => {
+        if (!cancelled) setStatus((s) => ({ ...s, [key]: img.naturalWidth > 0 ? "ok" : "broken" }));
+      };
+      img.onerror = () => {
+        if (!cancelled) setStatus((s) => ({ ...s, [key]: "broken" }));
+      };
+      img.src = r.url;
+    });
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
+
+  const broken = rows.filter((r) => status[`${r.kind}:${r.id}`] === "broken");
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="font-display text-2xl">Media audit</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Checks pane, artwork, and artist image URLs. Broken assets should be replaced via Panes /
+          Artworks tabs. Soft-session owners can review without a Supabase JWT.
+        </p>
+        <p className="mt-2 text-sm">
+          {rows.length} assets ·{" "}
+          <span className={broken.length ? "text-destructive" : "text-emerald-700"}>
+            {broken.length} broken
+          </span>
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {rows.map((r) => {
+          const key = `${r.kind}:${r.id}`;
+          const st = status[key] || "checking";
+          return (
+            <div key={key} className="overflow-hidden rounded-md border border-border bg-card">
+              <div className="aspect-[4/3] bg-muted">
+                <img src={r.url} alt="" className="h-full w-full object-cover" />
+              </div>
+              <div className="space-y-1 p-3 text-xs">
+                <div className="font-medium text-foreground">{r.label}</div>
+                <div className="text-muted-foreground">
+                  {r.kind} · {r.id}
+                </div>
+                <div
+                  className={
+                    st === "ok"
+                      ? "text-emerald-700"
+                      : st === "broken"
+                        ? "text-destructive"
+                        : "text-muted-foreground"
+                  }
+                >
+                  {st === "ok" ? "OK" : st === "broken" ? "Broken / missing" : "Checking…"}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

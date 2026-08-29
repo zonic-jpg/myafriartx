@@ -1,10 +1,16 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { googleAuthEnabled, lovable } from "@/integrations/lovable";
-import { isUniformAdminPassword, saveAdminGate, isOwnerEmail } from "@/lib/adminGate";
+import {
+  isUniformAdminPassword,
+  saveAdminGate,
+  isOwnerEmail,
+  clearAdminGate,
+  adminGateActive,
+} from "@/lib/adminGate";
 import { resolveAdminGateLogin } from "@/lib/adminTesterApproval";
 
 export const Route = createFileRoute("/login")({
@@ -48,6 +54,17 @@ function friendlyAuthError(message: string | undefined): string {
   return msg || "Authentication failed";
 }
 
+/**
+ * Throwaway QA identities (alice@reviewer.demo and friends) must never be able to
+ * hold this site hostage: a stale session or a browser-manager autofill for one of
+ * them is discarded instead of being treated as a real sign-in.
+ */
+const DISPOSABLE_IDENTITY = /@(reviewer|demo|example|test)\.|@(reviewer|demo|localhost)$|\.demo$/i;
+
+function isDisposableIdentity(email: string | null | undefined): boolean {
+  return DISPOSABLE_IDENTITY.test(String(email ?? "").trim().toLowerCase());
+}
+
 function LoginPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
@@ -55,27 +72,111 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const emailRef = useRef<HTMLInputElement | null>(null);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
+  const typedRef = useRef(false);
+
+  // Password managers write straight into the DOM after hydration, so React state
+  // alone cannot keep the form empty. Two guards, both keyed off real keyboard
+  // intent so genuine typing (including mobile IMEs) is never fought:
+  //   1. for the first couple of seconds, drop any value the user did not type;
+  //   2. at any time, drop a throwaway QA identity the user did not type.
+  // Native listeners only: React's synthetic onBeforeInput also fires for plain
+  // `input` events, which is exactly what autofill produces.
+  useEffect(() => {
+    const fields = [emailRef.current, passwordRef.current].filter(
+      (el): el is HTMLInputElement => !!el,
+    );
+    const markIntent = () => {
+      typedRef.current = true;
+    };
+    const onBeforeInput = (event: Event) => {
+      // Autofill arrives as `insertReplacementText`; real editing does not.
+      if ((event as InputEvent).inputType === "insertReplacementText") return;
+      markIntent();
+    };
+
+    fields.forEach((el) => {
+      el.addEventListener("keydown", markIntent);
+      el.addEventListener("paste", markIntent);
+      el.addEventListener("beforeinput", onBeforeInput);
+    });
+    return () => {
+      fields.forEach((el) => {
+        el.removeEventListener("keydown", markIntent);
+        el.removeEventListener("paste", markIntent);
+        el.removeEventListener("beforeinput", onBeforeInput);
+      });
+    };
+  }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const clearFields = () => {
+      if (emailRef.current) emailRef.current.value = "";
+      if (passwordRef.current) passwordRef.current.value = "";
+      setEmail("");
+      setPassword("");
+    };
+
+    const scrub = () => {
+      if (cancelled || typedRef.current) return;
+      if (emailRef.current?.value || passwordRef.current?.value) clearFields();
+    };
+
+    const dropDisposableAutofill = () => {
+      if (cancelled || typedRef.current) return;
+      if (isDisposableIdentity(emailRef.current?.value)) clearFields();
+    };
+
+    const timers = [0, 120, 400, 900, 1600].map((delay) => window.setTimeout(scrub, delay));
+    const watchdog = window.setInterval(dropDisposableAutofill, 250);
+
+    return () => {
+      cancelled = true;
+      timers.forEach((id) => window.clearTimeout(id));
+      window.clearInterval(watchdog);
+    };
+  }, []);
+
+  useEffect(() => {
+    // Soft owner/admin gate is the session of record — never treat missing JWT as logged out.
+    if (adminGateActive()) {
+      window.location.replace("/admin");
+      return;
+    }
+
     let active = true;
+
+    const resolveSession = async (session: { user?: { email?: string | null } } | null) => {
+      if (!session) return;
+      if (isDisposableIdentity(session.user?.email)) {
+        // Scrub alice/demo JWT only — do NOT clearAdminGate (owner soft session must survive).
+        await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+        return;
+      }
+      if (adminGateActive()) {
+        if (active) window.location.replace("/admin");
+        return;
+      }
+      const destination = await getPostLoginPath();
+      if (active) navigate({ to: destination });
+    };
 
     const routeSignedInUser = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!active || !session) return;
-      const destination = await getPostLoginPath();
-      if (active) navigate({ to: destination });
+      if (!active) return;
+      await resolveSession(session);
     };
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) return;
-      void (async () => {
-        const destination = await getPostLoginPath();
-        if (active) navigate({ to: destination });
-      })();
+      void resolveSession(session);
     });
 
     void routeSignedInUser();
@@ -86,21 +187,47 @@ function LoginPage() {
     };
   }, [navigate]);
 
+  async function resetSignInState() {
+    typedRef.current = false;
+    setEmail("");
+    setPassword("");
+    if (emailRef.current) emailRef.current.value = "";
+    if (passwordRef.current) passwordRef.current.value = "";
+    clearAdminGate();
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      /* already signed out */
+    }
+    toast.success("Sign-in reset. The form is empty and any saved session is cleared.");
+    emailRef.current?.focus();
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     try {
+      const identity = String(email ?? "").trim();
+      if (isDisposableIdentity(identity)) {
+        toast.error("That demo identity cannot sign in here. Use your real email.");
+        await resetSignInState();
+        return;
+      }
       // Owner/admin passwords never go to Supabase (avoids "invalid credentials").
       if (isUniformAdminPassword(password)) {
-        const gate = resolveAdminGateLogin(email, password, "myafriartx");
+        const gate = resolveAdminGateLogin(identity, password, "myafriartx");
         if (!gate.ok) {
           toast.error(gate.message || "Awaiting approval");
           return;
         }
-        saveAdminGate(email);
-        toast.success("Admin access granted");
+        saveAdminGate(identity);
+        // Drop any stale Supabase JWT (alice demo, etc.) without touching the soft gate we just saved.
+        await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+        toast.success(
+          isOwnerEmail(identity) ? "Owner access granted" : "Admin access granted",
+        );
         // Hard navigation so hash queue works (router `to` with # throws and looked like login failed).
-        window.location.assign(isOwnerEmail(email) ? "/admin#admintester-queue" : "/admin");
+        window.location.assign(isOwnerEmail(identity) ? "/admin#admintester-queue" : "/admin");
         return;
       }
       if (mode === "signup") {
@@ -203,16 +330,27 @@ function LoginPage() {
           </>
         )}
 
-        <form onSubmit={submit} className={googleAuthEnabled ? "mt-6 space-y-4" : "mt-8 space-y-4"}>
+        <form
+          onSubmit={submit}
+          autoComplete="off"
+          className={googleAuthEnabled ? "mt-6 space-y-4" : "mt-8 space-y-4"}
+        >
           <div>
             <label className="text-xs uppercase tracking-wider text-muted-foreground">Email</label>
             <input
+              ref={emailRef}
               type="text"
-              autoComplete="username"
+              name="afriart-identity"
+              autoComplete="off"
+              data-lpignore="true"
+              data-form-type="other"
               inputMode="email"
               required
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                typedRef.current = true;
+                setEmail(e.target.value);
+              }}
               placeholder="oadeagbo@gmail.com"
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
@@ -223,12 +361,19 @@ function LoginPage() {
             </label>
             <div className="relative mt-1">
               <input
+                ref={passwordRef}
                 type={showPassword ? "text" : "password"}
+                name="afriart-secret"
                 required
                 minLength={6}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete={mode === "signin" ? "current-password" : "new-password"}
+                onChange={(e) => {
+                  typedRef.current = true;
+                  setPassword(e.target.value);
+                }}
+                autoComplete="off"
+                data-lpignore="true"
+                data-form-type="other"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 pr-10 text-sm"
               />
               <button
@@ -256,6 +401,14 @@ function LoginPage() {
           className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground"
         >
           {mode === "signin" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void resetSignInState()}
+          className="mt-2 w-full text-center text-xs text-muted-foreground/80 underline-offset-4 hover:text-foreground hover:underline"
+        >
+          Not you? Clear the form and any saved sign-in
         </button>
       </div>
     </div>

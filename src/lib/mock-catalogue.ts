@@ -5,6 +5,10 @@
  * detail routes can resolve without a live database.
  */
 import { localCatalogueAssets } from "@/lib/local-image-assets";
+import {
+  FEATURED_SEED_ARTISTS,
+  FEATURED_SEED_ARTWORKS,
+} from "@/lib/editorial-seed";
 
 const currentYear = new Date().getFullYear();
 
@@ -260,14 +264,23 @@ function buildMockCatalogue(): { artworks: MockArtwork[]; artists: MockArtist[] 
 
 const BUILT = buildMockCatalogue();
 
-export const LOCAL_MOCK_ARTWORKS: MockArtwork[] = BUILT.artworks;
-export const LOCAL_MOCK_ARTISTS: MockArtist[] = BUILT.artists;
+export const LOCAL_MOCK_ARTWORKS: MockArtwork[] = [
+  ...FEATURED_SEED_ARTWORKS,
+  ...BUILT.artworks,
+];
+export const LOCAL_MOCK_ARTISTS: MockArtist[] = [
+  ...FEATURED_SEED_ARTISTS,
+  ...BUILT.artists,
+];
 
 export function isMockCatalogueCode(idOrCode: string): boolean {
   const s = idOrCode.trim().toUpperCase();
   return (
     s.startsWith("PCE-M") ||
     s.startsWith("ART-M") ||
+    s.startsWith("PCE-DOTUN") ||
+    s.startsWith("ART-DOTUN") ||
+    s.startsWith("SEED-") ||
     s.startsWith("LOCAL-PIECE-") ||
     s.startsWith("LOCAL-ARTIST-")
   );

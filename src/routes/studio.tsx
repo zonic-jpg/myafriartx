@@ -8,6 +8,7 @@ import { stageRoom } from "@/lib/stage-room.functions";
 import { toast } from "sonner";
 import { localImageForKey } from "@/lib/local-image-assets";
 import { NotifyBell } from "@/components/notify-bell";
+import { adminGateActive, clearAdminGate } from "@/lib/adminGate";
 
 export const Route = createFileRoute("/studio")({
   head: () => ({ meta: [{ title: "Studio — MyAfriart" }] }),
@@ -28,38 +29,73 @@ function Studio() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [gate, setGate] = useState(() =>
+    typeof window !== "undefined" ? adminGateActive() : false,
+  );
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setAuthed(!!s));
+    const syncGate = () => setGate(adminGateActive());
+    syncGate();
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      setAuthed(!!s);
+      syncGate();
+    });
     supabase.auth.getSession().then(({ data }) => {
       setAuthed(!!data.session);
+      syncGate();
       setReady(true);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (ready && !authed) navigate({ to: "/login" });
-  }, [ready, authed, navigate]);
+    if (ready && !authed && !gate) navigate({ to: "/login" });
+  }, [ready, authed, gate, navigate]);
 
-  if (!ready || !authed) {
+  if (!ready || (!authed && !gate)) {
     return (
       <div className="flex min-h-screen items-center justify-center text-muted-foreground">
         Loading studio…
       </div>
     );
   }
-  return <StudioInner />;
+  return <StudioInner gateMode={gate && !authed} />;
 }
 
-function StudioInner() {
+function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
   const fetchCatalog = useServerFn(getCatalog);
   const runStage = useServerFn(stageRoom);
   const fetchLatest = useServerFn(getLatestRender);
-  const { data, isLoading } = useQuery({ queryKey: ["catalog"], queryFn: () => fetchCatalog() });
+  const { data, isLoading } = useQuery({
+    queryKey: ["catalog", gateMode ? "gate" : "live"],
+    queryFn: async () => {
+      if (gateMode) {
+        const { LOCAL_MOCK_ARTWORKS, LOCAL_MOCK_ARTISTS } = await import("@/lib/mock-catalogue");
+        return {
+          artworks: LOCAL_MOCK_ARTWORKS,
+          artists: LOCAL_MOCK_ARTISTS,
+          styles: [],
+        };
+      }
+      try {
+        return await fetchCatalog();
+      } catch {
+        const { LOCAL_MOCK_ARTWORKS, LOCAL_MOCK_ARTISTS } = await import("@/lib/mock-catalogue");
+        return {
+          artworks: LOCAL_MOCK_ARTWORKS,
+          artists: LOCAL_MOCK_ARTISTS,
+          styles: [],
+        };
+      }
+    },
+  });
 
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(gateMode);
   useEffect(() => {
+    if (gateMode) {
+      setIsAdmin(true);
+      return;
+    }
     let active = true;
     (async () => {
       const {
@@ -75,7 +111,7 @@ function StudioInner() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [gateMode]);
 
   const [photo, setPhoto] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
@@ -343,7 +379,11 @@ function StudioInner() {
               ↻ Refresh
             </button>
             <button
-              onClick={() => supabase.auth.signOut()}
+              onClick={() => {
+                clearAdminGate();
+                void supabase.auth.signOut();
+                window.location.href = "/login";
+              }}
               className="text-muted-foreground hover:text-foreground"
             >
               Sign out
