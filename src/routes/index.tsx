@@ -21,6 +21,7 @@ import {
   artistDefault,
   localImageForKey,
   localPaneAssets,
+  publicPaneAssets,
   paneArtist,
   paneAuction,
   paneEvent,
@@ -28,15 +29,14 @@ import {
   panePiece,
   paneStage,
 } from "@/lib/local-image-assets";
-import { bustImageUrl } from "@/lib/cache-bust";
+import { bustImageUrl, isUsableImageUrl } from "@/lib/cache-bust";
 import { LOCAL_MOCK_ARTWORKS } from "@/lib/mock-catalogue";
 import logo from "@/assets/myafriart-logo.png";
 import { AiChatPanel, type SponsoredItem } from "@/components/ai-chat-panel";
 
 function paneImageFor(pane: Pick<Pane, "id" | "image">) {
-  return (
-    pane.image || MOCK_PANE_ASSETS[pane.id]?.image || localImageForKey(pane.id) || artistDefault
-  );
+  if (isUsableImageUrl(pane.image)) return pane.image;
+  return MOCK_PANE_ASSETS[pane.id]?.image || localImageForKey(pane.id) || artistDefault;
 }
 
 const csv = z.union([z.string(), z.array(z.string())]).transform((v) => {
@@ -104,8 +104,8 @@ type Pane = {
   special?: "lounge";
 };
 
-// Local mock assets database keyed by pane_id. Landing panes never use remote
-// image URLs, so image rendering is not dependent on admin-entered links.
+// Local mock assets keyed by pane_id. Admin CMS image_url wins when usable;
+// otherwise bundled /media defaults keep the public site from showing broken heroes.
 type PaneVisual = Pick<
   Pane,
   "gradient" | "image" | "to" | "scope" | "loungeTab" | "exploreLabel"
@@ -376,6 +376,10 @@ function Landing() {
             image: localImageForKey(p.pane_id) || artistDefault,
             to: "/studio",
           };
+          const adminImage =
+            (typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches
+              ? p.image_url_mobile || p.image_url
+              : p.image_url) || p.image_url;
           return {
             id: p.pane_id,
             kicker: p.kicker,
@@ -383,7 +387,7 @@ function Landing() {
             summary: p.summary,
             reveal: p.reveal,
             gradient: visual.gradient,
-            image: visual.image,
+            image: isUsableImageUrl(adminImage) ? adminImage : visual.image,
             to: visual.to,
             ...(visual.scope ? { scope: visual.scope } : {}),
             ...(visual.loungeTab ? { loungeTab: visual.loungeTab } : {}),
@@ -441,7 +445,9 @@ function Landing() {
         const localRows = rows.length
           ? rows.map((row: ArtworkRow, index: number) => ({
               ...row,
-              image_url: row.image_url || localImageForKey(row.id || row.title, index),
+              image_url: isUsableImageUrl(row.image_url)
+                ? row.image_url
+                : localImageForKey(row.id || row.title, index),
             }))
           : LOCAL_MOCK_ARTWORKS;
         setArtworks(localRows);
@@ -1208,8 +1214,17 @@ function PaneCard({
           decoding="async"
           onError={(event) => {
             const image = event.currentTarget;
-            if (image.src !== artistDefault) {
+            const local = localPaneAssets[pane.id] || publicPaneAssets[pane.id] || localImageForKey(pane.id) || artistDefault;
+            const tried = image.dataset.fallback || "0";
+            if (tried === "0") {
+              image.dataset.fallback = "1";
+              image.src = local;
+              return;
+            }
+            if (tried === "1") {
+              image.dataset.fallback = "2";
               image.src = artistDefault;
+              return;
             }
             if (!failedRef.current) {
               failedRef.current = true;

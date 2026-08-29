@@ -37,7 +37,7 @@ import { ServicePricingAdmin } from "@/components/admin/service-pricing-admin";
 import { KycAdmin } from "@/components/admin/kyc-admin";
 import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
-import { adminGateActive, clearAdminGate } from "@/lib/adminGate";
+import { adminGateActive, adminGateEmail, adminGateRole, clearAdminGate } from "@/lib/adminGate";
 import { AdminTesterQueue } from "@/components/admin/AdminTesterQueue";
 
 export const Route = createFileRoute("/admin")({
@@ -148,8 +148,11 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
   };
 
   if (gateMode) {
+    const gateRole = adminGateRole();
+    const gateEmail = adminGateEmail() || "admin";
+    const isOwner = gateRole === "owner";
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background" id="root" data-auth-role={gateRole || "admin"}>
         <AdminTesterQueue />
         <header className="border-b border-border">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -177,7 +180,11 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
         <main className="mx-auto max-w-6xl px-6 py-10">
           <h1 className="font-display text-3xl">Catalogue admin</h1>
           <p className="mt-2 text-sm text-muted-foreground">
-            Signed in via admin tester gate — approve pending testers above, then use full admin after Supabase session.
+            Signed in as <b>{gateEmail}</b>
+            {isOwner ? " · Super admin" : " · Admin"}.{" "}
+            {isOwner
+              ? "Approve pending ADMINTESTER requests above. You have owner/superadmin access."
+              : "Approved tester — full admin studio access after catalogue session sync."}
           </p>
         </main>
       </div>
@@ -1498,6 +1505,10 @@ function PanesAdmin({ data, onChange }: { data: any; onChange: () => void }) {
               onChange={(e) => setEditing({ ...editing, reveal: e.target.value })}
             />
           </Field>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Published pane images appear on the landing carousel. Leave blank to use the built-in
+            /media defaults so the public site never shows a broken hero.
+          </p>
           <Field label="Desktop image (wide)">
             <div className="space-y-2">
               <img

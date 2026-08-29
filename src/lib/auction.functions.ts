@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Lot, LotStatus } from "@/lib/auction-engine";
+import { isUsableImageUrl } from "@/lib/cache-bust";
 
 const __get_admin = () =>
   import("@/integrations/supabase/client.server").then((m) => m.supabaseAdmin);
@@ -44,7 +45,7 @@ export function mapDbLot(row: DbLot, leaderName: string | null): Lot & { reserve
     title: row.title,
     artist: row.artist ?? "Unknown artist",
     medium: row.medium ?? "",
-    image: row.image_url,
+    image: isUsableImageUrl(row.image_url) ? row.image_url : null,
     description: row.description ?? "",
     estimateLow: Number(row.estimate_low ?? 0),
     estimateHigh: Number(row.estimate_high ?? 0),

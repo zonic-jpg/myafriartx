@@ -11,6 +11,7 @@ import {
   getAuctionWinCheckout,
 } from "@/lib/auction.functions";
 import { initializePayment } from "@/lib/payments.functions";
+import { localImageForKey } from "@/lib/local-image-assets";
 import {
   type Lot,
   type Bid,
@@ -91,11 +92,7 @@ function AuctionFloor() {
           {lots.map((l) => (
             <button className={`lot ${l.status}`} key={l.id} onClick={() => setOpenId(l.id)}>
               <div className="lot-img">
-                {l.image ? (
-                  <img src={l.image} alt="" className="h-full w-full object-cover" />
-                ) : (
-                  <b>{l.title[0]}</b>
-                )}
+                <img src={l.image || localImageForKey(l.id || l.title)} alt="" className="h-full w-full object-cover" />
                 <span className="lot-code">{l.code}</span>
                 <span className={`lot-status s-${l.status}`}>
                   {l.status === "live" ? "● Live" : l.status}
@@ -227,11 +224,7 @@ function LotDetail({
       </button>
       <div className="ld-grid">
         <div className="ld-img">
-          {lot.image ? (
-            <img src={lot.image} alt="" className="h-full w-full object-cover" />
-          ) : (
-            <b>{lot.title[0]}</b>
-          )}
+          <img src={lot.image || localImageForKey(lot.id || lot.title)} alt="" className="h-full w-full object-cover" />
           <span className="lot-code">{lot.code}</span>
         </div>
         <div className="ld-info">

@@ -6,6 +6,16 @@ import paneLounge from "@/assets/pane-lounge.jpg";
 import panePiece from "@/assets/pane-piece.jpg";
 import paneStage from "@/assets/pane-stage.jpg";
 
+/** Stable public-path fallbacks (copied into dist/client/media on deploy). */
+export const publicPaneAssets: Record<string, string> = {
+  artist: "/media/pane-artist.jpg",
+  event: "/media/pane-event.jpg",
+  piece: "/media/pane-piece.jpg",
+  stage: "/media/pane-stage.jpg",
+  auction: "/media/pane-auction.jpg",
+  lounge: "/media/pane-lounge.jpg",
+};
+
 export const localPaneAssets: Record<string, string> = {
   artist: paneArtist,
   event: paneEvent,
@@ -31,7 +41,8 @@ export function localImageForKey(seed: string | null | undefined, index = 0) {
 }
 
 export function localPaneImage(paneId: string | null | undefined) {
-  return paneId ? (localPaneAssets[paneId] ?? localImageForKey(paneId)) : artistDefault;
+  if (!paneId) return artistDefault;
+  return localPaneAssets[paneId] ?? publicPaneAssets[paneId] ?? localImageForKey(paneId);
 }
 
 export { artistDefault, paneArtist, paneAuction, paneEvent, paneLounge, panePiece, paneStage };

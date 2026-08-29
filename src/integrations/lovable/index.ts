@@ -9,12 +9,23 @@ type SignInOptions = { redirect_uri?: string; extraParams?: Record<string, strin
 const mapProvider = (p: Provider): "google" | "apple" | "azure" =>
   p === "microsoft" ? "azure" : p === "lovable" ? "google" : p;
 
+/** Same pattern as MyYanga — only show/call Google when explicitly enabled. */
+export const googleAuthEnabled =
+  String(import.meta.env.VITE_GOOGLE_AUTH ?? "").trim().toLowerCase() === "true";
+
 export const lovable = {
   auth: {
-    signInWithOAuth: async (provider: Provider, opts?: SignInOptions) =>
-      supabase.auth.signInWithOAuth({
+    signInWithOAuth: async (provider: Provider, opts?: SignInOptions) => {
+      if (!googleAuthEnabled) {
+        return {
+          data: { provider: mapProvider(provider), url: null },
+          error: new Error("OAuth provider is not configured (missing VITE_GOOGLE_AUTH / OAuth secret)."),
+        };
+      }
+      return supabase.auth.signInWithOAuth({
         provider: mapProvider(provider),
         options: { redirectTo: opts?.redirect_uri, queryParams: opts?.extraParams },
-      }),
+      });
+    },
   },
 };
