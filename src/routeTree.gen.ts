@@ -15,6 +15,7 @@ import { Route as RendersRouteImport } from './routes/renders'
 import { Route as NotifyRouteImport } from './routes/notify'
 import { Route as LoungeRouteImport } from './routes/lounge'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as EventsRouteImport } from './routes/events'
 import { Route as DisputesRouteImport } from './routes/disputes'
 import { Route as CollateralRouteImport } from './routes/collateral'
 import { Route as AuctionRouteImport } from './routes/auction'
@@ -60,6 +61,11 @@ const LoungeRoute = LoungeRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DisputesRoute = DisputesRouteImport.update({
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/auction': typeof AuctionRoute
   '/collateral': typeof CollateralRoute
   '/disputes': typeof DisputesRoute
+  '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/lounge': typeof LoungeRoute
   '/notify': typeof NotifyRouteWithChildren
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/auction': typeof AuctionRoute
   '/collateral': typeof CollateralRoute
   '/disputes': typeof DisputesRoute
+  '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/lounge': typeof LoungeRoute
   '/notify': typeof NotifyRouteWithChildren
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   '/auction': typeof AuctionRoute
   '/collateral': typeof CollateralRoute
   '/disputes': typeof DisputesRoute
+  '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/lounge': typeof LoungeRoute
   '/notify': typeof NotifyRouteWithChildren
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
     | '/auction'
     | '/collateral'
     | '/disputes'
+    | '/events'
     | '/login'
     | '/lounge'
     | '/notify'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/auction'
     | '/collateral'
     | '/disputes'
+    | '/events'
     | '/login'
     | '/lounge'
     | '/notify'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '/auction'
     | '/collateral'
     | '/disputes'
+    | '/events'
     | '/login'
     | '/lounge'
     | '/notify'
@@ -297,6 +309,7 @@ export interface RootRouteChildren {
   AuctionRoute: typeof AuctionRoute
   CollateralRoute: typeof CollateralRoute
   DisputesRoute: typeof DisputesRoute
+  EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
   LoungeRoute: typeof LoungeRoute
   NotifyRoute: typeof NotifyRouteWithChildren
@@ -356,6 +369,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/disputes': {
@@ -492,6 +512,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuctionRoute: AuctionRoute,
   CollateralRoute: CollateralRoute,
   DisputesRoute: DisputesRoute,
+  EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
   LoungeRoute: LoungeRoute,
   NotifyRoute: NotifyRouteWithChildren,

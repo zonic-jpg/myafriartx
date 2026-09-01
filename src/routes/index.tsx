@@ -122,8 +122,7 @@ const MOCK_PANE_ASSETS: Record<string, PaneVisual> = {
   event: {
     gradient: "from-emerald-500 via-teal-600 to-sky-800",
     image: localPaneAssets.event,
-    to: "/lounge",
-    loungeTab: "sell",
+    to: "/events",
     exploreLabel: "Open event floor →",
   },
   piece: {

@@ -39,6 +39,9 @@ import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
 import { adminGateActive, adminGateEmail, adminGateRole, clearAdminGate } from "@/lib/adminGate";
 import { AdminTesterQueue } from "@/components/admin/AdminTesterQueue";
+import { LetterStudioAdmin } from "@/components/admin/LetterStudioAdmin";
+import { ContentIntakeAdmin } from "@/components/admin/ContentIntakeAdmin";
+import { EventsAdmin } from "@/components/admin/EventsAdmin";
 import { LOCAL_MOCK_ARTISTS, LOCAL_MOCK_ARTWORKS } from "@/lib/mock-catalogue";
 import { publicPaneAssets } from "@/lib/local-image-assets";
 
@@ -159,6 +162,7 @@ type Tab =
   | "styles"
   | "renders"
   | "panes"
+  | "events"
   | "media"
   | "allocation"
   | "lookup"
@@ -214,6 +218,14 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
       data-gate-mode={gateMode ? "1" : "0"}
     >
       <AdminTesterQueue />
+      <section className="mt-10">
+        <h2 className="text-lg font-medium mb-4">Letters</h2>
+        <LetterStudioAdmin />
+      </section>
+      <section className="mt-10">
+        <h2 className="text-lg font-medium mb-4">Content Intake</h2>
+        <ContentIntakeAdmin />
+      </section>
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="font-display text-xl">
@@ -262,6 +274,7 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
               "styles",
               "renders",
               "panes",
+              "events",
               "media",
               "allocation",
               "lookup",
@@ -300,6 +313,7 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
             {tab === "styles" && data && <StylesAdmin data={data} onChange={refresh} />}
             {tab === "renders" && data && <RendersAdmin data={data} onChange={refresh} />}
             {tab === "panes" && data && <PanesAdmin data={data} onChange={refresh} />}
+            {tab === "events" && <EventsAdmin />}
             {tab === "media" && data && <MediaAuditAdmin data={data} />}
             {tab === "allocation" && data && <AllocationAdmin data={data} />}
             {tab === "lookup" && (
