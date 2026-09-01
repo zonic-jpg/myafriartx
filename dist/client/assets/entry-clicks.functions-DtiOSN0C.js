@@ -1,1 +1,0 @@
-import{c as e,d as a,b as d}from"./index-D85o21S8.js";const c=e({method:"POST"}).handler(a("a74e1045cd7a0f3a821081d3f8641a8989318dbb6fc03d030a49fef87723a5fb")),t=e({method:"GET"}).middleware([d]).handler(a("4c6987d6c146ee428ebd850cb140551ad250799ad3d09ab3206687e52cd7eade"));export{t as g,c as r};
