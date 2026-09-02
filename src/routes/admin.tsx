@@ -43,6 +43,7 @@ import { LetterStudioAdmin } from "@/components/admin/LetterStudioAdmin";
 import { ContentIntakeAdmin } from "@/components/admin/ContentIntakeAdmin";
 import { EventsAdmin } from "@/components/admin/EventsAdmin";
 import { LOCAL_MOCK_ARTISTS, LOCAL_MOCK_ARTWORKS } from "@/lib/mock-catalogue";
+import { seedOutreachArtists } from "@/lib/outreach-artists";
 import { publicPaneAssets } from "@/lib/local-image-assets";
 
 export const Route = createFileRoute("/admin")({
@@ -434,10 +435,34 @@ function ArtistsAdmin({
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  // Runs against the signed-in admin's Supabase session (no server function),
+  // so it works from the browser even on the static deploy.
+  const mSeedOutreach = useMutation({
+    mutationFn: () => seedOutreachArtists(),
+    onSuccess: (r) => {
+      toast.success(`Seeded ${r.count} outreach artist profiles`);
+      onChange();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   return (
     <div>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
+        <p className="mr-auto max-w-xl text-xs text-muted-foreground">
+          Seeding upserts the curated outreach profiles from{" "}
+          <code>data/nigerian-artists-outreach-100.csv</code> so their advertised{" "}
+          <code>/artist/ART-OUT-###</code> links resolve. Only CSV facts are written and each
+          profile is marked unclaimed. Safe to re-run.
+        </p>
+        <button
+          type="button"
+          disabled={mSeedOutreach.isPending}
+          onClick={() => mSeedOutreach.mutate()}
+          className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted disabled:opacity-60"
+        >
+          {mSeedOutreach.isPending ? "Seeding…" : "Seed outreach artists"}
+        </button>
         <button
           onClick={() =>
             setEditing({
@@ -452,6 +477,8 @@ function ArtistsAdmin({
               domicile_city: "",
               date_of_birth: "",
               short_code: "",
+              primary_medium: "",
+              profile_status: "active",
             })
           }
           className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground hover:opacity-90"
@@ -592,6 +619,26 @@ function ArtistsAdmin({
               onChange={(e) => setEditing({ ...editing, alma_mater: e.target.value })}
             />
           </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Primary medium">
+              <input
+                className="inp"
+                placeholder="e.g. Sculpture"
+                value={editing.primary_medium ?? ""}
+                onChange={(e) => setEditing({ ...editing, primary_medium: e.target.value })}
+              />
+            </Field>
+            <Field label="Profile status">
+              <select
+                className="inp"
+                value={editing.profile_status ?? "active"}
+                onChange={(e) => setEditing({ ...editing, profile_status: e.target.value })}
+              >
+                <option value="active">Active artist</option>
+                <option value="unclaimed_outreach">Unclaimed outreach profile</option>
+              </select>
+            </Field>
+          </div>
           <Field label="Catalogue source">
             <select
               className="inp"
@@ -600,6 +647,8 @@ function ArtistsAdmin({
             >
               <option value="live">Live database</option>
               <option value="mock">Mock database</option>
+              <option value="artstage">ArtStage</option>
+              <option value="outreach">Outreach (unclaimed)</option>
             </select>
           </Field>
           <Field label="Portrait URL">

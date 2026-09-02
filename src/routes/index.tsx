@@ -249,6 +249,8 @@ type CatalogueArtist = {
   domicile_city: string | null;
   date_of_birth: string | null;
   portrait_url: string | null;
+  primary_medium?: string | null;
+  profile_status?: string | null;
 };
 
 function ageFromDob(dob: string | null): number | null {
@@ -607,11 +609,28 @@ function Landing() {
         ...catalogueArtists.map((ca) => ca.name).filter((n): n is string => !!n),
       ]),
     ).sort();
+    // Artist-level mediums (outreach profiles have no works yet) join the
+    // artwork mediums, deduped case-insensitively so "Sculpture" and
+    // "sculpture" stay a single facet.
+    const mergedMediums: string[] = [];
+    const mediumKeys = new Set<string>();
+    for (const value of [
+      ...set(artworks.map((a) => a.medium)),
+      ...set(catalogueArtists.map((ca) => ca.primary_medium)),
+    ]) {
+      const key = value.toLowerCase();
+      if (mediumKeys.has(key)) continue;
+      mediumKeys.add(key);
+      mergedMediums.push(value);
+    }
     return {
       countries: mergedCountries,
-      mediums: set(artworks.map((a) => a.medium)),
+      mediums: mergedMediums.sort(),
       genders: mergedGenders,
-      cities: set(artworks.map((a) => a.artist?.domicile_city)),
+      cities: set([
+        ...artworks.map((a) => a.artist?.domicile_city),
+        ...catalogueArtists.map((ca) => ca.domicile_city),
+      ]),
       artists: mergedArtists,
       ageBounds: [0, Math.max(200, ages.length ? Math.max(...ages) : 0)] as [number, number],
       priceBounds: [0, PRICE_CEILING_USD],
@@ -669,6 +688,8 @@ function Landing() {
     pieceCount: number;
     sample: ArtworkRow | null;
     portraitUrl?: string | null;
+    primaryMedium?: string | null;
+    profileStatus?: string | null;
   };
   const filteredArtists = useMemo<ArtistEntry[]>(() => {
     const q = filters.q.trim().toLowerCase();
@@ -722,12 +743,14 @@ function Landing() {
         map.set(a.artist.id, { artist: a.artist, pieceCount: 1, sample: a });
       }
     }
-    const artworkFiltersActive =
-      filters.mediums.length > 0 || filters.priceRange !== null || filters.ageRange !== null;
-    if (!artworkFiltersActive) {
+    // Artists without works can't satisfy price/age filters, which read piece
+    // data. A medium filter still applies to them via their own primary medium.
+    const pieceOnlyFiltersActive = filters.priceRange !== null || filters.ageRange !== null;
+    if (!pieceOnlyFiltersActive) {
       for (const ca of catalogueArtists) {
         if (map.has(ca.id)) continue;
         if (!artistMatches(ca)) continue;
+        if (!selectedMatches(filters.mediums, ca.primary_medium)) continue;
         if (q && !ca.name.toLowerCase().includes(q)) continue;
         map.set(ca.id, {
           artist: {
@@ -742,6 +765,8 @@ function Landing() {
           pieceCount: 0,
           sample: null,
           portraitUrl: ca.portrait_url,
+          primaryMedium: ca.primary_medium ?? null,
+          profileStatus: ca.profile_status ?? null,
         });
       }
     }
@@ -980,29 +1005,38 @@ function Landing() {
                               loading="lazy"
                               className="absolute inset-0 h-full w-full object-contain transition"
                             />
-                          ) : entry.portraitUrl ? (
+                          ) : (
                             <img
-                              src={bustImageUrl(entry.portraitUrl, entry.artist.id)}
+                              src={
+                                entry.portraitUrl
+                                  ? bustImageUrl(entry.portraitUrl, entry.artist.id)
+                                  : artistDefault
+                              }
                               alt={entry.artist.name}
                               loading="lazy"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).src = artistDefault;
+                              }}
                               className="absolute inset-0 h-full w-full object-contain transition"
                             />
-                          ) : (
-                            <div className="absolute inset-0 flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                              No image
-                            </div>
                           )}
                         </div>
                         <div className="p-3">
                           <p className="truncate text-sm font-semibold">{entry.artist.name}</p>
                           <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                            {[entry.artist.country, entry.artist.domicile_city]
+                            {[entry.primaryMedium, entry.artist.country, entry.artist.domicile_city]
                               .filter(Boolean)
                               .join(" · ") || "—"}
                           </p>
-                          <p className="mt-1 text-[11px] text-muted-foreground">
-                            {entry.pieceCount} matching piece{entry.pieceCount === 1 ? "" : "s"}
-                          </p>
+                          {entry.profileStatus === "unclaimed_outreach" ? (
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                              Unclaimed profile
+                            </p>
+                          ) : (
+                            <p className="mt-1 text-[11px] text-muted-foreground">
+                              {entry.pieceCount} matching piece{entry.pieceCount === 1 ? "" : "s"}
+                            </p>
+                          )}
                         </div>
                       </>
                     );

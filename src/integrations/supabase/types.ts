@@ -39,10 +39,16 @@ export type Database = {
           gender: string | null;
           id: string;
           name: string;
+          outreach_note: string | null;
+          outreach_source: string | null;
+          outreach_status: string | null;
           portrait_url: string | null;
+          primary_medium: string | null;
+          profile_status: string;
           short_code: string | null;
           updated_at: string;
           view_count: number;
+          website: string | null;
         };
         Insert: {
           alma_mater?: string | null;
@@ -56,10 +62,16 @@ export type Database = {
           gender?: string | null;
           id?: string;
           name: string;
+          outreach_note?: string | null;
+          outreach_source?: string | null;
+          outreach_status?: string | null;
           portrait_url?: string | null;
+          primary_medium?: string | null;
+          profile_status?: string;
           short_code?: string | null;
           updated_at?: string;
           view_count?: number;
+          website?: string | null;
         };
         Update: {
           alma_mater?: string | null;
@@ -73,10 +85,16 @@ export type Database = {
           gender?: string | null;
           id?: string;
           name?: string;
+          outreach_note?: string | null;
+          outreach_source?: string | null;
+          outreach_status?: string | null;
           portrait_url?: string | null;
+          primary_medium?: string | null;
+          profile_status?: string;
           short_code?: string | null;
           updated_at?: string;
           view_count?: number;
+          website?: string | null;
         };
         Relationships: [];
       };

@@ -113,6 +113,13 @@ export const getCataloguePieces = createServerFn({ method: "GET" }).handler(asyn
 // ============================================================
 // Public: Catalogue artists
 // ============================================================
+const ARTIST_BASE_COLS =
+  "id, short_code, name, country, gender, domicile_city, date_of_birth, portrait_url, view_count, content_source, created_at";
+// Added by the outreach-profiles migration. Selected separately so the
+// catalogue still renders if the app deploys before the migration lands.
+const ARTIST_OUTREACH_COLS =
+  "primary_medium, website, profile_status, outreach_note, outreach_source, outreach_status";
+
 export const getCatalogueArtists = createServerFn({ method: "GET" }).handler(async () => {
   const { data: settings } = await (await __get_admin())
     .from("app_settings")
@@ -121,27 +128,43 @@ export const getCatalogueArtists = createServerFn({ method: "GET" }).handler(asy
     .maybeSingle();
   const source = (typeof settings?.value === "boolean" ? settings.value : true) ? "mock" : "live";
 
-  const [{ data: alloc }, { data: rows }] = await Promise.all([
-    (await __get_admin()).from("catalogue_allocations_artists").select("country, percent"),
+  const curated = async (cols: string) =>
     (await __get_admin())
       .from("artists")
-      .select(
-        "id, short_code, name, country, gender, domicile_city, date_of_birth, portrait_url, view_count, content_source, created_at",
-      )
+      .select(cols)
       .eq("content_source", source)
       .order("created_at", { ascending: false })
+      .limit(500);
+
+  const [{ data: alloc }, curatedResult, { data: outreachRows }] = await Promise.all([
+    (await __get_admin()).from("catalogue_allocations_artists").select("country, percent"),
+    curated(`${ARTIST_BASE_COLS}, ${ARTIST_OUTREACH_COLS}`),
+    (await __get_admin())
+      .from("artists")
+      .select(`${ARTIST_BASE_COLS}, ${ARTIST_OUTREACH_COLS}`)
+      .eq("profile_status", "unclaimed_outreach")
+      .order("name")
       .limit(500),
   ]);
 
+  const rows = curatedResult.data ?? (await curated(ARTIST_BASE_COLS)).data;
   const items = (rows ?? []) as any[];
   const pool: Record<string, any[]> = {};
   for (const item of items) {
     const country = item.country ?? "Unknown";
     (pool[country] ??= []).push(item);
   }
+
+  // Outreach profiles sit outside the country allocation (they are unclaimed
+  // records, not curated inventory) but must stay browsable and searchable, so
+  // they are appended in full rather than sampled.
+  const allocated = applyAllocation(pool, alloc ?? [], CATALOGUE_CAP);
+  const seen = new Set(allocated.map((a: any) => a.id));
+  const outreach = ((outreachRows ?? []) as any[]).filter((a) => !seen.has(a.id));
+
   return {
-    artists: applyAllocation(pool, alloc ?? [], CATALOGUE_CAP),
-    totalAvailable: items.length,
+    artists: [...allocated, ...outreach],
+    totalAvailable: items.length + outreach.length,
   };
 });
 
@@ -187,13 +210,14 @@ export const getArtistDetail = createServerFn({ method: "GET" })
     }
     try {
       const key = matchKey(data.idOrCode);
-      const { data: artist } = await (await __get_admin())
-        .from("artists")
-        .select(
-          "id, short_code, name, country, gender, domicile_city, date_of_birth, portrait_url, bio, era, alma_mater, view_count, created_at, updated_at",
-        )
-        .eq(key, data.idOrCode)
-        .maybeSingle();
+      const detailCols =
+        "id, short_code, name, country, gender, domicile_city, date_of_birth, portrait_url, bio, era, alma_mater, view_count, created_at, updated_at";
+      const load = (cols: string) =>
+        __get_admin().then((admin) =>
+          admin.from("artists").select(cols).eq(key, data.idOrCode).maybeSingle(),
+        );
+      const withOutreach = await load(`${detailCols}, ${ARTIST_OUTREACH_COLS}`);
+      const artist = (withOutreach.data ?? (await load(detailCols)).data) as any;
       if (artist) {
         const { data: works } = await (await __get_admin())
           .from("artworks")

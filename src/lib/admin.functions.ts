@@ -96,11 +96,13 @@ const ArtistIn = z.object({
   country: z.string().max(100).nullable().optional(),
   alma_mater: z.string().max(200).nullable().optional(),
   portrait_url: z.string().url().nullable().optional(),
-  content_source: z.enum(["live", "mock"]).default("live"),
+  content_source: z.enum(["live", "mock", "artstage", "outreach"]).default("live"),
   gender: z.string().max(20).nullable().optional(),
   domicile_city: z.string().max(100).nullable().optional(),
   date_of_birth: z.string().max(20).nullable().optional(),
   short_code: z.string().max(20).nullable().optional(),
+  primary_medium: z.string().max(100).nullable().optional(),
+  profile_status: z.enum(["active", "unclaimed_outreach"]).optional(),
 });
 export const saveArtist = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
