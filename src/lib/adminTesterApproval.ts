@@ -2,15 +2,15 @@
  * Zonic ADMINTESTER approval — MyAfriArtX.
  * Orbit standard: ~/Downloads/MyYangaX-COMPLETE/AUTH.md
  */
+import { isUniformAdminPassword } from "./adminGate";
+
 export const OWNER_EMAIL = "oadeagbo@gmail.com";
 export const APPROVAL_STORE_KEY = "zonic_admintester_approval_v1";
-export const ADMIN_PASSWORDS = ["ADMINTESTER1", "admin123", "rubbaxadmin1"];
 export const AWAITING_MSG =
   "Awaiting approval — the owner must approve your admin access before you can sign in. You will be notified once approved.";
 
 export function isSharedAdminPassword(password: unknown): boolean {
-  const candidate = String(password ?? "").trim().toLowerCase();
-  return ADMIN_PASSWORDS.some((p) => p.toLowerCase() === candidate);
+  return isUniformAdminPassword(String(password ?? ""));
 }
 
 export function isOwnerEmail(email: string): boolean {

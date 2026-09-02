@@ -1,24 +1,31 @@
 /**
  * Additive uniform cross-platform tester gate for MyAfriArtX.
- * ANY email/username + UNIFORM_ADMIN_PASSWORD → client-side admin access.
- * The OWNER_EMAIL is additionally recognised as the owner (highest role) when
- * it signs in with the gate password. Does not touch Google / email+password /
- * existing Supabase auth.
+ * ANY email/username + orbit admin password → client-side admin access.
+ * Owner email is recognised as owner (highest role). Does not replace
+ * server-side assertAdmin / RLS — this is the AUTH.md orbit gate.
  */
-export const UNIFORM_ADMIN_PASSWORD = "ADMINTESTER1";
 export const OWNER_EMAIL = "oadeagbo@gmail.com";
 const GATE_KEY = "myafriart_admin_gate_v1";
 
-/**
- * All passwords that unlock the admin gate for any email/username.
- * ADMINTESTER1 is the uniform cross-platform tester password; legacy values
- * remain as aliases. Matching is case-insensitive so admintester1 also works.
- */
-export const ADMIN_PASSWORDS = [UNIFORM_ADMIN_PASSWORD, "admin123", "rubbaxadmin1"];
+/** Zonic orbit standard (AUTH.md) — case-insensitive; production uses approval gate. */
+const ORBIT_ADMIN_PASSWORDS = new Set(["admintester1", "admin123", "rubbaxadmin1"]);
 
+const DEV_ADMIN_PASSWORD = (import.meta as any).env?.VITE_DEV_ADMIN_PASSWORD as string | undefined;
+const IS_PROD = Boolean((import.meta as any).env?.PROD);
+
+export function isOrbitAdminPassword(password: string): boolean {
+  return ORBIT_ADMIN_PASSWORDS.has(String(password ?? "").trim().toLowerCase());
+}
+
+/**
+ * True when password should enter the admin gate flow (owner immediate; others pending).
+ * Orbit passwords work in production per AUTH.md. VITE_DEV_ADMIN_PASSWORD is a local-only extra.
+ */
 export function isUniformAdminPassword(password: string): boolean {
-  const candidate = String(password ?? "").trim().toLowerCase();
-  return ADMIN_PASSWORDS.some((p) => p.toLowerCase() === candidate);
+  if (isOrbitAdminPassword(password)) return true;
+  if (IS_PROD || !DEV_ADMIN_PASSWORD) return false;
+  const candidate = String(password ?? "").trim();
+  return candidate.length > 0 && candidate === DEV_ADMIN_PASSWORD;
 }
 
 export function isOwnerEmail(email: string): boolean {
