@@ -12,6 +12,7 @@ import {
   adminGateActive,
 } from "@/lib/adminGate";
 import { resolveAdminGateLogin } from "@/lib/adminTesterApproval";
+import { PasswordRecovery } from "@/components/PasswordRecovery";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Sign in — MyAfriart" }] }),
@@ -385,6 +386,14 @@ function LoginPage() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            {mode === "signin" && (
+              <a
+                href="#forgot"
+                className="mt-2 block text-center text-xs text-primary underline-offset-2 hover:underline"
+              >
+                Forgot password?
+              </a>
+            )}
           </div>
           <button
             type="submit"
@@ -394,6 +403,8 @@ function LoginPage() {
             {loading ? "…" : mode === "signin" ? "Sign in" : "Create account"}
           </button>
         </form>
+
+        <PasswordRecovery brand="MyAfriArt" />
 
         <button
           type="button"

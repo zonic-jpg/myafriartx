@@ -1,16 +1,20 @@
-# MyAfriArtX — static SPA on Netlify (prebuilt dist/client in repo)
+# MyAfriArtX — Netlify: static client + serverless stage-room
 [build]
-  command = "echo 'Publishing prebuilt dist/client'"
+  command = "npm run build"
   publish = "dist/client"
+  functions = "netlify/functions"
 
 [build.environment]
   NODE_VERSION = "20"
-  # VITE_SUPABASE_URL — set via Netlify UI/API env (do not hardcode)
-  # VITE_SUPABASE_PUBLISHABLE_KEY — set via Netlify UI/API env (do not hardcode)
-  # VITE_SUPABASE_PROJECT_ID — set via Netlify UI/API env (do not hardcode)
   VITE_GOOGLE_AUTH = "false"
 
-# Cold /auth links (content loaders, ZonicMe hub) → login
+[functions]
+  node_bundler = "esbuild"
+
+[functions."stage-room"]
+  timeout = 60
+
+# Cold /auth links → login
 [[redirects]]
   from = "/auth"
   to = "/login"
@@ -21,6 +25,25 @@
   from = "/auth/*"
   to = "/login"
   status = 302
+  force = true
+
+# Stage API before SPA catch-all
+[[redirects]]
+  from = "/api/stage-room"
+  to = "/.netlify/functions/stage-room"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/stage-room/"
+  to = "/.netlify/functions/stage-room"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
   force = true
 
 [[redirects]]

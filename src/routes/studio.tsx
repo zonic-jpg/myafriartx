@@ -1,14 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { getCatalog, getLatestRender } from "@/lib/studio-catalog.functions";
-import { stageRoom } from "@/lib/stage-room.functions";
 import { toast } from "sonner";
 import { localImageForKey } from "@/lib/local-image-assets";
 import { NotifyBell } from "@/components/notify-bell";
 import { adminGateActive, clearAdminGate } from "@/lib/adminGate";
+import { fetchStudioCatalogClient, stageRoomClient } from "@/lib/stage-room-client";
+import { LOCAL_MOCK_STYLES } from "@/lib/stage-styles";
 
 export const Route = createFileRoute("/studio")({
   head: () => ({ meta: [{ title: "Studio — MyAfriart" }] }),
@@ -63,31 +62,9 @@ function Studio() {
 }
 
 function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
-  const fetchCatalog = useServerFn(getCatalog);
-  const runStage = useServerFn(stageRoom);
-  const fetchLatest = useServerFn(getLatestRender);
   const { data, isLoading } = useQuery({
     queryKey: ["catalog", gateMode ? "gate" : "live"],
-    queryFn: async () => {
-      if (gateMode) {
-        const { LOCAL_MOCK_ARTWORKS, LOCAL_MOCK_ARTISTS } = await import("@/lib/mock-catalogue");
-        return {
-          artworks: LOCAL_MOCK_ARTWORKS,
-          artists: LOCAL_MOCK_ARTISTS,
-          styles: [],
-        };
-      }
-      try {
-        return await fetchCatalog();
-      } catch {
-        const { LOCAL_MOCK_ARTWORKS, LOCAL_MOCK_ARTISTS } = await import("@/lib/mock-catalogue");
-        return {
-          artworks: LOCAL_MOCK_ARTWORKS,
-          artists: LOCAL_MOCK_ARTISTS,
-          styles: [],
-        };
-      }
-    },
+    queryFn: () => fetchStudioCatalogClient(gateMode),
   });
 
   const [isAdmin, setIsAdmin] = useState(gateMode);
@@ -171,37 +148,42 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
   const [elapsed, setElapsed] = useState(0);
   const [progressStatus, setProgressStatus] = useState<string | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
-  const baselineIdRef = useRef<string | null>(null);
+
+  const styles = (data?.styles?.length ? data.styles : LOCAL_MOCK_STYLES) as any[];
+
+  useEffect(() => {
+    if (!styleId && styles[0]?.id) setStyleId(styles[0].id);
+  }, [styles, styleId]);
 
   const stage = useMutation({
     mutationFn: async () => {
       if (!photo || !styleId || picked.length === 0)
         throw new Error("Photo, style and at least one artwork required");
-      // Snapshot the latest render id so polling can detect a NEW one created by this run.
-      try {
-        const { render } = await fetchLatest();
-        baselineIdRef.current = render?.id ?? null;
-      } catch {
-        baselineIdRef.current = null;
-      }
       setLastError(null);
       setStartedAt(Date.now());
-      setProgressStatus("uploading");
-      return runStage({
-        data: {
-          sourceImageBase64: photo,
-          styleId,
-          artworkIds: picked,
-          mediaFilter: media,
-          placementRequest,
-        },
+      setProgressStatus("compositing");
+      const artworks = (data?.artworks ?? [])
+        .filter((a: any) => picked.includes(a.id))
+        .map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          medium: a.medium,
+          image_url: localImageForKey(a.image_url) || a.image_url,
+        }));
+      return stageRoomClient({
+        sourceImageBase64: photo,
+        styleId,
+        artworkIds: picked,
+        mediaFilter: media,
+        placementRequest,
+        artworks,
       });
     },
     onSuccess: (r) => {
       setResult({ url: r.resultUrl, src: r.sourceUrl });
       setProgressStatus(null);
       setStartedAt(null);
-      toast.success("Render ready");
+      toast.success(r.provider === "canvas-preview" ? "Preview staged on wall" : "Render ready");
     },
     onError: (e: any) => {
       const msg = e?.message ?? "Render failed";
@@ -222,55 +204,12 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
     return () => clearInterval(t);
   }, [startedAt]);
 
-  // Poll latest render row while the mutation is in flight (graceful recovery on disconnect).
-  useEffect(() => {
-    if (!stage.isPending) return;
-    let cancelled = false;
-    let consecutiveErrors = 0;
-    const tick = async () => {
-      try {
-        const { render } = await fetchLatest();
-        consecutiveErrors = 0;
-        if (cancelled || !render) return;
-        const isNew = render.id !== baselineIdRef.current;
-        if (!isNew) {
-          setProgressStatus("uploading");
-          return;
-        }
-        setProgressStatus(render.status);
-        if (render.status === "completed" && render.result_image_url) {
-          setResult({ url: render.result_image_url, src: render.source_image_url });
-          setProgressStatus(null);
-          setStartedAt(null);
-          stage.reset();
-          toast.success("Render ready");
-        } else if (render.status === "failed") {
-          const msg = render.error_message || "Render failed";
-          setLastError(msg);
-          setProgressStatus(null);
-          setStartedAt(null);
-          stage.reset();
-          toast.error(msg);
-        }
-      } catch {
-        consecutiveErrors++;
-        if (consecutiveErrors >= 4) setProgressStatus("reconnecting");
-      }
-    };
-    const id = setInterval(tick, 2500);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stage.isPending]);
-
   const progressLabel = useMemo(() => {
     if (!stage.isPending) return null;
     const base =
       progressStatus === "reconnecting"
         ? "Reconnecting…"
-        : progressStatus === "processing"
+        : progressStatus === "processing" || progressStatus === "compositing"
           ? "Composing your room"
           : progressStatus === "uploading"
             ? "Uploading photo"
@@ -279,7 +218,7 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
               : "Working";
     const phase =
       elapsed < 8
-        ? "uploading your room"
+        ? "preparing your room"
         : elapsed < 25
           ? "analysing wall geometry"
           : elapsed < 50
@@ -472,7 +411,7 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
 
           <Field label="Style">
             <div className="grid grid-cols-2 gap-2">
-              {(data?.styles ?? []).map((s: any) => (
+              {styles.map((s: any) => (
                 <button
                   key={s.id}
                   onClick={() => setStyleId(s.id)}
