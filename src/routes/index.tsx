@@ -821,6 +821,9 @@ function Landing() {
               </span>
             </Link>
             <nav className="flex flex-shrink-0 items-center gap-2 text-sm sm:gap-3">
+              <Link to="/submit" className="px-1 text-black/70 hover:text-black">
+                Submit work
+              </Link>
               <Link to="/login" className="px-1 text-black/70 hover:text-black">
                 Sign in
               </Link>
@@ -1108,6 +1111,9 @@ function Landing() {
             </Link>
             <Link to="/studio" className="font-medium text-white hover:text-white/80">
               Stage a room
+            </Link>
+            <Link to="/submit" className="font-medium text-white hover:text-white/80">
+              Submit work
             </Link>
           </nav>
         </div>

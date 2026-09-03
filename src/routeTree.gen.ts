@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as VerificationRouteImport } from './routes/verification'
+import { Route as SubmitRouteImport } from './routes/submit'
 import { Route as StudioRouteImport } from './routes/studio'
 import { Route as RendersRouteImport } from './routes/renders'
 import { Route as NotifyRouteImport } from './routes/notify'
@@ -36,6 +37,11 @@ import { Route as ApiBridgeEnterRouteImport } from './routes/api/bridge.enter'
 const VerificationRoute = VerificationRouteImport.update({
   id: '/verification',
   path: '/verification',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SubmitRoute = SubmitRouteImport.update({
+  id: '/submit',
+  path: '/submit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudioRoute = StudioRouteImport.update({
@@ -161,6 +167,7 @@ export interface FileRoutesByFullPath {
   '/notify': typeof NotifyRouteWithChildren
   '/renders': typeof RendersRoute
   '/studio': typeof StudioRoute
+  '/submit': typeof SubmitRoute
   '/verification': typeof VerificationRoute
   '/api/chat': typeof ApiChatRoute
   '/artist/$code': typeof ArtistCodeRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByTo {
   '/notify': typeof NotifyRouteWithChildren
   '/renders': typeof RendersRoute
   '/studio': typeof StudioRoute
+  '/submit': typeof SubmitRoute
   '/verification': typeof VerificationRoute
   '/api/chat': typeof ApiChatRoute
   '/artist/$code': typeof ArtistCodeRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/notify': typeof NotifyRouteWithChildren
   '/renders': typeof RendersRoute
   '/studio': typeof StudioRoute
+  '/submit': typeof SubmitRoute
   '/verification': typeof VerificationRoute
   '/api/chat': typeof ApiChatRoute
   '/artist/$code': typeof ArtistCodeRoute
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/notify'
     | '/renders'
     | '/studio'
+    | '/submit'
     | '/verification'
     | '/api/chat'
     | '/artist/$code'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/notify'
     | '/renders'
     | '/studio'
+    | '/submit'
     | '/verification'
     | '/api/chat'
     | '/artist/$code'
@@ -289,6 +300,7 @@ export interface FileRouteTypes {
     | '/notify'
     | '/renders'
     | '/studio'
+    | '/submit'
     | '/verification'
     | '/api/chat'
     | '/artist/$code'
@@ -315,6 +327,7 @@ export interface RootRouteChildren {
   NotifyRoute: typeof NotifyRouteWithChildren
   RendersRoute: typeof RendersRoute
   StudioRoute: typeof StudioRoute
+  SubmitRoute: typeof SubmitRoute
   VerificationRoute: typeof VerificationRoute
   ApiChatRoute: typeof ApiChatRoute
   ArtistCodeRoute: typeof ArtistCodeRoute
@@ -334,6 +347,13 @@ declare module '@tanstack/react-router' {
       path: '/verification'
       fullPath: '/verification'
       preLoaderRoute: typeof VerificationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/submit': {
+      id: '/submit'
+      path: '/submit'
+      fullPath: '/submit'
+      preLoaderRoute: typeof SubmitRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/studio': {
@@ -518,6 +538,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotifyRoute: NotifyRouteWithChildren,
   RendersRoute: RendersRoute,
   StudioRoute: StudioRoute,
+  SubmitRoute: SubmitRoute,
   VerificationRoute: VerificationRoute,
   ApiChatRoute: ApiChatRoute,
   ArtistCodeRoute: ArtistCodeRoute,

@@ -1,3 +1,2 @@
 /auth    /login   302
 /auth/*  /login   302
-/*    /index.html   200

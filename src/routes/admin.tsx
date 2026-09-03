@@ -38,12 +38,15 @@ import { KycAdmin } from "@/components/admin/kyc-admin";
 import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
 import { adminGateActive, adminGateEmail, adminGateRole, clearAdminGate } from "@/lib/adminGate";
+import { setDiagnosticsAudience } from "@/lib/public-message";
 import { AdminTesterQueue } from "@/components/admin/AdminTesterQueue";
 import { LetterStudioAdmin } from "@/components/admin/LetterStudioAdmin";
-import { ContentIntakeAdmin } from "@/components/admin/ContentIntakeAdmin";
+import { BatchUploadAdmin } from "@/components/admin/BatchUploadAdmin";
+import { SubmissionsAdmin } from "@/components/admin/SubmissionsAdmin";
 import { EventsAdmin } from "@/components/admin/EventsAdmin";
 import { LOCAL_MOCK_ARTISTS, LOCAL_MOCK_ARTWORKS } from "@/lib/mock-catalogue";
 import { seedOutreachArtists } from "@/lib/outreach-artists";
+import { publicMessage } from "@/lib/public-message";
 import { publicPaneAssets } from "@/lib/local-image-assets";
 
 export const Route = createFileRoute("/admin")({
@@ -111,10 +114,6 @@ function Admin() {
       sub.subscription.unsubscribe();
     };
   }, []);
-  useEffect(() => {
-    if (ready && !authed && !gate) navigate({ to: "/login" });
-  }, [ready, authed, gate, navigate]);
-
   const checkAdmin = useServerFn(checkIsAdmin);
   const { data: roleData, isLoading: roleLoading } = useQuery({
     queryKey: ["isAdmin"],
@@ -122,6 +121,14 @@ function Admin() {
     enabled: authed && !gate,
     retry: false,
   });
+
+  useEffect(() => {
+    setDiagnosticsAudience(gate || !!roleData?.isAdmin);
+  }, [gate, roleData?.isAdmin]);
+
+  useEffect(() => {
+    if (ready && !authed && !gate) navigate({ to: "/login" });
+  }, [ready, authed, gate, navigate]);
 
   // Uniform tester gate grants full admin client-side without a Supabase session.
   if (gate) {
@@ -156,6 +163,9 @@ function Admin() {
 }
 
 type Tab =
+  | "submissions"
+  | "letters"
+  | "intake"
   | "studio"
   | "settings"
   | "artworks"
@@ -186,7 +196,7 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
   });
   const [localData] = useState(() => localGateAdminData());
   const data = gateMode ? localData : serverData;
-  const [tab, setTab] = useState<Tab>(gateMode ? "artists" : "artworks");
+  const [tab, setTab] = useState<Tab>("submissions");
   const [lookupSeed, setLookupSeed] = useState<string>("");
   const refresh = () => {
     if (gateMode) return;
@@ -218,15 +228,6 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
       data-auth-role={gateMode ? gateRole || "admin" : "supabase-admin"}
       data-gate-mode={gateMode ? "1" : "0"}
     >
-      <AdminTesterQueue />
-      <section className="mt-10">
-        <h2 className="text-lg font-medium mb-4">Letters</h2>
-        <LetterStudioAdmin />
-      </section>
-      <section className="mt-10">
-        <h2 className="text-lg font-medium mb-4">Content Intake</h2>
-        <ContentIntakeAdmin />
-      </section>
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="font-display text-xl">
@@ -265,9 +266,18 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
           </p>
         )}
 
-        <div className="mt-6 flex flex-wrap gap-1 border-b border-border">
+        {/* The approval queue is the first thing the owner needs to see, so it
+            sits above the tab strip rather than behind a tab. */}
+        <div className="mt-6">
+          <AdminTesterQueue />
+        </div>
+
+        <div className="mt-8 flex flex-wrap gap-1 border-b border-border">
           {(
             [
+              "submissions",
+              "letters",
+              "intake",
               "studio",
               "settings",
               "artworks",
@@ -303,6 +313,15 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
           <div className="py-10 text-sm text-muted-foreground">Loading…</div>
         ) : (
           <div className="py-6">
+            {tab === "submissions" && <SubmissionsAdmin />}
+            {tab === "letters" && <LetterStudioAdmin />}
+            {tab === "intake" && data && (
+              <BatchUploadAdmin
+                artists={data.artists ?? []}
+                artworks={data.artworks ?? []}
+                loading={!gateMode && isLoading}
+              />
+            )}
             {tab === "studio" && <ContentStudio />}
             {tab === "settings" && data && <SettingsAdmin data={data} onChange={refresh} />}
             {tab === "artworks" && data && (
@@ -349,7 +368,7 @@ function SettingsAdmin({ data, onChange }: { data: any; onChange: () => void }) 
       toast.success(next ? "Mock catalogue enabled" : "Live catalogue enabled");
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
 
   return (
@@ -425,7 +444,7 @@ function ArtistsAdmin({
       setEditing(null);
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
   const mDel = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
@@ -433,7 +452,7 @@ function ArtistsAdmin({
       toast.success("Deleted");
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
   // Runs against the signed-in admin's Supabase session (no server function),
   // so it works from the browser even on the static deploy.
@@ -443,7 +462,7 @@ function ArtistsAdmin({
       toast.success(`Seeded ${r.count} outreach artist profiles`);
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
 
   return (
@@ -723,7 +742,7 @@ function ArtworksAdmin({
       setEditing(null);
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
   const mDel = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
@@ -731,7 +750,7 @@ function ArtworksAdmin({
       toast.success("Deleted");
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
 
   async function onFile(f: File) {
@@ -747,7 +766,7 @@ function ArtworksAdmin({
       setEditing((e: any) => ({ ...e, image_url: url }));
       toast.success("Image uploaded");
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(publicMessage(e, "Image upload failed"));
     } finally {
       setUploading(false);
     }
@@ -1006,7 +1025,7 @@ function StylesAdmin({ data, onChange }: { data: any; onChange: () => void }) {
       setEditing(null);
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
   const mDel = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
@@ -1014,7 +1033,7 @@ function StylesAdmin({ data, onChange }: { data: any; onChange: () => void }) {
       toast.success("Deleted");
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
 
   return (
@@ -1164,7 +1183,7 @@ function RendersAdmin({ data, onChange }: { data: any; onChange: () => void }) {
       toast.success("Updated");
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
   const mDel = useMutation({
     mutationFn: (id: string) => delFn({ data: { id } }),
@@ -1172,7 +1191,7 @@ function RendersAdmin({ data, onChange }: { data: any; onChange: () => void }) {
       toast.success("Deleted");
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
 
   const renders: any[] = (data.renders ?? []).filter((r: any) => {
@@ -1420,7 +1439,7 @@ function PanesAdmin({ data, onChange }: { data: any; onChange: () => void }) {
       setEditing(null);
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
   const mDel = useMutation({
     mutationFn: (id: string) => del({ data: { id } }),
@@ -1428,7 +1447,7 @@ function PanesAdmin({ data, onChange }: { data: any; onChange: () => void }) {
       toast.success("Deleted");
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
   const mReorder = useMutation({
     mutationFn: (order: { id: string; sort_order: number }[]) => reorder({ data: { order } }),
@@ -1437,7 +1456,7 @@ function PanesAdmin({ data, onChange }: { data: any; onChange: () => void }) {
       setDirty(false);
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
   const mStatus = useMutation({
     mutationFn: (v: { id: string; status: "draft" | "published" }) => setStatus({ data: v }),
@@ -1445,7 +1464,7 @@ function PanesAdmin({ data, onChange }: { data: any; onChange: () => void }) {
       toast.success(v.status === "published" ? "Published" : "Moved to draft");
       onChange();
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
 
   async function onFile(f: File, target: "desktop" | "mobile") {
@@ -1462,7 +1481,7 @@ function PanesAdmin({ data, onChange }: { data: any; onChange: () => void }) {
       setEditing((e: any) => ({ ...e, [key]: url }));
       toast.success(`${target === "desktop" ? "Desktop" : "Mobile"} image uploaded`);
     } catch (e: any) {
-      toast.error(e.message);
+      toast.error(publicMessage(e, "Image upload failed"));
     } finally {
       setUploading(null);
     }
@@ -1958,7 +1977,7 @@ function AllocationEditor({ scope, data }: { scope: "pieces" | "artists"; data: 
       toast.success("Allocation saved");
       qc.invalidateQueries({ queryKey: ["alloc", scope] });
     },
-    onError: (e: Error) => toast.error(e.message ?? "Save failed"),
+    onError: (e: Error) => toast.error(publicMessage(e, "Save failed")),
   });
 
   if (isLoading) return <div className="text-sm text-muted-foreground">Loading…</div>;

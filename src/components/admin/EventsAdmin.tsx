@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { deleteLiveEvent, listLiveEvents, saveLiveEvent, type LiveEvent } from "@/lib/events.functions";
+import { publicMessage } from "@/lib/public-message";
 
 const emptyForm = (): Partial<LiveEvent> => ({
   title: "",
@@ -49,7 +50,7 @@ export function EventsAdmin() {
       setForm(emptyForm());
       toast.success("Event saved");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
 
   const deleteMut = useMutation({
@@ -58,7 +59,7 @@ export function EventsAdmin() {
       qc.invalidateQueries({ queryKey: ["live-events"] });
       toast.success("Event deleted");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error(publicMessage(e)),
   });
 
   const onSubmit = (e: React.FormEvent) => {

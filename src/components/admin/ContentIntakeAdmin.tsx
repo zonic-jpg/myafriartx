@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { UploadCloud, Check, X, Loader2, Trash2, Send, Gauge, ShieldAlert, Copy, Wand2 } from "lucide-react";
 import { enrichContentImage } from "@/lib/ai.functions";
 import { bulkStage } from "@/lib/content-intake.functions";
+import { publicMessage } from "@/lib/public-message";
 
 const T = { ink: "#171633", ink2: "#3A3960", paper: "#FAF8F3", brass: "#A67C34", stone: "#8A8577",
   line: "#DED8C8", ok: "#2F6B4F", warn: "#9A6414", bad: "#8E2B24", accent: "#2F7D4F",
@@ -80,7 +81,7 @@ export function ContentIntakeAdmin() {
       })) } });
       setItems((xs) => xs.filter((x) => x.status !== "approved"));
       toast.success(`Staged ${res.staged} of ${res.received} for publish.`);
-    } catch (e: any) { toast.error(e?.message || "Staging failed"); }
+    } catch (e: any) { toast.error(publicMessage(e, "Staging failed")); }
   };
 
   const chip = (bg: string, fg: string) => ({ background: bg, color: fg, fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 20, display: "inline-flex", alignItems: "center", gap: 4 } as const);

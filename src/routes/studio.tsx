@@ -8,6 +8,9 @@ import { NotifyBell } from "@/components/notify-bell";
 import { adminGateActive, clearAdminGate } from "@/lib/adminGate";
 import { fetchStudioCatalogClient, stageRoomClient } from "@/lib/stage-room-client";
 import { LOCAL_MOCK_STYLES } from "@/lib/stage-styles";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ImageDropzone, fileToDownscaledDataUrl } from "@/components/image-dropzone";
+import { publicMessage } from "@/lib/public-message";
 
 export const Route = createFileRoute("/studio")({
   head: () => ({ meta: [{ title: "Studio — MyAfriart" }] }),
@@ -51,14 +54,39 @@ function Studio() {
     if (ready && !authed && !gate) navigate({ to: "/login" });
   }, [ready, authed, gate, navigate]);
 
-  if (!ready || (!authed && !gate)) {
-    return (
-      <div className="flex min-h-screen items-center justify-center text-muted-foreground">
-        Loading studio…
-      </div>
-    );
-  }
+  if (!ready || (!authed && !gate)) return <StudioSkeleton />;
   return <StudioInner gateMode={gate && !authed} />;
+}
+
+/** Mirrors the real studio layout so nothing jumps when the session resolves. */
+function StudioSkeleton() {
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="border-b border-border">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <span className="font-display text-xl">MyAfriart</span>
+          <Skeleton className="h-4 w-48" />
+        </div>
+      </header>
+      <main className="mx-auto grid max-w-6xl gap-10 px-6 py-10 lg:grid-cols-[1fr_360px]">
+        <section>
+          <Skeleton className="h-9 w-40" />
+          <Skeleton className="mt-2 h-4 w-72" />
+          <Skeleton className="mt-6 aspect-[4/3] w-full rounded-xl" />
+          <Skeleton className="mt-3 h-8 w-32 rounded-md" />
+        </section>
+        <aside className="space-y-6">
+          {[0, 1, 2].map((i) => (
+            <div key={i}>
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="mt-2 h-24 w-full rounded-md" />
+            </div>
+          ))}
+          <Skeleton className="h-12 w-full rounded-md" />
+        </aside>
+      </main>
+    </div>
+  );
 }
 
 function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
@@ -141,6 +169,7 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
     sessionStorage.setItem("studio:placement", placementRequest);
   }, [placementRequest]);
   const [result, setResult] = useState<{ url: string; src: string } | null>(null);
+  const [preparingPhoto, setPreparingPhoto] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   // Progress tracking
@@ -186,7 +215,7 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
       toast.success(r.provider === "canvas-preview" ? "Preview staged on wall" : "Render ready");
     },
     onError: (e: any) => {
-      const msg = e?.message ?? "Render failed";
+      const msg = publicMessage(e, "Render failed");
       setLastError(msg);
       setProgressStatus(null);
       setStartedAt(null);
@@ -230,54 +259,11 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
   }, [stage.isPending, progressStatus, elapsed]);
 
   async function onPick(file: File) {
-    // Resize large photos client-side so they never trip the server's 10MB limit.
-    // Never throws — falls back to the raw file so the upload always works.
-    const toData = () =>
-      new Promise<string>((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result));
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
+    setPreparingPhoto(true);
     try {
-      let w0: number, h0: number, src: CanvasImageSource;
-      try {
-        const bmp = await createImageBitmap(file, { imageOrientation: "from-image" } as any);
-        w0 = bmp.width;
-        h0 = bmp.height;
-        src = bmp;
-      } catch {
-        const dataUrl = await toData();
-        const img = await new Promise<HTMLImageElement>((res, rej) => {
-          const i = new Image();
-          i.onload = () => res(i);
-          i.onerror = rej;
-          i.src = dataUrl;
-        });
-        w0 = img.naturalWidth;
-        h0 = img.naturalHeight;
-        src = img;
-      }
-      const s = Math.min(1, 1600 / Math.max(w0, h0));
-      const w = Math.max(1, Math.round(w0 * s)),
-        h = Math.max(1, Math.round(h0 * s));
-      const c = document.createElement("canvas");
-      c.width = w;
-      c.height = h;
-      const ctx = c.getContext("2d");
-      if (!ctx) {
-        setPhoto(await toData());
-        return;
-      }
-      ctx.drawImage(src, 0, 0, w, h);
-      if ("close" in src && typeof (src as any).close === "function") (src as any).close();
-      setPhoto(c.toDataURL("image/jpeg", 0.85));
-    } catch {
-      try {
-        setPhoto(await toData());
-      } catch {
-        /* ignore */
-      }
+      setPhoto(await fileToDownscaledDataUrl(file));
+    } finally {
+      setPreparingPhoto(false);
     }
   }
 
@@ -339,19 +325,19 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
             Stage curated artworks on a wall in your room.
           </p>
 
-          <div className="mt-6 overflow-hidden rounded-md border border-border bg-card">
+          <div className="mt-6">
             {result ? (
-              <BeforeAfter before={result.src} after={result.url} />
-            ) : photo ? (
-              <img src={photo} alt="Your room" className="aspect-[4/3] w-full object-cover" />
+              <div className="overflow-hidden rounded-xl border border-border bg-card">
+                <BeforeAfter before={result.src} after={result.url} />
+              </div>
             ) : (
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="flex aspect-[4/3] w-full flex-col items-center justify-center gap-3 bg-muted text-muted-foreground hover:bg-accent"
-              >
-                <div className="font-display text-2xl">Upload or capture your room</div>
-                <div className="text-xs uppercase tracking-wider">JPG · PNG · max 10MB</div>
-              </button>
+              <ImageDropzone
+                value={photo}
+                onSelect={(file) => void onPick(file)}
+                busy={preparingPhoto}
+                title="Drag a photo of your room here, or click to choose"
+                hint="Straight-on shot of the wall · JPG, PNG or WebP"
+              />
             )}
           </div>
           <input
@@ -368,7 +354,7 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
               onClick={() => fileRef.current?.click()}
               className="rounded-md border border-border px-3 py-1.5 text-xs hover:bg-accent"
             >
-              {photo ? "Replace photo" : "Choose photo"}
+              {photo ? "Replace photo" : "Take a photo"}
             </button>
             {result && (
               <>
@@ -428,7 +414,11 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
 
           <Field label={`Artworks (${picked.length}/3)`}>
             {isLoading ? (
-              <div className="text-xs text-muted-foreground">Loading catalogue…</div>
+              <div className="grid grid-cols-3 gap-2">
+                {Array.from({ length: 9 }).map((_, i) => (
+                  <Skeleton key={i} className="aspect-square w-full rounded" />
+                ))}
+              </div>
             ) : (
               <div className="grid grid-cols-3 gap-2">
                 {artworks.map((a: any) => {

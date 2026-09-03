@@ -10,6 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { NotifyAutoOpen } from "@/components/notify-auto-open";
+import { OrbitSessionNotice } from "@/components/OrbitSessionNotice";
 
 import appCss from "../styles.css?url";
 
@@ -111,6 +112,7 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
+      <OrbitSessionNotice />
       <Outlet />
       <SiteFooter />
       <NotifyAutoOpen />

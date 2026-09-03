@@ -11,7 +11,8 @@ import {
   clearAdminGate,
   adminGateActive,
 } from "@/lib/adminGate";
-import { resolveAdminGateLogin } from "@/lib/adminTesterApproval";
+import { resolveAdminGateLoginRemote } from "@/lib/adminTesterApproval";
+import { publicMessage } from "@/lib/public-message";
 import { PasswordRecovery } from "@/components/PasswordRecovery";
 
 export const Route = createFileRoute("/login")({
@@ -216,9 +217,9 @@ function LoginPage() {
       }
       // Owner/admin passwords never go to Supabase (avoids "invalid credentials").
       if (isUniformAdminPassword(password)) {
-        const gate = resolveAdminGateLogin(identity, password, "myafriartx");
+        const gate = await resolveAdminGateLoginRemote(identity, password, "myafriartx");
         if (!gate.ok) {
-          toast.error(gate.message || "Awaiting approval");
+          toast.info(gate.message || "Awaiting approval", { duration: 8000 });
           return;
         }
         saveAdminGate(identity);
@@ -252,7 +253,7 @@ function LoginPage() {
       }
       navigate({ to: await getPostLoginPath() });
     } catch (err: any) {
-      toast.error(friendlyAuthError(err?.message));
+      toast.error(friendlyAuthError(publicMessage(err, "Authentication failed")));
     } finally {
       setLoading(false);
     }

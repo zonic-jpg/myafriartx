@@ -53,7 +53,14 @@ export const sendLetter = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) =>
     z.object({
-      audience: z.enum(["permission", "collaboration", "advertising"]),
+      audience: z.enum([
+        "permission",
+        "collaboration",
+        "advertising",
+        "artist_invite",
+        "sponsorship",
+        "press",
+      ]),
       recipientBrand: z.string().min(1).max(200),
       to: z.string().email(),
       subject: z.string().min(1).max(300),
