@@ -25,7 +25,15 @@ import {
   type BatchDraft,
   type BatchItemStatus,
 } from "@/lib/batch-upload";
-import { callAdminBridge, type ArtworkSubmission } from "@/lib/admin-bridge";
+import {
+  callAdminBridge,
+  fetchCatalogue,
+  fetchExhibitionInterest,
+  updateArtist,
+  type ArtworkSubmission,
+  type BridgeArtist,
+  type BridgeArtwork,
+} from "@/lib/admin-bridge";
 import { publicMessage } from "@/lib/public-message";
 
 type Artist = { id: string; name: string; country?: string | null };
@@ -68,6 +76,115 @@ function mapSubmissionStatus(status: ArtworkSubmission["status"]): BatchItemStat
   return "submitted";
 }
 
+/**
+ * Per-artist exhibition cost-sharing opt-in — admin-only, no public form.
+ * Rendered right under the artist picker so it travels with whichever
+ * artist is selected. Narrowed to just the fields it reads/writes so the
+ * plain mock-data `Artist` fallback (no portrait_url) still satisfies it.
+ */
+function ExhibitionInterestRow({
+  artist,
+  onSaved,
+}: {
+  artist: Pick<BridgeArtist, "id" | "exhibition_interest" | "exhibition_notes">;
+  onSaved: (patch: { id: string; exhibition_interest: boolean; exhibition_notes: string | null }) => void;
+}) {
+  const [interested, setInterested] = useState(!!artist.exhibition_interest);
+  const [notes, setNotes] = useState(artist.exhibition_notes ?? "");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setInterested(!!artist.exhibition_interest);
+    setNotes(artist.exhibition_notes ?? "");
+  }, [artist.id, artist.exhibition_interest, artist.exhibition_notes]);
+
+  const save = async (nextInterested: boolean, nextNotes: string) => {
+    setSaving(true);
+    try {
+      await updateArtist({ id: artist.id, exhibition_interest: nextInterested, exhibition_notes: nextNotes });
+      onSaved({ id: artist.id, exhibition_interest: nextInterested, exhibition_notes: nextNotes || null });
+    } catch (e) {
+      toast.error(publicMessage(e, "Could not save exhibition interest."));
+      setInterested(!!artist.exhibition_interest);
+      setNotes(artist.exhibition_notes ?? "");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex min-w-[260px] flex-1 items-center gap-2 rounded-md border border-border bg-muted/20 px-3 py-2">
+      <label className="flex items-center gap-1.5 text-xs font-medium">
+        <input
+          type="checkbox"
+          checked={interested}
+          disabled={saving}
+          onChange={(e) => {
+            const next = e.target.checked;
+            setInterested(next);
+            void save(next, notes);
+          }}
+        />
+        Exhibition cost-sharing interest
+      </label>
+      <input
+        className="flex-1 rounded-md border border-input bg-background px-2 py-1 text-xs"
+        placeholder="Target exhibition / region (for grouping)"
+        value={notes}
+        disabled={saving}
+        onChange={(e) => setNotes(e.target.value)}
+        onBlur={() => void save(interested, notes)}
+      />
+    </div>
+  );
+}
+
+/** Admin-only aggregate: artists opted into exhibition cost-sharing, grouped by target. */
+function ExhibitionInterestPanel() {
+  const [groups, setGroups] = useState<{ notes: string; artists: { id: string; name: string }[] }[] | null>(null);
+  const [total, setTotal] = useState(0);
+  const [loadingPanel, setLoadingPanel] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoadingPanel(true);
+    try {
+      const res = await fetchExhibitionInterest();
+      setGroups(res.groups ?? []);
+      setTotal(res.total ?? 0);
+    } catch {
+      setGroups(null);
+    } finally {
+      setLoadingPanel(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  if (!groups?.length) return null;
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Exhibition cost-sharing interest ({total})
+      </h3>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Artists opted in, grouped by target exhibition/region — a group with 2+ names is worth pooling logistics for.
+      </p>
+      {loadingPanel && <p className="mt-2 text-xs text-muted-foreground">Refreshing…</p>}
+      <div className="mt-3 space-y-2">
+        {groups.map((g) => (
+          <div key={g.notes} className="rounded-md border border-border bg-muted/20 px-3 py-2 text-xs">
+            <p className="font-medium">{g.notes}</p>
+            <p className="mt-0.5 text-muted-foreground">{g.artists.map((a) => a.name).join(", ")}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function BatchUploadAdmin({ artists, artworks, loading = false }: Props) {
   const [artistId, setArtistId] = useState("");
   const [drafts, setDrafts] = useState<BatchDraft[]>([]);
@@ -77,12 +194,37 @@ export function BatchUploadAdmin({ artists, artworks, loading = false }: Props) 
   const [submitting, setSubmitting] = useState(false);
   const [queue, setQueue] = useState<ArtworkSubmission[]>([]);
   const [queueLoading, setQueueLoading] = useState(false);
+  const [liveCatalogue, setLiveCatalogue] = useState<{ artists: BridgeArtist[]; artworks: BridgeArtwork[] } | null>(
+    null,
+  );
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const artist = artists.find((a) => a.id === artistId) ?? null;
+  // BatchUploadAdmin's artists/artworks props are sourced from a dead
+  // TanStack server fn. The real owner signs in via the orbit gate (no
+  // Supabase session — production has zero rows in auth.users), so that
+  // props path silently served local mock data. Self-fetch the real
+  // catalogue once and prefer it whenever it has loaded.
+  useEffect(() => {
+    let cancelled = false;
+    fetchCatalogue()
+      .then((res) => {
+        if (!cancelled) setLiveCatalogue(res);
+      })
+      .catch(() => {
+        /* fall back to props (mock data) if the bridge call fails */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const effectiveArtists = liveCatalogue?.artists ?? artists;
+  const effectiveArtworks = liveCatalogue?.artworks ?? artworks;
+
+  const artist = effectiveArtists.find((a) => a.id === artistId) ?? null;
   const liveArtworks = useMemo(
-    () => artworks.filter((a) => a.artist_id === artistId && a.is_active !== false),
-    [artworks, artistId],
+    () => effectiveArtworks.filter((a) => a.artist_id === artistId && a.is_active !== false),
+    [effectiveArtworks, artistId],
   );
 
   const persist = useCallback(
@@ -307,7 +449,7 @@ export function BatchUploadAdmin({ artists, artworks, loading = false }: Props) 
             onChange={(e) => setArtistId(e.target.value)}
           >
             <option value="">— choose one artist —</option>
-            {artists.map((a) => (
+            {effectiveArtists.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
                 {a.country ? ` · ${a.country}` : ""}
@@ -321,6 +463,22 @@ export function BatchUploadAdmin({ artists, artworks, loading = false }: Props) 
           </p>
         )}
       </div>
+
+      {artist && (
+        <ExhibitionInterestRow
+          key={artist.id}
+          artist={artist}
+          onSaved={(patch) => {
+            setLiveCatalogue((prev) => {
+              const base = prev ?? { artists: effectiveArtists as BridgeArtist[], artworks: effectiveArtworks as BridgeArtwork[] };
+              return {
+                ...base,
+                artists: base.artists.map((a) => (a.id === patch.id ? { ...a, ...patch } : a)),
+              };
+            });
+          }}
+        />
+      )}
 
       {!artistId ? (
         <p className="rounded-lg border border-dashed border-border px-4 py-12 text-center text-sm text-muted-foreground">
@@ -697,6 +855,8 @@ export function BatchUploadAdmin({ artists, artworks, loading = false }: Props) 
               )}
             </aside>
           </div>
+
+          <ExhibitionInterestPanel />
         </>
       )}
     </section>

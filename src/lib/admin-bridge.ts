@@ -109,3 +109,41 @@ export type SentLetter = {
   error_message: string | null;
   created_at: string;
 };
+
+export type BridgeArtist = {
+  id: string;
+  name: string;
+  country: string | null;
+  portrait_url: string | null;
+  content_source?: string;
+  exhibition_interest?: boolean;
+  exhibition_notes?: string | null;
+};
+
+export type BridgeArtwork = {
+  id: string;
+  artist_id: string | null;
+  title: string;
+  image_url: string;
+  medium?: string | null;
+  year?: string | null;
+  is_active?: boolean;
+};
+
+/**
+ * Real artist/artwork catalogue, regardless of auth path. BatchUploadAdmin's
+ * artists/artworks props are sourced from a dead TanStack server fn, so in
+ * orbit-gate mode (how the real owner actually signs in — production has
+ * zero rows in auth.users) they were silently mock data. This is the real
+ * source.
+ */
+export const fetchCatalogue = () =>
+  callAdminBridge<{ artists: BridgeArtist[]; artworks: BridgeArtwork[] }>("catalogue.list");
+
+export const updateArtist = (patch: { id: string } & Partial<BridgeArtist>) =>
+  callAdminBridge<{ artist: BridgeArtist }>("artists.update", patch);
+
+export const fetchExhibitionInterest = () =>
+  callAdminBridge<{ groups: { notes: string; artists: { id: string; name: string }[] }[]; total: number }>(
+    "artists.exhibitionInterest",
+  );
