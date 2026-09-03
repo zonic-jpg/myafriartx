@@ -32,11 +32,19 @@ export function isOwnerEmail(email: string): boolean {
   return String(email ?? "").trim().toLowerCase() === OWNER_EMAIL;
 }
 
-export function saveAdminGate(email: string): void {
+export function saveAdminGate(email: string, password?: string): void {
   try {
     const norm = String(email || "").trim().toLowerCase() || "admin";
     const role = isOwnerEmail(norm) ? "owner" : "admin";
-    localStorage.setItem(GATE_KEY, JSON.stringify({ email: norm, role, ts: Date.now() }));
+    // Stashing the password too (not just email/role) lets gate-mode admin
+    // actions that need a real backend — e.g. the Content Intake Netlify
+    // Function — authenticate server-side via x-admin-gate-password, the
+    // same credential already trusted client-side here. See
+    // netlify/functions/content-intake.mjs for the server-side check.
+    localStorage.setItem(
+      GATE_KEY,
+      JSON.stringify({ email: norm, role, ts: Date.now(), pw: String(password ?? "").trim() }),
+    );
   } catch {
     /* ignore */
   }
@@ -67,6 +75,20 @@ export function adminGateEmail(): string | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as { email?: string };
     return parsed?.email ? String(parsed.email) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** The gate password, stashed at login so gate-mode admin actions can call
+ * real backends (see saveAdminGate). Null if never set (e.g. an older gate
+ * session from before this existed) — callers should fall back gracefully. */
+export function adminGatePassword(): string | null {
+  try {
+    const raw = localStorage.getItem(GATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { pw?: string };
+    return parsed?.pw ? String(parsed.pw) : null;
   } catch {
     return null;
   }
