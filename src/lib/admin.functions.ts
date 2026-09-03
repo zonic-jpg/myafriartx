@@ -131,7 +131,23 @@ export const deleteArtist = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const { error } = await context.supabase.from("artists").delete().eq("id", data.id);
+    const sb = context.supabase;
+
+    const { data: arts } = await sb.from("artworks").select("id, image_url").eq("artist_id", data.id);
+    for (const art of arts ?? []) {
+      const url = art.image_url ?? "";
+      const marker = "/storage/v1/object/public/artworks/";
+      const idx = url.indexOf(marker);
+      if (idx >= 0) {
+        const path = decodeURIComponent(url.slice(idx + marker.length).split("?")[0] ?? "");
+        if (path) await sb.storage.from("artworks").remove([path]);
+      }
+    }
+    const { error: artErr } = await sb.from("artworks").delete().eq("artist_id", data.id);
+    if (artErr) throw new Error(artErr.message);
+
+    // outreach_works rows cascade via artist_id FK when the profile is removed.
+    const { error } = await sb.from("artists").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

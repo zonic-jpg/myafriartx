@@ -459,7 +459,7 @@ function ArtistsAdmin({
   const mSeedOutreach = useMutation({
     mutationFn: () => seedOutreachArtists(),
     onSuccess: (r) => {
-      toast.success(`Seeded ${r.count} outreach artist profiles`);
+      toast.success(`Seeded ${r.count} outreach profiles (${r.works} works)`);
       onChange();
     },
     onError: (e: Error) => toast.error(publicMessage(e)),
@@ -469,10 +469,9 @@ function ArtistsAdmin({
     <div>
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <p className="mr-auto max-w-xl text-xs text-muted-foreground">
-          Seeding upserts the curated outreach profiles from{" "}
-          <code>data/nigerian-artists-outreach-100.csv</code> so their advertised{" "}
-          <code>/artist/ART-OUT-###</code> links resolve. Only CSV facts are written and each
-          profile is marked unclaimed. Safe to re-run.
+          Seeding upserts regional outreach profiles from{" "}
+          <code>data/african-artists-outreach-regional.json</code> plus the Nigerian CSV and public
+          reference works. Each profile is marked unclaimed. Safe to re-run.
         </p>
         <button
           type="button"
@@ -480,7 +479,7 @@ function ArtistsAdmin({
           onClick={() => mSeedOutreach.mutate()}
           className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted disabled:opacity-60"
         >
-          {mSeedOutreach.isPending ? "Seeding…" : "Seed outreach artists"}
+          {mSeedOutreach.isPending ? "Seeding…" : "Seed regional outreach"}
         </button>
         <button
           onClick={() =>
@@ -557,7 +556,13 @@ function ArtistsAdmin({
                   Edit
                 </button>
                 <button
-                  onClick={() => confirm("Delete?") && mDel.mutate(a.id)}
+                  onClick={() => {
+                    const outreach = a.profile_status === "unclaimed_outreach";
+                    const msg = outreach
+                      ? `Delete unclaimed outreach profile for ${a.name}? This removes the profile and any stored outreach works. The artist has not consented to this listing.`
+                      : "Delete?";
+                    if (confirm(msg)) mDel.mutate(a.id);
+                  }}
                   className="text-xs text-destructive underline"
                 >
                   Delete

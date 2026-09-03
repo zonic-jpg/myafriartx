@@ -1,0 +1,20 @@
+export const GHANA = {
+  count: 15,
+  artists: [
+    { name: "El Anatsui", medium: "Sculpture", city: "Anyako", gender: "male", birth_year: 1944, wikipedia: "El Anatsui" },
+    { name: "Ibrahim Mahama", medium: "Installation", city: "Tamale", gender: "male", birth_year: 1987, website: "ibrahimmahama.org", wikipedia: "Ibrahim Mahama (artist)" },
+    { name: "Ablade Glover", medium: "Painting", city: "Accra", gender: "male", birth_year: 1934, wikipedia: "Ablade Glover" },
+    { name: "Kwame Akoto-Bamfo", medium: "Sculpture", city: "Accra", gender: "male", birth_year: 1980, website: "nkyinkyim.com", wikipedia: "Kwame Akoto-Bamfo" },
+    { name: "Serge Attukwei Clottey", medium: "Mixed media", city: "Accra", gender: "male", birth_year: 1985, wikipedia: "Serge Attukwei Clottey" },
+    { name: "Zohra Opoku", medium: "Textile", city: "Accra", gender: "female", birth_year: 1976, wikipedia: "Zohra Opoku" },
+    { name: "Paa Joe", medium: "Sculpture", city: "Accra", gender: "male", birth_year: 1947, wikipedia: "Paa Joe" },
+    { name: "Jeremiah Quarshie", medium: "Painting", city: "Accra", gender: "male", birth_year: 1985, wikipedia: "Jeremiah Quarshie" },
+    { name: "Bright Ackwerh", medium: "Digital art", city: "Accra", gender: "male", birth_year: 1989, website: "brightackwerh.com" },
+    { name: "Betty Acquah", medium: "Painting", city: "Accra", gender: "female", birth_year: 1965 },
+    { name: "Yaw Owusu", medium: "Sculpture", city: "Accra", gender: "male", birth_year: 1992, wikipedia: "Yaw Owusu" },
+    { name: "Kwaku Boafo", medium: "Painting", city: "Accra", gender: "male", birth_year: 1986 },
+    { name: "Isaac Opoku", medium: "Painting", city: "Kumasi", gender: "male", birth_year: 1990 },
+    { name: "Ama Ofori", medium: "Mixed media", city: "Accra", gender: "female", birth_year: 1991 },
+    { name: "Joseph Awuah-Darko", medium: "Photography", city: "Accra", gender: "male", birth_year: 1996, wikipedia: "Joseph Awuah-Darko" },
+  ],
+};

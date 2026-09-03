@@ -1,0 +1,20 @@
+export const MOROCCO = {
+  count: 15,
+  artists: [
+    { name: "Hassan Hajjaj", medium: "Photography", city: "Marrakech", gender: "male", birth_year: 1961, wikipedia: "Hassan Hajjaj" },
+    { name: "Mohamed Melehi", medium: "Painting", city: "Casablanca", gender: "male", birth_year: 1936, wikipedia: "Mohamed Melehi" },
+    { name: "Farid Belkahia", medium: "Painting", city: "Marrakech", gender: "male", birth_year: 1934, wikipedia: "Farid Belkahia" },
+    { name: "Malika Agueznay", medium: "Painting", city: "Casablanca", gender: "female", birth_year: 1948 },
+    { name: "Chaïbia Talal", medium: "Painting", city: "Casablanca", gender: "female", birth_year: 1929, wikipedia: "Chaïbia Talal" },
+    { name: "Mounir Fatmi", medium: "Installation", city: "Tangier", gender: "male", birth_year: 1970, wikipedia: "Mounir Fatmi" },
+    { name: "Yto Barrada", medium: "Photography", city: "Tangier", gender: "female", birth_year: 1971, wikipedia: "Yto Barrada" },
+    { name: "Lalla Essaydi", medium: "Photography", city: "Marrakech", gender: "female", birth_year: 1956, wikipedia: "Lalla Essaydi" },
+    { name: "Mohamed Larbi Rahhali", medium: "Painting", city: "Marrakech", gender: "male", birth_year: 1943 },
+    { name: "Abderrazak Sahli", medium: "Painting", city: "Tetouan", gender: "male", birth_year: 1940 },
+    { name: "Saïd Aouita", medium: "Sculpture", city: "Rabat", gender: "male", birth_year: 1956 },
+    { name: "Hicham Benohoud", medium: "Photography", city: "Marrakech", gender: "male", birth_year: 1968 },
+    { name: "Meriem Bennani", medium: "Video", city: "Casablanca", gender: "female", birth_year: 1988, wikipedia: "Meriem Bennani" },
+    { name: "Majida Khattari", medium: "Photography", city: "Casablanca", gender: "female", birth_year: 1966 },
+    { name: "Soufiane Idrissi", medium: "Painting", city: "Casablanca", gender: "male", birth_year: 1990 },
+  ],
+};

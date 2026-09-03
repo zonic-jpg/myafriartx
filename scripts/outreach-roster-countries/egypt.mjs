@@ -1,0 +1,20 @@
+export const EGYPT = {
+  count: 15,
+  artists: [
+    { name: "Mahmoud Mokhtar", medium: "Sculpture", city: "Cairo", gender: "male", birth_year: 1891, wikipedia: "Mahmoud Mokhtar" },
+    { name: "Mahmoud Said", medium: "Painting", city: "Alexandria", gender: "male", birth_year: 1897, wikipedia: "Mahmoud Said" },
+    { name: "Inji Efflatoun", medium: "Painting", city: "Cairo", gender: "female", birth_year: 1924, wikipedia: "Inji Efflatoun" },
+    { name: "Adam Henein", medium: "Sculpture", city: "Cairo", gender: "male", birth_year: 1929, wikipedia: "Adam Henein" },
+    { name: "Gazbia Sirry", medium: "Painting", city: "Cairo", gender: "female", birth_year: 1925, wikipedia: "Gazbia Sirry" },
+    { name: "Hamed Nada", medium: "Painting", city: "Cairo", gender: "male", birth_year: 1924 },
+    { name: "Samir Rafi", medium: "Painting", city: "Cairo", gender: "male", birth_year: 1926 },
+    { name: "Mohamed Abla", medium: "Painting", city: "Cairo", gender: "male", birth_year: 1953 },
+    { name: "Moataz Nasr", medium: "Installation", city: "Cairo", gender: "male", birth_year: 1961, wikipedia: "Moataz Nasr" },
+    { name: "Ghada Amer", medium: "Textile", city: "Cairo", gender: "female", birth_year: 1963, wikipedia: "Ghada Amer" },
+    { name: "Wael Shawky", medium: "Video", city: "Alexandria", gender: "male", birth_year: 1971, wikipedia: "Wael Shawky" },
+    { name: "Basim Magdy", medium: "Photography", city: "Cairo", gender: "male", birth_year: 1977, wikipedia: "Basim Magdy" },
+    { name: "Hassan Khan", medium: "Video", city: "Cairo", gender: "male", birth_year: 1975, wikipedia: "Hassan Khan" },
+    { name: "Amal Kenawy", medium: "Installation", city: "Cairo", gender: "female", birth_year: 1974, wikipedia: "Amal Kenawy" },
+    { name: "Marwan Elgamal", medium: "Painting", city: "Cairo", gender: "male", birth_year: 1991 },
+  ],
+};

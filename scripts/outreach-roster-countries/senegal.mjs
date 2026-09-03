@@ -1,0 +1,20 @@
+export const SENEGAL = {
+  count: 15,
+  artists: [
+    { name: "Ousmane Sow", medium: "Sculpture", city: "Dakar", gender: "male", birth_year: 1935, wikipedia: "Ousmane Sow" },
+    { name: "Iba N'Diaye", medium: "Painting", city: "Dakar", gender: "male", birth_year: 1928, wikipedia: "Iba N'Diaye" },
+    { name: "Viviane Sennes", medium: "Painting", city: "Dakar", gender: "female", birth_year: 1954 },
+    { name: "Seni Awa Camara", medium: "Sculpture", city: "Dakar", gender: "female", birth_year: 1945 },
+    { name: "Issa Samb", medium: "Performance", city: "Dakar", gender: "male", birth_year: 1945, wikipedia: "Issa Samb" },
+    { name: "Anta Germaine Gaye", medium: "Painting", city: "Dakar", gender: "female", birth_year: 1964 },
+    { name: "Soly Cissé", medium: "Painting", city: "Dakar", gender: "male", birth_year: 1969 },
+    { name: "Viyé Diba", medium: "Installation", city: "Dakar", gender: "male", birth_year: 1954 },
+    { name: "Ndary Lo", medium: "Sculpture", city: "Dakar", gender: "male", birth_year: 1961 },
+    { name: "Moustapha Dimé", medium: "Mixed media", city: "Dakar", gender: "male", birth_year: 1952 },
+    { name: "Cheikh Niass", medium: "Painting", city: "Dakar", gender: "male", birth_year: 1988 },
+    { name: "Fatou Kandé Senghor", medium: "Film/Video", city: "Dakar", gender: "female", birth_year: 1971 },
+    { name: "Bara Ndiaye", medium: "Photography", city: "Dakar", gender: "male", birth_year: 1990 },
+    { name: "Mamadou Gomis", medium: "Photography", city: "Dakar", gender: "male", birth_year: 1985 },
+    { name: "Aïcha Diallo", medium: "Mixed media", city: "Dakar", gender: "female", birth_year: 1993 },
+  ],
+};

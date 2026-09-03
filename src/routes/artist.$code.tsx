@@ -135,28 +135,59 @@ function ArtistDetailPage() {
             </p>
           ) : (
             <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {works.map((w: any) => (
-                <Link
-                  key={w.id}
-                  to="/piece/$code"
-                  params={{ code: w.short_code }}
-                  className="group block"
-                >
-                  <div className="aspect-[4/5] overflow-hidden rounded-md border border-border bg-muted">
-                    {w.image_url && (
-                      <img
-                        src={w.image_url}
-                        alt={w.title}
-                        className="h-full w-full object-contain transition"
-                      />
-                    )}
+              {works.map((w: any) => {
+                const card = (
+                  <>
+                    <div className="aspect-[4/5] overflow-hidden rounded-md border border-border bg-muted">
+                      {w.image_url ? (
+                        <img
+                          src={w.image_url}
+                          alt={w.title}
+                          className="h-full w-full object-contain transition group-hover:opacity-90"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center p-3 text-center text-xs text-muted-foreground">
+                          Public image not on file
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-1 truncate text-sm font-medium">{w.title}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {isOutreach ? "Unclaimed reference" : `${w.short_code} · ${w.lifecycle_status}`}
+                    </p>
+                  </>
+                );
+                if (isOutreach && w.source_url) {
+                  return (
+                    <a
+                      key={w.id}
+                      href={w.source_url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="group block"
+                    >
+                      {card}
+                    </a>
+                  );
+                }
+                if (!isOutreach && w.short_code) {
+                  return (
+                    <Link
+                      key={w.id}
+                      to="/piece/$code"
+                      params={{ code: w.short_code }}
+                      className="group block"
+                    >
+                      {card}
+                    </Link>
+                  );
+                }
+                return (
+                  <div key={w.id} className="group block">
+                    {card}
                   </div>
-                  <p className="mt-1 truncate text-sm font-medium">{w.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {w.short_code} · {w.lifecycle_status}
-                  </p>
-                </Link>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>

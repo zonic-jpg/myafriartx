@@ -219,6 +219,29 @@ export const getArtistDetail = createServerFn({ method: "GET" })
       const withOutreach = await load(`${detailCols}, ${ARTIST_OUTREACH_COLS}`);
       const artist = (withOutreach.data ?? (await load(detailCols)).data) as any;
       if (artist) {
+        const isOutreach = artist.profile_status === "unclaimed_outreach";
+        if (isOutreach) {
+          const { data: outreachWorks } = await (await __get_admin())
+            .from("outreach_works")
+            .select("id, slot, title, image_url, source_url")
+            .eq("artist_short_code", artist.short_code)
+            .order("slot", { ascending: true });
+          const works = (outreachWorks ?? []).map((w: any) => ({
+            id: w.id,
+            short_code: `${artist.short_code}-W${w.slot}`,
+            title: w.title ?? "Untitled",
+            medium: artist.primary_medium,
+            year: null,
+            image_url: w.image_url,
+            price: null,
+            currency: null,
+            lifecycle_status: "outreach_discover",
+            view_count: 0,
+            created_at: null,
+            source_url: w.source_url,
+          }));
+          return { artist, works };
+        }
         const { data: works } = await (await __get_admin())
           .from("artworks")
           .select(

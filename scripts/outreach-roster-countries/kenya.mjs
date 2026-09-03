@@ -1,0 +1,20 @@
+export const KENYA = {
+  count: 15,
+  artists: [
+    { name: "Wangechi Mutu", medium: "Mixed media", city: "Nairobi", gender: "female", birth_year: 1972, wikipedia: "Wangechi Mutu" },
+    { name: "Cyrus Kabiru", medium: "Sculpture", city: "Nairobi", gender: "male", birth_year: 1984, wikipedia: "Cyrus Kabiru" },
+    { name: "Peterson Kamwathi", medium: "Drawing", city: "Nairobi", gender: "male", birth_year: 1980 },
+    { name: "Beatrice Wanjiku", medium: "Painting", city: "Nairobi", gender: "female", birth_year: 1978 },
+    { name: "Richard Onyango", medium: "Painting", city: "Nairobi", gender: "male", birth_year: 1960 },
+    { name: "Jackie Karuti", medium: "Installation", city: "Nairobi", gender: "female", birth_year: 1987 },
+    { name: "Mbuthia Maina", medium: "Sculpture", city: "Nairobi", gender: "male", birth_year: 1988 },
+    { name: "Longinos Nagila", medium: "Photography", city: "Nairobi", gender: "male", birth_year: 1990 },
+    { name: "Kaloki Nyamai", medium: "Painting", city: "Nairobi", gender: "male", birth_year: 1985 },
+    { name: "Syowia Kyambi", medium: "Performance", city: "Nairobi", gender: "female", birth_year: 1979, wikipedia: "Syowia Kyambi" },
+    { name: "Michael Soi", medium: "Painting", city: "Nairobi", gender: "male", birth_year: 1972 },
+    { name: "Shabu Mwangi", medium: "Painting", city: "Nairobi", gender: "male", birth_year: 1980 },
+    { name: "Joseph Bertiers", medium: "Painting", city: "Nairobi", gender: "male", birth_year: 1963 },
+    { name: "Dennis Muraguri", medium: "Printmaking", city: "Nairobi", gender: "male", birth_year: 1985 },
+    { name: "Jimnah Kimani", medium: "Painting", city: "Nairobi", gender: "male", birth_year: 1992 },
+  ],
+};
