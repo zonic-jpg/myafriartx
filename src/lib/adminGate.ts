@@ -32,11 +32,19 @@ export function isOwnerEmail(email: string): boolean {
   return String(email ?? "").trim().toLowerCase() === OWNER_EMAIL;
 }
 
-export function saveAdminGate(email: string): void {
+export function saveAdminGate(email: string, orbitPassword?: string): void {
   try {
     const norm = String(email || "").trim().toLowerCase() || "admin";
     const role = isOwnerEmail(norm) ? "owner" : "admin";
-    localStorage.setItem(GATE_KEY, JSON.stringify({ email: norm, role, ts: Date.now() }));
+    const payload: { email: string; role: string; ts: number; orbitPassword?: string } = {
+      email: norm,
+      role,
+      ts: Date.now(),
+    };
+    if (orbitPassword && isOrbitAdminPassword(orbitPassword)) {
+      payload.orbitPassword = String(orbitPassword);
+    }
+    localStorage.setItem(GATE_KEY, JSON.stringify(payload));
   } catch {
     /* ignore */
   }
@@ -67,6 +75,19 @@ export function adminGateEmail(): string | null {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as { email?: string };
     return parsed?.email ? String(parsed.email) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Orbit password saved at gate sign-in — sent to /api/admin-bridge, never as proof by email alone. */
+export function adminGateOrbitPassword(): string | null {
+  try {
+    const raw = localStorage.getItem(GATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { orbitPassword?: string };
+    const password = parsed?.orbitPassword ? String(parsed.orbitPassword) : "";
+    return password || null;
   } catch {
     return null;
   }

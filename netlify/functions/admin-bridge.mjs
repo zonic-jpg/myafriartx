@@ -3,27 +3,28 @@
  * POST /api/admin-bridge  { action, ... }
  *
  * The production site is a static SPA, so TanStack `createServerFn` endpoints do
- * not exist at runtime and the owner signs in through the soft admin gate, which
- * deliberately holds no Supabase JWT. Every privileged read/write therefore goes
- * through this one function using the service role key.
+ * not exist at runtime and the owner may sign in through the orbit admin gate,
+ * which deliberately holds no Supabase JWT. Every privileged read/write therefore
+ * goes through this one function using the service role key.
  *
- * Authorisation, strongest first:
- *   1. Bearer Supabase JWT belonging to a user with the 'admin' role.
- *   2. `x-admin-key` matching ADMIN_BRIDGE_SECRET (set this on Netlify to lock
- *      the bridge down to people who know the secret).
- *   3. Soft gate: `x-admin-email` equal to OWNER_EMAIL. This matches the trust
- *      level of the rest of the orbit gate and keeps the queue usable with no
- *      extra configuration. Set ADMIN_BRIDGE_SOFT_GATE=false to disable it.
+ * Authorisation (server-side only — never trust client-supplied email headers):
+ *   1. Bearer Supabase JWT whose user has the 'admin' role in user_roles, or
+ *      whose email claim is OWNER_EMAIL.
+ *   2. Orbit gate password in `x-orbit-gate-password` or body.orbitPassword,
+ *      verified case-insensitively against the Zonic orbit standard password.
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (required),
  *      SUPABASE_PUBLISHABLE_KEY (JWT verification),
- *      RESEND_API_KEY + LETTERS_FROM (letters.send),
- *      ADMIN_BRIDGE_SECRET, ADMIN_BRIDGE_SOFT_GATE (optional).
+ *      RESEND_API_KEY + LETTERS_FROM (letters.send).
  */
 import { createClient } from "@supabase/supabase-js";
 
 const OWNER_EMAIL = "oadeagbo@gmail.com";
+const ORBIT_GATE_PASSWORD = "zonicgate2026";
 const APP_ID = "myafriartx";
+const AUTH_FAIL_LIMIT = 20;
+const AUTH_FAIL_WINDOW_MS = 15 * 60 * 1000;
+const authFailBuckets = new Map();
 const MEDIA_ENUM = [
   "oil",
   "watercolor",
@@ -39,7 +40,7 @@ const MEDIA_ENUM = [
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-admin-email, x-admin-key",
+  "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-orbit-gate-password",
   "Content-Type": "application/json",
 };
 
@@ -62,7 +63,49 @@ function header(event, name) {
 
 const norm = (v) => String(v ?? "").trim().toLowerCase();
 
-async function resolveActor(event, supabaseUrl, serviceKey) {
+function clientIp(event) {
+  const fwd = header(event, "x-forwarded-for");
+  if (fwd) return String(fwd).split(",")[0].trim();
+  return header(event, "client-ip") || "unknown";
+}
+
+function authRateLimited(ip) {
+  const now = Date.now();
+  const bucket = authFailBuckets.get(ip);
+  if (!bucket || now - bucket.startedAt > AUTH_FAIL_WINDOW_MS) {
+    authFailBuckets.set(ip, { count: 0, startedAt: now });
+    return false;
+  }
+  return bucket.count >= AUTH_FAIL_LIMIT;
+}
+
+function recordAuthFailure(ip) {
+  const now = Date.now();
+  const bucket = authFailBuckets.get(ip);
+  if (!bucket || now - bucket.startedAt > AUTH_FAIL_WINDOW_MS) {
+    authFailBuckets.set(ip, { count: 1, startedAt: now });
+    return;
+  }
+  bucket.count += 1;
+}
+
+function isOrbitGatePassword(value) {
+  return norm(value) === ORBIT_GATE_PASSWORD;
+}
+
+function orbitPasswordFromRequest(event, body) {
+  const fromHeader = header(event, "x-orbit-gate-password");
+  if (fromHeader) return fromHeader;
+  if (body && typeof body.orbitPassword === "string") return body.orbitPassword;
+  return "";
+}
+
+async function resolveActor(event, supabaseUrl, serviceKey, body = {}) {
+  const ip = clientIp(event);
+  if (authRateLimited(ip)) {
+    return { ok: false, reason: "Too many failed admin sign-in attempts. Try again later." };
+  }
+
   const anonKey = env("SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_ANON_KEY");
   const token = String(header(event, "authorization")).replace(/^Bearer\s+/i, "").trim();
 
@@ -74,6 +117,10 @@ async function resolveActor(event, supabaseUrl, serviceKey) {
     const { data } = await userClient.auth.getUser();
     const user = data?.user;
     if (user) {
+      const email = norm(user.email);
+      if (email === OWNER_EMAIL) {
+        return { ok: true, email, userId: user.id, via: "jwt-owner" };
+      }
       const admin = createClient(supabaseUrl, serviceKey);
       const { data: role } = await admin
         .from("user_roles")
@@ -81,26 +128,20 @@ async function resolveActor(event, supabaseUrl, serviceKey) {
         .eq("user_id", user.id)
         .eq("role", "admin")
         .maybeSingle();
-      if (role) return { ok: true, email: norm(user.email) || OWNER_EMAIL, userId: user.id, via: "jwt" };
+      if (role) return { ok: true, email: email || OWNER_EMAIL, userId: user.id, via: "jwt" };
     }
   }
 
-  const secret = env("ADMIN_BRIDGE_SECRET");
-  if (secret && header(event, "x-admin-key") === secret) {
-    return { ok: true, email: norm(header(event, "x-admin-email")) || OWNER_EMAIL, userId: null, via: "secret" };
+  const orbitPassword = orbitPasswordFromRequest(event, body);
+  if (orbitPassword && isOrbitGatePassword(orbitPassword)) {
+    return { ok: true, email: "orbit-gate@myafriart", userId: null, via: "orbit-gate" };
   }
 
-  const softGateOff = norm(env("ADMIN_BRIDGE_SOFT_GATE")) === "false";
-  const gateEmail = norm(header(event, "x-admin-email"));
-  if (!softGateOff && gateEmail && gateEmail === OWNER_EMAIL) {
-    return { ok: true, email: gateEmail, userId: null, via: "soft-gate" };
-  }
+  if (orbitPassword || token) recordAuthFailure(ip);
 
   return {
     ok: false,
-    reason: secret
-      ? "This admin action needs the owner console key."
-      : "Sign in as the owner to use this admin action.",
+    reason: "Sign in with your Supabase account or the orbit admin password to use this action.",
   };
 }
 
@@ -367,7 +408,7 @@ export async function handler(event) {
     return respond(200, { status: data?.status ?? "none" });
   }
 
-  const actor = await resolveActor(event, supabaseUrl, serviceKey);
+  const actor = await resolveActor(event, supabaseUrl, serviceKey, body);
   if (!actor.ok) return respond(403, { error: actor.reason });
 
   try {

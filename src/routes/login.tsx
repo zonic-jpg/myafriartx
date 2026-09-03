@@ -222,7 +222,7 @@ function LoginPage() {
           toast.info(gate.message || "Awaiting approval", { duration: 8000 });
           return;
         }
-        saveAdminGate(identity);
+        saveAdminGate(identity, password);
         // Drop any stale Supabase JWT (alice demo, etc.) without touching the soft gate we just saved.
         await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
         toast.success(

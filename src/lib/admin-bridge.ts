@@ -1,17 +1,15 @@
 /**
  * Client for POST /api/admin-bridge (netlify/functions/admin-bridge.mjs).
  *
- * The owner signs in through the soft orbit gate, which holds no Supabase JWT,
- * so privileged reads and writes cannot go through RLS from the browser. They go
- * through this one serverless door instead, carrying the gate identity plus any
- * Supabase session that happens to exist.
+ * Privileged reads and writes go through this one serverless door, carrying a
+ * Supabase JWT when present and/or the orbit gate password verified server-side.
+ * Client email headers are never used as proof of ownership.
  */
 import { supabase } from "@/integrations/supabase/client";
-import { adminGateEmail } from "@/lib/adminGate";
+import { adminGateOrbitPassword } from "@/lib/adminGate";
 import { publicMessage } from "@/lib/public-message";
 
 const ENDPOINT = "/api/admin-bridge";
-const CONSOLE_KEY_STORAGE = "myafriart_owner_console_key";
 
 export class BridgeUnavailableError extends Error {
   constructor(message: string) {
@@ -20,34 +18,15 @@ export class BridgeUnavailableError extends Error {
   }
 }
 
-export function ownerConsoleKey(): string {
-  try {
-    return localStorage.getItem(CONSOLE_KEY_STORAGE) || "";
-  } catch {
-    return "";
-  }
-}
-
-export function setOwnerConsoleKey(key: string): void {
-  try {
-    if (key) localStorage.setItem(CONSOLE_KEY_STORAGE, key);
-    else localStorage.removeItem(CONSOLE_KEY_STORAGE);
-  } catch {
-    /* private mode */
-  }
-}
-
 async function authHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const gate = adminGateEmail();
-  if (gate) headers["x-admin-email"] = gate;
-  const key = ownerConsoleKey();
-  if (key) headers["x-admin-key"] = key;
+  const orbitPassword = adminGateOrbitPassword();
+  if (orbitPassword) headers["x-orbit-gate-password"] = orbitPassword;
   try {
     const { data } = await supabase.auth.getSession();
     if (data.session?.access_token) headers.Authorization = `Bearer ${data.session.access_token}`;
   } catch {
-    /* anonymous soft gate */
+    /* orbit gate without Supabase JWT */
   }
   return headers;
 }
