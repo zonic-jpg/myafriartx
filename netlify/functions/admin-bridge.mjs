@@ -11,9 +11,14 @@
  *   1. Bearer Supabase JWT belonging to a user with the 'admin' role.
  *   2. `x-admin-key` matching ADMIN_BRIDGE_SECRET (set this on Netlify to lock
  *      the bridge down to people who know the secret).
- *   3. Soft gate: `x-admin-email` equal to OWNER_EMAIL. This matches the trust
- *      level of the rest of the orbit gate and keeps the queue usable with no
- *      extra configuration. Set ADMIN_BRIDGE_SOFT_GATE=false to disable it.
+ *   3. Soft gate: `x-admin-email` equal to OWNER_EMAIL AND `x-admin-gate-password`
+ *      equal to the site's orbit gate password (src/lib/adminGate.ts). Both are
+ *      required — email alone used to be enough here, which meant anyone who
+ *      read OWNER_EMAIL out of the public JS bundle (it's a plain constant) and
+ *      sent that one header got full owner access with no credential at all.
+ *      Requiring the password too brings this path back to the same trust
+ *      level as the login screen itself. Set ADMIN_BRIDGE_SOFT_GATE=false to
+ *      disable this path entirely.
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (required),
  *      SUPABASE_PUBLISHABLE_KEY (JWT verification),
@@ -24,6 +29,11 @@ import { createClient } from "@supabase/supabase-js";
 
 const OWNER_EMAIL = "oadeagbo@gmail.com";
 const APP_ID = "myafriartx";
+// Mirrors src/lib/adminGate.ts's ORBIT_ADMIN_PASSWORD exactly — keep both in
+// sync by hand if it ever changes. Already public in the shipped client
+// bundle, so duplicating it server-side adds no new exposure; requiring it
+// here (instead of trusting email alone) is what closes the hole above.
+const ORBIT_ADMIN_PASSWORD = "zonicgate2026";
 const MEDIA_ENUM = [
   "oil",
   "watercolor",
@@ -39,7 +49,8 @@ const MEDIA_ENUM = [
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-admin-email, x-admin-key",
+  "Access-Control-Allow-Headers":
+    "authorization, content-type, apikey, x-admin-email, x-admin-key, x-admin-gate-password",
   "Content-Type": "application/json",
 };
 
@@ -92,7 +103,8 @@ async function resolveActor(event, supabaseUrl, serviceKey) {
 
   const softGateOff = norm(env("ADMIN_BRIDGE_SOFT_GATE")) === "false";
   const gateEmail = norm(header(event, "x-admin-email"));
-  if (!softGateOff && gateEmail && gateEmail === OWNER_EMAIL) {
+  const gatePassword = norm(header(event, "x-admin-gate-password"));
+  if (!softGateOff && gateEmail && gateEmail === OWNER_EMAIL && gatePassword === ORBIT_ADMIN_PASSWORD) {
     return { ok: true, email: gateEmail, userId: null, via: "soft-gate" };
   }
 
@@ -399,6 +411,70 @@ export async function handler(event) {
           .eq("app", APP_ID);
         if (error) throw new Error(error.message);
         return respond(200, { ok: true, email, status: decision });
+      }
+
+      // Real artist/artwork data, regardless of how the caller signed in.
+      // BatchUploadAdmin used to receive these as props sourced from
+      // adminGetAll (a dead TanStack server fn), so in gate mode — the way
+      // the real owner actually signs in, since production has zero rows in
+      // auth.users — the artist picker and "already live for this artist"
+      // list were silently showing local mock data instead of the real
+      // catalogue. This gives it a real, working source regardless of auth path.
+      case "catalogue.list": {
+        const [{ data: artists, error: artistsErr }, { data: artworks, error: artworksErr }] = await Promise.all([
+          admin
+            .from("artists")
+            .select("id,name,country,portrait_url,content_source,exhibition_interest,exhibition_notes")
+            .order("name", { ascending: true }),
+          admin
+            .from("artworks")
+            .select("id,artist_id,title,image_url,medium,year,is_active")
+            .order("created_at", { ascending: false })
+            .limit(2000),
+        ]);
+        if (artistsErr) throw new Error(artistsErr.message);
+        if (artworksErr) throw new Error(artworksErr.message);
+        return respond(200, { artists: artists ?? [], artworks: artworks ?? [] });
+      }
+
+      case "artists.update": {
+        const id = String(body.id || "");
+        if (!id) return respond(400, { error: "id required" });
+        const patch = {};
+        if (body.name !== undefined) patch.name = String(body.name).trim().slice(0, 300);
+        if (body.country !== undefined) patch.country = String(body.country || "").trim().slice(0, 120) || null;
+        if (body.portrait_url !== undefined) patch.portrait_url = String(body.portrait_url || "").trim() || null;
+        if (body.exhibition_interest !== undefined) patch.exhibition_interest = !!body.exhibition_interest;
+        if (body.exhibition_notes !== undefined) {
+          patch.exhibition_notes = String(body.exhibition_notes || "").trim().slice(0, 1000) || null;
+        }
+        if (!Object.keys(patch).length) return respond(400, { error: "no fields to update" });
+        const { data, error } = await admin.from("artists").update(patch).eq("id", id).select().maybeSingle();
+        if (error) throw new Error(error.message);
+        return respond(200, { artist: data });
+      }
+
+      // Admin-only aggregate for the artist exhibition cost-sharing opt-in
+      // (src/components/admin/BatchUploadAdmin.tsx) — grouped by each
+      // artist's free-text target so 2+ interested in the same show are
+      // easy to spot. No public form.
+      case "artists.exhibitionInterest": {
+        const { data, error } = await admin
+          .from("artists")
+          .select("id,name,exhibition_notes")
+          .eq("exhibition_interest", true)
+          .order("name", { ascending: true });
+        if (error) throw new Error(error.message);
+        const groups = new Map();
+        for (const a of data ?? []) {
+          const key = (a.exhibition_notes || "").trim() || "Unspecified / general interest";
+          if (!groups.has(key)) groups.set(key, []);
+          groups.get(key).push({ id: a.id, name: a.name });
+        }
+        return respond(200, {
+          groups: [...groups.entries()].map(([notes, artists]) => ({ notes, artists })),
+          total: (data ?? []).length,
+        });
       }
 
       case "submissions.list": {

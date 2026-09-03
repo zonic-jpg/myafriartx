@@ -7,7 +7,7 @@
  * Supabase session that happens to exist.
  */
 import { supabase } from "@/integrations/supabase/client";
-import { adminGateEmail } from "@/lib/adminGate";
+import { adminGateActive, adminGateEmail, adminGatePassword } from "@/lib/adminGate";
 import { publicMessage } from "@/lib/public-message";
 
 const ENDPOINT = "/api/admin-bridge";
@@ -41,6 +41,10 @@ async function authHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const gate = adminGateEmail();
   if (gate) headers["x-admin-email"] = gate;
+  // The bridge's soft-gate path now requires the gate password too (it used
+  // to trust the email header alone, which anyone could spoof — see
+  // admin-bridge.mjs). Send it whenever a gate session is active.
+  if (adminGateActive()) headers["x-admin-gate-password"] = adminGatePassword();
   const key = ownerConsoleKey();
   if (key) headers["x-admin-key"] = key;
   try {
@@ -119,6 +123,40 @@ export type ArtworkSubmission = {
   artwork_id: string | null;
   created_at: string;
 };
+
+export type BridgeArtist = {
+  id: string;
+  name: string;
+  country: string | null;
+  portrait_url: string | null;
+  content_source?: string;
+  exhibition_interest?: boolean;
+  exhibition_notes?: string | null;
+};
+
+export type BridgeArtwork = {
+  id: string;
+  artist_id: string | null;
+  title: string;
+  image_url: string;
+  medium?: string | null;
+  year?: string | null;
+  is_active?: boolean;
+};
+
+/** Real artist/artwork data via the bridge — works the same whether the
+ * caller is a real Supabase admin or the gate-mode owner (unlike the
+ * adminGetAll prop path, which only ever returns mock data in gate mode). */
+export const fetchCatalogue = () =>
+  callAdminBridge<{ artists: BridgeArtist[]; artworks: BridgeArtwork[] }>("catalogue.list");
+
+export const updateArtist = (patch: { id: string } & Partial<BridgeArtist>) =>
+  callAdminBridge<{ artist: BridgeArtist }>("artists.update", patch);
+
+export const fetchExhibitionInterest = () =>
+  callAdminBridge<{ groups: { notes: string; artists: { id: string; name: string }[] }[]; total: number }>(
+    "artists.exhibitionInterest",
+  );
 
 export type SentLetter = {
   id: string;

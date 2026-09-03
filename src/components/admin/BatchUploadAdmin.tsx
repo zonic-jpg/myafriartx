@@ -25,7 +25,15 @@ import {
   type BatchDraft,
   type BatchItemStatus,
 } from "@/lib/batch-upload";
-import { callAdminBridge, type ArtworkSubmission } from "@/lib/admin-bridge";
+import {
+  callAdminBridge,
+  fetchCatalogue,
+  updateArtist as updateArtistBridge,
+  fetchExhibitionInterest,
+  type ArtworkSubmission,
+  type BridgeArtist,
+  type BridgeArtwork,
+} from "@/lib/admin-bridge";
 import { publicMessage } from "@/lib/public-message";
 
 type Artist = { id: string; name: string; country?: string | null };
@@ -79,10 +87,36 @@ export function BatchUploadAdmin({ artists, artworks, loading = false }: Props) 
   const [queueLoading, setQueueLoading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const artist = artists.find((a) => a.id === artistId) ?? null;
+  // Real artist/artwork data, fetched independently of the `artists`/`artworks`
+  // props above. Those props come from admin.tsx's adminGetAll call, which is
+  // a dead TanStack server fn under this static deploy — in gate mode (how
+  // the real owner actually signs in, since production has zero rows in
+  // auth.users) it silently falls back to local mock data, so the picker
+  // used to show fake artist names instead of the real catalogue. This takes
+  // over once it loads; the props stay as a fallback while it's in flight.
+  const [liveCatalogue, setLiveCatalogue] = useState<{ artists: BridgeArtist[]; artworks: BridgeArtwork[] } | null>(
+    null,
+  );
+  useEffect(() => {
+    let cancelled = false;
+    fetchCatalogue()
+      .then((res) => {
+        if (!cancelled) setLiveCatalogue(res);
+      })
+      .catch(() => {
+        /* keep the prop-supplied data as a fallback */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const effectiveArtists = liveCatalogue?.artists ?? artists;
+  const effectiveArtworks = liveCatalogue?.artworks ?? artworks;
+
+  const artist = effectiveArtists.find((a) => a.id === artistId) ?? null;
   const liveArtworks = useMemo(
-    () => artworks.filter((a) => a.artist_id === artistId && a.is_active !== false),
-    [artworks, artistId],
+    () => effectiveArtworks.filter((a) => a.artist_id === artistId && a.is_active !== false),
+    [effectiveArtworks, artistId],
   );
 
   const persist = useCallback(
@@ -307,7 +341,7 @@ export function BatchUploadAdmin({ artists, artworks, loading = false }: Props) 
             onChange={(e) => setArtistId(e.target.value)}
           >
             <option value="">— choose one artist —</option>
-            {artists.map((a) => (
+            {effectiveArtists.map((a) => (
               <option key={a.id} value={a.id}>
                 {a.name}
                 {a.country ? ` · ${a.country}` : ""}
@@ -321,6 +355,14 @@ export function BatchUploadAdmin({ artists, artworks, loading = false }: Props) 
           </p>
         )}
       </div>
+
+      {artist && (
+        <ExhibitionInterestRow
+          key={artist.id}
+          artist={artist}
+          onSaved={(patch) => setLiveCatalogue((c) => (c ? { ...c, artists: c.artists.map((a) => (a.id === artist.id ? { ...a, ...patch } : a)) } : c))}
+        />
+      )}
 
       {!artistId ? (
         <p className="rounded-lg border border-dashed border-border px-4 py-12 text-center text-sm text-muted-foreground">
@@ -699,6 +741,117 @@ export function BatchUploadAdmin({ artists, artworks, loading = false }: Props) 
           </div>
         </>
       )}
+
+      <ExhibitionInterestPanel />
+    </section>
+  );
+}
+
+/** Admin-only opt-in on the artist's own profile — no public form. Saves on
+ * blur/change so typing in the notes field doesn't fire a request per key. */
+function ExhibitionInterestRow({
+  artist,
+  onSaved,
+}: {
+  artist: Pick<BridgeArtist, "id" | "exhibition_interest" | "exhibition_notes">;
+  onSaved: (patch: Partial<BridgeArtist>) => void;
+}) {
+  const [interested, setInterested] = useState(!!artist.exhibition_interest);
+  const [notes, setNotes] = useState(artist.exhibition_notes || "");
+  const [saving, setSaving] = useState(false);
+
+  const save = async (patch: Partial<BridgeArtist>) => {
+    setSaving(true);
+    try {
+      await updateArtistBridge({ id: artist.id, ...patch });
+      onSaved(patch);
+    } catch (e) {
+      toast.error(publicMessage(e, "Could not save"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-border bg-card px-4 py-3">
+      <label className="flex items-center gap-2 text-sm font-medium">
+        <input
+          type="checkbox"
+          checked={interested}
+          disabled={saving}
+          onChange={(e) => {
+            setInterested(e.target.checked);
+            void save({ exhibition_interest: e.target.checked });
+          }}
+        />
+        Interested in shared/cost-pooled exhibition logistics
+      </label>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Admin-only — never shown publicly. Groups artists interested in the same event for shared costs.
+      </p>
+      {interested && (
+        <input
+          className="mt-2 w-full max-w-md rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+          placeholder="Target exhibition / region (e.g. Dakar Biennale 2027)"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          onBlur={() => void save({ exhibition_notes: notes })}
+        />
+      )}
+    </div>
+  );
+}
+
+/** Admin-only aggregate: which artists opted into shared exhibition
+ * logistics, grouped by their target event, so 2+ artists interested in the
+ * same show are easy to spot. Toggled per-artist above; no public form. */
+function ExhibitionInterestPanel() {
+  const [groups, setGroups] = useState<{ notes: string; artists: { id: string; name: string }[] }[] | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchExhibitionInterest()
+      .then((res) => {
+        if (!cancelled) setGroups(res.groups);
+      })
+      .catch(() => {
+        if (!cancelled) setGroups([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <section className="space-y-2 rounded-lg border border-border bg-card p-4">
+      <div>
+        <h3 className="font-display text-lg">Exhibition cost-sharing interest</h3>
+        <p className="text-xs text-muted-foreground">
+          Admin-only. Artists grouped by target exhibition — a group with 2+ names is a candidate for pooled
+          logistics/costs.
+        </p>
+      </div>
+      {loading && <p className="text-sm text-muted-foreground">Loading…</p>}
+      {!loading && !groups?.length && <p className="text-sm text-muted-foreground">No artists have opted in yet.</p>}
+      <div className="space-y-2">
+        {groups?.map((g) => (
+          <div key={g.notes} className="rounded-md border border-border px-3 py-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{g.notes}</span>
+              {g.artists.length >= 2 && (
+                <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-900">
+                  {g.artists.length} artists — poolable
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 text-xs text-muted-foreground">{g.artists.map((a) => a.name).join(", ")}</p>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

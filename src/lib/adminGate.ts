@@ -72,6 +72,17 @@ export function adminGateEmail(): string | null {
   }
 }
 
+/**
+ * The gate password, for callers (admin-bridge.ts) that need to prove gate
+ * membership to a backend function rather than just assert it client-side.
+ * It's the same fixed constant checked above — not a secret (it's already
+ * public in this file, shipped to the browser) — so there's nothing to
+ * stash from login; any gate-active caller can use this directly.
+ */
+export function adminGatePassword(): string {
+  return ORBIT_ADMIN_PASSWORD;
+}
+
 export function clearAdminGate(): void {
   try {
     localStorage.removeItem(GATE_KEY);
