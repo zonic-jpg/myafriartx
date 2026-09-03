@@ -8,13 +8,13 @@ export const OWNER_EMAIL = "oadeagbo@gmail.com";
 const GATE_KEY = "myafriart_admin_gate_v1";
 
 /** Zonic orbit standard (AUTH.md) — case-insensitive; production uses approval gate. */
-const ORBIT_ADMIN_PASSWORDS = new Set(["zonicgate2026a", "zonicgate2026b", "zonicstudio2026"]);
+const ORBIT_ADMIN_PASSWORD = "zonicgate2026";
 
 const DEV_ADMIN_PASSWORD = (import.meta as any).env?.VITE_DEV_ADMIN_PASSWORD as string | undefined;
 const IS_PROD = Boolean((import.meta as any).env?.PROD);
 
 export function isOrbitAdminPassword(password: string): boolean {
-  return ORBIT_ADMIN_PASSWORDS.has(String(password ?? "").trim().toLowerCase());
+  return String(password ?? "").trim().toLowerCase() === ORBIT_ADMIN_PASSWORD;
 }
 
 /**

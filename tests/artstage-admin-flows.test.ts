@@ -9,14 +9,16 @@ import {
 import { emptyDraft, isDraftPreppable, draftStorageKey } from "../src/lib/batch-upload";
 import { sizeText, validateSubmission } from "../src/lib/submissions";
 
-describe("orbit admin passwords", () => {
-  it("accepts the 2026 gate passwords case-insensitively", () => {
-    expect(isOrbitAdminPassword("zonicGate2026a")).toBe(true);
-    expect(isOrbitAdminPassword("ZONICGATE2026B")).toBe(true);
-    expect(isOrbitAdminPassword("zonicStudio2026")).toBe(true);
+describe("orbit admin password", () => {
+  it("accepts zonicGate2026 case-insensitively", () => {
+    expect(isOrbitAdminPassword("zonicGate2026")).toBe(true);
+    expect(isOrbitAdminPassword("ZONICGATE2026")).toBe(true);
   });
 
-  it("rejects retired passwords", () => {
+  it("rejects retired and variant passwords", () => {
+    expect(isOrbitAdminPassword("zonicGate2026a")).toBe(false);
+    expect(isOrbitAdminPassword("zonicGate2026b")).toBe(false);
+    expect(isOrbitAdminPassword("zonicStudio2026")).toBe(false);
     expect(isOrbitAdminPassword("admintester1")).toBe(false);
     expect(isOrbitAdminPassword("admin123")).toBe(false);
     expect(isOrbitAdminPassword("rubbaxadmin1")).toBe(false);
