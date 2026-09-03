@@ -30,13 +30,13 @@ export const Route = createFileRoute("/lounge")({
   validateSearch: zodValidator(loungeSearchSchema),
   head: () => ({
     meta: [
-      { title: "The Art Lounge — MyAfriart" },
+      { title: "The Art Lounge — MyAfriArt" },
       {
         name: "description",
         content:
           "A private floor for registered buyers and sellers. Browse listings, message members, and use our broker service.",
       },
-      { property: "og:title", content: "The Art Lounge — MyAfriart" },
+      { property: "og:title", content: "The Art Lounge — MyAfriArt" },
       { property: "og:description", content: "A private floor for registered buyers and sellers." },
     ],
   }),

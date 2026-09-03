@@ -13,7 +13,7 @@ import { ImageDropzone, fileToDownscaledDataUrl } from "@/components/image-dropz
 import { publicMessage } from "@/lib/public-message";
 
 export const Route = createFileRoute("/studio")({
-  head: () => ({ meta: [{ title: "Studio — MyAfriart" }] }),
+  head: () => ({ meta: [{ title: "Studio — MyAfriArt" }] }),
   component: Studio,
 });
 
@@ -64,7 +64,7 @@ function StudioSkeleton() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <span className="font-display text-xl">MyAfriart</span>
+          <span className="font-display text-xl">MyAfriArt</span>
           <Skeleton className="h-4 w-48" />
         </div>
       </header>
@@ -280,7 +280,7 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="font-display text-xl">
-            MyAfriart
+            MyAfriArt
           </Link>
           <div className="flex items-center gap-4 text-sm">
             <NotifyBell />

@@ -42,7 +42,7 @@ function InboxPage() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Link to="/" className="font-display text-xl">
-            MyAfriart
+            MyAfriArt
           </Link>
           <nav className="flex items-center gap-4 text-sm">
             <Link to="/notify" className="text-muted-foreground hover:text-foreground">

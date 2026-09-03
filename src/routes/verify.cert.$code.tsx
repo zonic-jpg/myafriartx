@@ -7,7 +7,7 @@ import { Link } from "@tanstack/react-router";
 export const Route = createFileRoute("/verify/cert/$code")({
   component: VerifyCertPage,
   head: ({ params }) => ({
-    meta: [{ title: `Certificate ${params.code} — MyAfriart` }],
+    meta: [{ title: `Certificate ${params.code} — MyAfriArt` }],
   }),
 });
 
@@ -30,7 +30,7 @@ function VerifyCertPage() {
   return (
     <div className="mx-auto min-h-screen max-w-lg p-8">
       <Link to="/" className="text-sm text-primary underline">
-        ← MyAfriart
+        ← MyAfriArt
       </Link>
       <h1 className="mt-6 font-display text-2xl">Certificate verification</h1>
       <p className="mt-1 text-sm text-muted-foreground">Code: {code.toUpperCase()}</p>

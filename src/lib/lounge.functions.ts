@@ -426,7 +426,7 @@ export const adminIssueCertificate = createServerFn({ method: "POST" })
       borderWidth: 2,
     });
     draw("CERTIFICATE OF AUTHENTICITY", 90, 760, 22, true);
-    draw("MyAfriart Brokerage Service", 90, 735, 12);
+    draw("MyAfriArt Brokerage Service", 90, 735, 12);
     draw(`Reference: ${req.id}`, 60, 690, 10);
     draw(`Issued: ${new Date().toISOString().slice(0, 10)}`, 60, 670, 10);
     draw("Work", 60, 630, 14, true);
@@ -456,7 +456,7 @@ export const adminIssueCertificate = createServerFn({ method: "POST" })
       12,
     );
     if (req.carrier) draw(`Carrier: ${req.carrier} (${req.tracking_ref ?? ""})`, 60, 266, 11);
-    draw("MyAfriart certifies that the work described above has been independently", 60, 150, 10);
+    draw("MyAfriArt certifies that the work described above has been independently", 60, 150, 10);
     draw("verified and the transaction monitored under our brokerage service.", 60, 136, 10);
 
     const bytes = await pdf.save();

@@ -27,7 +27,7 @@ import {
 export const Route = createFileRoute("/auction")({
   component: AuctionFloor,
   head: () => ({
-    meta: [{ title: "Live Auction — MyAfriart" }],
+    meta: [{ title: "Live Auction — MyAfriArt" }],
   }),
 });
 

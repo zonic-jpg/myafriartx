@@ -68,7 +68,7 @@ function ArtistDetailPage() {
       <header className="border-b border-border bg-gradient-to-r from-purple-600 to-red-500 text-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
           <Link to="/" className="font-display text-lg">
-            MyAfriart
+            MyAfriArt
           </Link>
           <Link to="/" className="text-sm text-white/80 hover:text-white">
             ← Back to catalogue
@@ -112,8 +112,8 @@ function ArtistDetailPage() {
               <div className="rounded-md border border-dashed border-border bg-muted/40 p-3 text-sm">
                 <p className="font-medium">Unclaimed artist profile</p>
                 <p className="mt-1 text-muted-foreground">
-                  MyAfriart created this listing from public information so the artist can be found
-                  and invited. {a.name} has not claimed it and is not a MyAfriart member. Only the
+                  MyAfriArt created this listing from public information so the artist can be found
+                  and invited. {a.name} has not claimed it and is not a MyAfriArt member. Only the
                   details shown here are on record.
                 </p>
                 {a.outreach_note && (

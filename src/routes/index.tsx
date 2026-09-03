@@ -183,7 +183,7 @@ const FALLBACK_PANES: Pane[] = [
     title: "Harmattan, II",
     summary:
       "Pastel on raw linen, 120 × 90 cm. A study of dry-season light over the Sahel. One of three in the series, the only one offered publicly.",
-    reveal: "Reveal the details, story, and buying path for this standout piece on MyAfriart.",
+    reveal: "Reveal the details, story, and buying path for this standout piece on MyAfriArt.",
     ...MOCK_PANE_ASSETS.piece,
   },
   {
@@ -807,7 +807,7 @@ function Landing() {
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white ring-2 ring-black sm:h-10 sm:w-10">
                 <img
                   src={logo}
-                  alt="MyAfriart logo"
+                  alt="MyAfriArt logo"
                   className="h-7 w-7 sm:h-8 sm:w-8 object-contain"
                 />
               </span>
@@ -877,7 +877,7 @@ function Landing() {
         {/* Scrolling panes */}
         <section className="relative mt-8 sm:mt-12">
           <div className="mb-3 flex items-end justify-between gap-3">
-            <h2 className="font-display text-xl sm:text-2xl">This week on MyAfriart</h2>
+            <h2 className="font-display text-xl sm:text-2xl">This week on MyAfriArt</h2>
             <div className="flex items-center gap-2">
               {paneFailedCount > 0 && (
                 <button
@@ -1101,7 +1101,7 @@ function Landing() {
 
       <footer className="border-t border-zinc-900 bg-zinc-900 text-zinc-200 pb-24 md:pb-0">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-2 px-4 py-5 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
-          <div>© MyAfriart</div>
+          <div>© MyAfriArt</div>
           <nav className="flex items-center gap-4">
             <Link to="/" className="font-medium text-white hover:text-white/80">
               Discover

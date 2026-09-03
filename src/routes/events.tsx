@@ -8,7 +8,7 @@ export const Route = createFileRoute("/events")({
   component: EventsPage,
   head: () => ({
     meta: [
-      { title: "Live Events — MyAfriart" },
+      { title: "Live Events — MyAfriArt" },
       {
         name: "description",
         content:
@@ -31,7 +31,7 @@ function EventsPage() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
           <Link to="/" className="font-display text-xl">
-            MyAfriart
+            MyAfriArt
           </Link>
           <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground">
             Admin

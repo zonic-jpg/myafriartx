@@ -8,7 +8,7 @@ import { ID_TYPES } from "@/lib/kyc-constants";
 
 export const Route = createFileRoute("/verification")({
   component: VerificationPage,
-  head: () => ({ meta: [{ title: "Identity verification — MyAfriart" }] }),
+  head: () => ({ meta: [{ title: "Identity verification — MyAfriArt" }] }),
 });
 
 const ID_LABELS: Record<(typeof ID_TYPES)[number], string> = {
@@ -80,7 +80,7 @@ function VerificationPage() {
   return (
     <div className="mx-auto min-h-screen max-w-lg px-6 py-10">
       <Link to="/" className="text-sm text-primary underline">
-        ← MyAfriart
+        ← MyAfriArt
       </Link>
       <h1 className="mt-6 font-display text-3xl">Identity verification</h1>
       <p className="mt-2 text-sm text-muted-foreground">

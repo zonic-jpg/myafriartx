@@ -68,7 +68,7 @@ function PieceDetailPage() {
       <header className="border-b border-border bg-gradient-to-r from-purple-600 to-red-500 text-white">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
           <Link to="/" className="font-display text-lg">
-            MyAfriart
+            MyAfriArt
           </Link>
           <Link to="/" className="text-sm text-white/80 hover:text-white">
             ← Back to catalogue

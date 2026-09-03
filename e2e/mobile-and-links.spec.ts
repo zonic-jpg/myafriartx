@@ -21,7 +21,7 @@ test.describe("mobile landing layout", () => {
   test("lands at the top — hero visible, no auto-scroll past catalogue", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: /Discover African art/i })).toBeVisible();
-    await expect(page.getByText("This week on MyAfriart")).toBeVisible();
+    await expect(page.getByText("This week on MyAfriArt")).toBeVisible();
     const scrollY = await page.evaluate(() => window.scrollY);
     expect(scrollY).toBeLessThan(80);
   });
@@ -96,7 +96,7 @@ test.describe("mobile landing layout", () => {
 test.describe("primary navigation links", () => {
   test("logo and Discover return home with hero", async ({ page }) => {
     await page.goto("/login");
-    await page.getByRole("link", { name: /MyAfriart/i }).first().click();
+    await page.getByRole("link", { name: /MyAfriArt/i }).first().click();
     await expect(page).toHaveURL(/\/(\?|$)/);
     await expect(page.getByRole("heading", { name: /Discover African art/i })).toBeVisible();
 

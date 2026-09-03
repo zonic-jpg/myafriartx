@@ -77,7 +77,7 @@ export function AiChatPanel({
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-primary" />
-            <span className="text-sm font-medium tracking-tight">MyAfriart Concierge</span>
+            <span className="text-sm font-medium tracking-tight">MyAfriArt Concierge</span>
           </div>
           <button
             type="button"

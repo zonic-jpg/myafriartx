@@ -6,9 +6,9 @@ import { siblingZonicApps } from "@/lib/zonicLinks";
 // footer.contact, footer.faqs), exactly like the rest of the site's content.
 const DEFAULT = {
   privacy:
-    "MyAfriart respects your privacy. We collect only what's needed to show you art, process orders and run AI room-staging, never sell your personal data, and handle payments through regulated providers. You can request deletion of your data at any time.",
+    "MyAfriArt respects your privacy. We collect only what's needed to show you art, process orders and run AI room-staging, never sell your personal data, and handle payments through regulated providers. You can request deletion of your data at any time.",
   contact:
-    "MyAfriart (a ZonicMe company)\nFloor M2, Transcorp Hilton, Abuja, Nigeria\n\nSupport: hello@myafriart.com\nArtists: artists@myafriart.com",
+    "MyAfriArt (a ZonicMe company)\nFloor M2, Transcorp Hilton, Abuja, Nigeria\n\nSupport: hello@myafriart.com\nArtists: artists@myafriart.com",
   faqs: [
     {
       q: "What is room-staging?",
@@ -16,7 +16,7 @@ const DEFAULT = {
     },
     {
       q: "How do I buy a piece?",
-      a: "Open any artwork and follow the purchase link; the sale is between you and the artist, with MyAfriart handling secure payment.",
+      a: "Open any artwork and follow the purchase link; the sale is between you and the artist, with MyAfriArt handling secure payment.",
     },
     {
       q: "Can artists list their work?",

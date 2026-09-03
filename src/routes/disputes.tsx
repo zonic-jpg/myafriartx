@@ -7,7 +7,7 @@ import { listMyDisputablePayments, openDispute } from "@/lib/disputes.functions"
 
 export const Route = createFileRoute("/disputes")({
   component: DisputesPage,
-  head: () => ({ meta: [{ title: "Payment disputes — MyAfriart" }] }),
+  head: () => ({ meta: [{ title: "Payment disputes — MyAfriArt" }] }),
 });
 
 type PaymentRow = Awaited<ReturnType<typeof listMyDisputablePayments>>[number];
@@ -68,7 +68,7 @@ function DisputesPage() {
   return (
     <div className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <Link to="/" className="text-sm text-primary underline">
-        ← MyAfriart
+        ← MyAfriArt
       </Link>
       <h1 className="mt-6 font-display text-3xl">Payments & disputes</h1>
       <p className="mt-2 text-sm text-muted-foreground">

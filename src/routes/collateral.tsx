@@ -8,7 +8,7 @@ import SiteFooter from "@/components/SiteFooter";
 
 export const Route = createFileRoute("/collateral")({
   component: CollateralPage,
-  head: () => ({ meta: [{ title: "Art Collateral — MyAfriart" }] }),
+  head: () => ({ meta: [{ title: "Art Collateral — MyAfriArt" }] }),
 });
 
 function CollateralPage() {
@@ -77,7 +77,7 @@ function CollateralPage() {
     <div className="min-h-screen bg-background">
       <header className="border-b px-6 py-4">
         <Link to="/" className="font-display text-lg">
-          MyAfriart
+          MyAfriArt
         </Link>
       </header>
       <main className="mx-auto max-w-3xl space-y-8 px-6 py-10">

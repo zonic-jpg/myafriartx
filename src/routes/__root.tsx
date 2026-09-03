@@ -64,19 +64,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "MyAfriart is a curated marketplace and discovery platform for African art. Explore artists, artworks, and stage pieces in your space with our artstage room tool.",
+          "MyAfriArt is a curated marketplace and discovery platform for African art. Explore artists, artworks, and stage pieces in your space with our artstage room tool.",
       },
       { property: "og:title", content: "MyAfriArtX — Discover African Art" },
       { name: "twitter:title", content: "MyAfriArtX — Discover African Art" },
       {
         property: "og:description",
         content:
-          "MyAfriart is a curated marketplace and discovery platform for African art. Explore artists, artworks, and stage pieces in your space with our artstage room tool.",
+          "MyAfriArt is a curated marketplace and discovery platform for African art. Explore artists, artworks, and stage pieces in your space with our artstage room tool.",
       },
       {
         name: "twitter:description",
         content:
-          "MyAfriart is a curated marketplace and discovery platform for African art. Explore artists, artworks, and stage pieces in your space with our artstage room tool.",
+          "MyAfriArt is a curated marketplace and discovery platform for African art. Explore artists, artworks, and stage pieces in your space with our artstage room tool.",
       },
       { property: "og:image", content: "/og-image.png" },
       { name: "twitter:image", content: "/og-image.png" },

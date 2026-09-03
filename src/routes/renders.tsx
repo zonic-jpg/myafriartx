@@ -7,7 +7,7 @@ import { getMyRenders } from "@/lib/studio-catalog.functions";
 import { localImageForKey } from "@/lib/local-image-assets";
 
 export const Route = createFileRoute("/renders")({
-  head: () => ({ meta: [{ title: "My renders — MyAfriart" }] }),
+  head: () => ({ meta: [{ title: "My renders — MyAfriArt" }] }),
   component: RendersPage,
 });
 
@@ -37,7 +37,7 @@ function List() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="font-display text-xl">
-            MyAfriart
+            MyAfriArt
           </Link>
           <div className="flex items-center gap-3 text-sm">
             <button

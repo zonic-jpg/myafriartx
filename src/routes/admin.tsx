@@ -50,7 +50,7 @@ import { publicMessage } from "@/lib/public-message";
 import { publicPaneAssets } from "@/lib/local-image-assets";
 
 export const Route = createFileRoute("/admin")({
-  head: () => ({ meta: [{ title: "Admin — MyAfriart" }] }),
+  head: () => ({ meta: [{ title: "Admin — MyAfriArt" }] }),
   component: Admin,
 });
 
@@ -231,7 +231,7 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link to="/" className="font-display text-xl">
-            MyAfriart
+            MyAfriArt
           </Link>
           <nav className="flex items-center gap-4 text-sm">
             <Link to="/studio" className="text-muted-foreground hover:text-foreground">
@@ -666,7 +666,7 @@ function ArtistsAdmin({
             >
               <option value="live">Live database</option>
               <option value="mock">Mock database</option>
-              <option value="artstage">ArtStage</option>
+              <option value="artstage">MyAfriArt catalogue</option>
               <option value="outreach">Outreach (unclaimed)</option>
             </select>
           </Field>

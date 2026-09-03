@@ -13,7 +13,7 @@ import {
 import { publicMessage } from "@/lib/public-message";
 
 export const Route = createFileRoute("/submit")({
-  head: () => ({ meta: [{ title: "Submit your work — MyAfriart" }] }),
+  head: () => ({ meta: [{ title: "Submit your work — MyAfriArt" }] }),
   component: SubmitPage,
 });
 
@@ -100,7 +100,7 @@ function SubmitPage() {
         <h1 className="mt-6 font-display text-3xl">Submitted for review</h1>
         <p className="mt-3 text-sm text-muted-foreground">
           “{draft.title}” is now in the moderation queue. Once an editor approves it, the work appears on
-          the MyAfriart board. If you left an email address we will let you know either way.
+          the MyAfriArt board. If you left an email address we will let you know either way.
         </p>
         <div className="mt-8 flex justify-center gap-3">
           <Link
@@ -136,7 +136,7 @@ function SubmitPage() {
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
           <Link to="/" className="font-display text-xl">
-            MyAfriart
+            MyAfriArt
           </Link>
           <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
             Back

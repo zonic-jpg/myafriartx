@@ -16,7 +16,7 @@ import { publicMessage } from "@/lib/public-message";
 import { PasswordRecovery } from "@/components/PasswordRecovery";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in — MyAfriart" }] }),
+  head: () => ({ meta: [{ title: "Sign in — MyAfriArt" }] }),
   component: LoginPage,
 });
 
@@ -285,7 +285,7 @@ function LoginPage() {
     >
       <div className="w-full max-w-sm">
         <Link to="/" className="font-display text-2xl">
-          MyAfriart
+          MyAfriArt
         </Link>
         <h1 className="mt-8 font-display text-3xl">
           {mode === "signin" ? "Welcome back" : "Create an account"}

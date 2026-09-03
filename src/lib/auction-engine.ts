@@ -1,4 +1,4 @@
-// MyAfriart auction engine — rules consistent with international timed auctions
+// MyAfriArt auction engine — rules consistent with international timed auctions
 // (Christie's / Sotheby's / eBay timed sales). Pure functions, shared by the
 // client UI and the server functions so both enforce identical rules.
 
