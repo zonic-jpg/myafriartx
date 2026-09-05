@@ -100,8 +100,8 @@ function Admin() {
     window.addEventListener("storage", syncGate);
     window.addEventListener("focus", syncGate);
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setAuthed(!!s);
       syncGate();
+      setAuthed(!!s);
     });
     supabase.auth.getSession().then(({ data }) => {
       setAuthed(!!data.session);
@@ -127,7 +127,12 @@ function Admin() {
   }, [gate, roleData?.isAdmin]);
 
   useEffect(() => {
-    if (ready && !authed && !gate) navigate({ to: "/login" });
+    if (!ready) return;
+    if (adminGateActive()) {
+      if (!gate) setGate(true);
+      return;
+    }
+    if (!authed && !gate) navigate({ to: "/login" });
   }, [ready, authed, gate, navigate]);
 
   // Uniform tester gate grants full admin client-side without a Supabase session.
@@ -236,9 +241,6 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
           <nav className="flex items-center gap-4 text-sm">
             <Link to="/studio" className="text-muted-foreground hover:text-foreground">
               Studio
-            </Link>
-            <Link to="/blog" className="text-muted-foreground hover:text-foreground">
-              Blog
             </Link>
             <span className="font-medium">Admin</span>
             <button

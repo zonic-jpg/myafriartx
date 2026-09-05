@@ -17,7 +17,8 @@
     "test:links": "node scripts/check-links.mjs",
     "test:e2e": "playwright test",
     "test:e2e:mobile": "playwright test --project=iphone-390",
-    "package:staging": "node scripts/package-staging.mjs"
+    "package:staging": "node scripts/package-staging.mjs",
+    "ship": "node scripts/netlify-digest-deploy.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.48",

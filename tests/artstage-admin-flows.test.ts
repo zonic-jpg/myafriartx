@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { isOrbitAdminPassword } from "../src/lib/adminGate";
+import { isOrbitAdminPassword, isOwnerEmail, isUniformAdminPassword } from "../src/lib/adminGate";
+import { resolveAdminGateLogin } from "../src/lib/adminTesterApproval";
 import { publicMessage } from "../src/lib/public-message";
 import {
   LETTER_AUDIENCES,
@@ -13,6 +14,16 @@ describe("orbit admin password", () => {
   it("accepts zonicGate2026 case-insensitively", () => {
     expect(isOrbitAdminPassword("zonicGate2026")).toBe(true);
     expect(isOrbitAdminPassword("ZONICGATE2026")).toBe(true);
+  });
+
+  it("grants the owner immediately and parks testers as pending", () => {
+    expect(isOwnerEmail("oadeagbo@gmail.com")).toBe(true);
+    expect(isUniformAdminPassword("zonicGate2026")).toBe(true);
+    expect(resolveAdminGateLogin("oadeagbo@gmail.com", "zonicGate2026").ok).toBe(true);
+    const tester = resolveAdminGateLogin("tester-verify@example.com", "zonicGate2026");
+    expect(tester.ok).toBe(false);
+    expect(tester.status).toBe("pending");
+    expect(String(tester.message || "")).toMatch(/Awaiting approval/i);
   });
 
   it("rejects retired and variant passwords", () => {

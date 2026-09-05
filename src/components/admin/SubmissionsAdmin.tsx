@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, ExternalLink, RefreshCw, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
-import { callAdminBridge, type ArtworkSubmission } from "@/lib/admin-bridge";
+import { callAdminBridge, listSubmissionsViaRpc, type ArtworkSubmission } from "@/lib/admin-bridge";
 import { publicMessage } from "@/lib/public-message";
 import { SUBMISSION_MEDIA } from "@/lib/submissions";
 
@@ -43,8 +43,14 @@ export function SubmissionsAdmin() {
         setItems(res.submissions ?? []);
         setNotice(null);
       } catch (e) {
-        setItems([]);
-        setNotice(publicMessage(e, "The submission queue could not be loaded."));
+        const fallback = await listSubmissionsViaRpc(status);
+        if (fallback) {
+          setItems(fallback);
+          setNotice(null);
+        } else {
+          setItems([]);
+          setNotice(publicMessage(e, "The submission queue could not be loaded."));
+        }
       } finally {
         setLoading(false);
       }

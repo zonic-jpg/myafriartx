@@ -33,6 +33,7 @@ import { bustImageUrl, isUsableImageUrl } from "@/lib/cache-bust";
 import { LOCAL_MOCK_ARTWORKS } from "@/lib/mock-catalogue";
 import logo from "@/assets/myafriart-logo.png";
 import { AiChatPanel, type SponsoredItem } from "@/components/ai-chat-panel";
+import { adminGateActive } from "@/lib/adminGate";
 
 function paneImageFor(pane: Pick<Pane, "id" | "image">) {
   if (isUsableImageUrl(pane.image)) return pane.image;
@@ -339,6 +340,9 @@ function Landing() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [loungeOpen, setLoungeOpen] = useState(false);
   const [authed, setAuthed] = useState(false);
+  const [gate, setGate] = useState(() =>
+    typeof window !== "undefined" ? adminGateActive() : false,
+  );
   const [userId, setUserId] = useState<string | null>(null);
   const [gatePromptOpen, setGatePromptOpen] = useState(false);
   const [panes, setPanes] = useState<Pane[]>(FALLBACK_PANES);
@@ -421,15 +425,25 @@ function Landing() {
   }, []);
 
   useEffect(() => {
+    const syncGate = () => setGate(adminGateActive());
+    syncGate();
+    window.addEventListener("storage", syncGate);
+    window.addEventListener("focus", syncGate);
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      syncGate();
       setAuthed(!!s);
       setUserId(s?.user?.id ?? null);
     });
     supabase.auth.getSession().then(({ data }) => {
+      syncGate();
       setAuthed(!!data.session);
       setUserId(data.session?.user?.id ?? null);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      window.removeEventListener("storage", syncGate);
+      window.removeEventListener("focus", syncGate);
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -824,9 +838,15 @@ function Landing() {
               <Link to="/submit" className="px-1 text-black/70 hover:text-black">
                 Submit work
               </Link>
-              <Link to="/login" className="px-1 text-black/70 hover:text-black">
-                Sign in
-              </Link>
+              {gate ? (
+                <Link to="/admin" className="px-1 text-black/70 hover:text-black">
+                  Admin
+                </Link>
+              ) : (
+                <Link to="/login" className="px-1 text-black/70 hover:text-black">
+                  Sign in
+                </Link>
+              )}
             </nav>
           </div>
         </div>

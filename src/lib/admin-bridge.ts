@@ -99,6 +99,20 @@ export type ArtworkSubmission = {
   created_at: string;
 };
 
+/** Orbit-password RPC fallback when /api/admin-bridge is missing on this deploy. */
+export async function listSubmissionsViaRpc(
+  status: "pending" | "approved" | "rejected" | "all" = "pending",
+): Promise<ArtworkSubmission[] | null> {
+  const password = adminGateOrbitPassword();
+  if (!password) return null;
+  const { data, error } = await supabase.rpc("list_artwork_submissions_queue" as never, {
+    p_orbit_password: password,
+    p_status: status,
+  } as never);
+  if (error || !Array.isArray(data)) return null;
+  return data as ArtworkSubmission[];
+}
+
 export type SentLetter = {
   id: string;
   audience: string;

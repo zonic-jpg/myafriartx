@@ -223,8 +223,17 @@ function LoginPage() {
           return;
         }
         saveAdminGate(identity, password);
-        // Drop any stale Supabase JWT (alice demo, etc.) without touching the soft gate we just saved.
-        await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+        // Never blanket-signOut after a successful owner/orbit gate — that
+        // fires onAuthStateChange(null) and Studio then treats the owner as
+        // logged out. Scrub a leftover disposable (alice) JWT only.
+        try {
+          const leftover = await supabase.auth.getSession();
+          if (isDisposableIdentity(leftover.data.session?.user?.email)) {
+            await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+          }
+        } catch {
+          /* gate already saved */
+        }
         toast.success(
           isOwnerEmail(identity) ? "Owner access granted" : "Admin access granted",
         );

@@ -38,24 +38,40 @@ function Studio() {
   useEffect(() => {
     const syncGate = () => setGate(adminGateActive());
     syncGate();
+    window.addEventListener("storage", syncGate);
+    window.addEventListener("focus", syncGate);
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      setAuthed(!!s);
+      // Re-read the orbit gate on every auth event, including SIGNED_OUT.
+      // A missing JWT is not a logout when the soft session is still present.
       syncGate();
+      setAuthed(!!s);
     });
     supabase.auth.getSession().then(({ data }) => {
-      setAuthed(!!data.session);
       syncGate();
+      setAuthed(!!data.session);
       setReady(true);
     });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      window.removeEventListener("storage", syncGate);
+      window.removeEventListener("focus", syncGate);
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
-    if (ready && !authed && !gate) navigate({ to: "/login" });
+    if (!ready) return;
+    // Live read — do not trust a stale React flag after signOut(null).
+    if (adminGateActive()) {
+      if (!gate) setGate(true);
+      return;
+    }
+    if (!authed && !gate) navigate({ to: "/login" });
   }, [ready, authed, gate, navigate]);
 
-  if (!ready || (!authed && !gate)) return <StudioSkeleton />;
-  return <StudioInner gateMode={gate && !authed} />;
+  const liveGate = gate || (typeof window !== "undefined" && adminGateActive());
+  if (!ready || (!authed && !liveGate)) return <StudioSkeleton />;
+  // Gate wins over a leftover demo JWT so Admin stays visible and we never bounce to /login.
+  return <StudioInner gateMode={!!liveGate} />;
 }
 
 /** Mirrors the real studio layout so nothing jumps when the session resolves. */
