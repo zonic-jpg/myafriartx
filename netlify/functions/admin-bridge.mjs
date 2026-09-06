@@ -408,6 +408,26 @@ export async function handler(event) {
     return respond(200, { status: data?.status ?? "none" });
   }
 
+  // Public events calendar — no auth required, published rows only.
+  // (The events page used TanStack createServerFn's listLiveEvents, but this
+  // site ships as a static SPA with no server-fn runtime in production, so
+  // that endpoint never existed at runtime — the calendar was silently dead,
+  // same root cause as the catalogue bug above.)
+  if (action === "events.public") {
+    const from = typeof body.from === "string" ? body.from : null;
+    let q = admin
+      .from("live_events")
+      .select(
+        "id,title,description,detail_text,venue,city,country,starts_at,ends_at,image_url,detail_image_url,detail_video_url,ticket_url,category,tags,status",
+      )
+      .eq("status", "published")
+      .order("starts_at", { ascending: true });
+    if (from) q = q.gte("starts_at", from);
+    const { data, error } = await q;
+    if (error) return respond(500, { error: error.message });
+    return respond(200, { events: data ?? [] });
+  }
+
   const actor = await resolveActor(event, supabaseUrl, serviceKey, body);
   if (!actor.ok) return respond(403, { error: actor.reason });
 
@@ -482,11 +502,50 @@ export async function handler(event) {
       // this artist" list were silently showing local mock data instead of
       // the real catalogue. This gives it a real, working source regardless
       // of auth path.
+      case "catalogue.ensureSourced": {
+        const incoming = Array.isArray(body.artists) ? body.artists : [];
+        if (!incoming.length) return respond(400, { error: "artists required" });
+        const rows = incoming.slice(0, 200).map((a) => ({
+          short_code: String(a.short_code || "").slice(0, 40),
+          name: String(a.name || "").trim().slice(0, 200),
+          country: String(a.country || "").trim().slice(0, 120) || null,
+          domicile_city: String(a.domicile_city || "").trim().slice(0, 120) || null,
+          primary_medium: String(a.primary_medium || "").trim().slice(0, 80) || null,
+          website: String(a.website || "").trim().slice(0, 400) || null,
+          outreach_source: String(a.outreach_source || a.website || "").trim().slice(0, 400) || null,
+          outreach_note: String(a.outreach_note || "public source").trim().slice(0, 200) || null,
+          outreach_status: "seed",
+          profile_status: "active",
+          content_source: "live",
+          portrait_url: null,
+        })).filter((a) => a.short_code && a.name);
+        const { error: upsertErr } = await admin.from("artists").upsert(rows, { onConflict: "short_code" });
+        if (upsertErr) throw new Error(upsertErr.message);
+        const { data: fakeRows } = await admin
+          .from("artists")
+          .select("id, short_code, content_source")
+          .or("content_source.eq.mock,content_source.eq.outreach,short_code.like.ART-M%,short_code.like.ART-OUT%,profile_status.eq.unclaimed_outreach");
+        const retireIds = (fakeRows ?? [])
+          .filter((r) => !String(r.short_code || "").startsWith("ART-SRC"))
+          .map((r) => r.id);
+        let retired = 0;
+        if (retireIds.length) {
+          const { error: retireErr } = await admin.from("artists").delete().in("id", retireIds);
+          if (!retireErr) retired = retireIds.length;
+        }
+        await admin.from("app_settings").upsert({
+          key: "mock_catalogue_enabled",
+          value: false,
+          updated_at: new Date().toISOString(),
+        });
+        return respond(200, { ok: true, upserted: rows.length, retired, via: actor.via });
+      }
+
       case "catalogue.list": {
         const [{ data: artists, error: artistsErr }, { data: artworks, error: artworksErr }] = await Promise.all([
           admin
             .from("artists")
-            .select("id,name,country,portrait_url,content_source,exhibition_interest,exhibition_notes")
+            .select("id,name,country,portrait_url,content_source,exhibition_interest,exhibition_notes,website,outreach_source,short_code,primary_medium")
             .order("name", { ascending: true }),
           admin
             .from("artworks")
@@ -496,7 +555,14 @@ export async function handler(event) {
         ]);
         if (artistsErr) throw new Error(artistsErr.message);
         if (artworksErr) throw new Error(artworksErr.message);
-        return respond(200, { artists: artists ?? [], artworks: artworks ?? [] });
+        const visible = (artists ?? []).filter((a) => {
+          const source = String(a.content_source || "").toLowerCase();
+          const code = String(a.short_code || "").toUpperCase();
+          if (source === "mock" || source === "outreach") return false;
+          if (code.startsWith("ART-M") || code.startsWith("ART-OUT")) return false;
+          return true;
+        });
+        return respond(200, { artists: visible, artworks: artworks ?? [] });
       }
 
       case "artists.update": {
@@ -621,6 +687,58 @@ export async function handler(event) {
           value: body.letterhead ?? {},
           updated_at: new Date().toISOString(),
         });
+        if (error) throw new Error(error.message);
+        return respond(200, { ok: true });
+      }
+
+      // Admin events CRUD — same live_events table as events.public above.
+      // Needs a real admin actor (orbit gate password or admin JWT), resolved above.
+      case "events.list": {
+        let q = admin.from("live_events").select("*").order("starts_at", { ascending: true });
+        if (!body.includeDrafts) q = q.eq("status", "published");
+        const { data, error } = await q;
+        if (error) throw new Error(error.message);
+        return respond(200, { events: data ?? [], via: actor.via });
+      }
+
+      case "events.save": {
+        const title = String(body.title || "").trim().slice(0, 300);
+        if (!title) return respond(400, { error: "title required" });
+        const startsAt = body.starts_at ? new Date(body.starts_at) : null;
+        if (!startsAt || Number.isNaN(startsAt.getTime())) {
+          return respond(400, { error: "starts_at (ISO date) required" });
+        }
+        const endsAt = body.ends_at ? new Date(body.ends_at) : null;
+        const tags = Array.isArray(body.tags) ? body.tags.map((t) => String(t).slice(0, 80)).slice(0, 20) : [];
+        const status = ["draft", "published", "archived"].includes(body.status) ? body.status : "published";
+        const patch = {
+          title,
+          description: body.description ? String(body.description).slice(0, 4000) : null,
+          detail_text: body.detail_text ? String(body.detail_text).slice(0, 12000) : (body.description ? String(body.description).slice(0, 12000) : null),
+          venue: body.venue ? String(body.venue).slice(0, 300) : null,
+          city: body.city ? String(body.city).slice(0, 120) : null,
+          country: body.country ? String(body.country).slice(0, 120) : null,
+          starts_at: startsAt.toISOString(),
+          ends_at: endsAt && !Number.isNaN(endsAt.getTime()) ? endsAt.toISOString() : null,
+          image_url: body.image_url ? String(body.image_url).slice(0, 2000) : "/media/pane-event.jpg",
+          detail_image_url: body.detail_image_url ? String(body.detail_image_url).slice(0, 2000) : null,
+          detail_video_url: body.detail_video_url ? String(body.detail_video_url).slice(0, 2000) : null,
+          ticket_url: body.ticket_url ? String(body.ticket_url).slice(0, 2000) : null,
+          category: body.category ? String(body.category).slice(0, 120) : null,
+          tags,
+          status,
+          updated_at: new Date().toISOString(),
+        };
+        const result = body.id
+          ? await admin.from("live_events").update(patch).eq("id", body.id).select("*").single()
+          : await admin.from("live_events").insert(patch).select("*").single();
+        if (result.error) throw new Error(result.error.message);
+        return respond(200, { event: result.data, via: actor.via });
+      }
+
+      case "events.delete": {
+        if (!body.id) return respond(400, { error: "id required" });
+        const { error } = await admin.from("live_events").delete().eq("id", body.id);
         if (error) throw new Error(error.message);
         return respond(200, { ok: true });
       }

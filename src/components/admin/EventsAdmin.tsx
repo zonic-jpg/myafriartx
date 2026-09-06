@@ -1,8 +1,7 @@
-import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { deleteLiveEvent, listLiveEvents, saveLiveEvent, type LiveEvent } from "@/lib/events.functions";
+import { deleteEventAdmin, fetchEventsAdmin, saveEventAdmin, type LiveEvent } from "@/lib/admin-bridge";
 import { publicMessage } from "@/lib/public-message";
 
 const emptyForm = (): Partial<LiveEvent> => ({
@@ -33,18 +32,15 @@ function toLocalInput(iso: string | null | undefined) {
 
 export function EventsAdmin() {
   const qc = useQueryClient();
-  const fetchEvents = useServerFn(listLiveEvents);
-  const saveEvent = useServerFn(saveLiveEvent);
-  const removeEvent = useServerFn(deleteLiveEvent);
   const [form, setForm] = useState<Partial<LiveEvent>>(emptyForm);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["live-events", "admin"],
-    queryFn: () => fetchEvents({ data: { includeDrafts: true } }),
+    queryFn: async () => (await fetchEventsAdmin(true)).events,
   });
 
   const saveMut = useMutation({
-    mutationFn: (payload: Partial<LiveEvent>) => saveEvent({ data: payload as never }),
+    mutationFn: (payload: Partial<LiveEvent>) => saveEventAdmin(payload as never),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["live-events"] });
       setForm(emptyForm());
@@ -54,7 +50,7 @@ export function EventsAdmin() {
   });
 
   const deleteMut = useMutation({
-    mutationFn: (id: string) => removeEvent({ data: { id } }),
+    mutationFn: (id: string) => deleteEventAdmin(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["live-events"] });
       toast.success("Event deleted");

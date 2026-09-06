@@ -1,3 +1,14 @@
+/**
+ * DEAD IN PRODUCTION (2026-09-06): this site ships as a static SPA (see
+ * netlify.toml / scripts/ship-admin-bridge.mjs) with no TanStack server-fn
+ * runtime deployed, so these createServerFn endpoints never execute on the
+ * live site — calling them from the client silently does nothing useful.
+ * The real, working path is netlify/functions/admin-bridge.mjs
+ * (events.public / events.list / events.save / events.delete), wired up in
+ * src/lib/admin-bridge.ts. Kept here only so local `npm start` (which does
+ * run the server-fn runtime) still has something to fall back to; do not
+ * wire new UI to this file — use admin-bridge instead.
+ */
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";

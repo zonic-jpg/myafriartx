@@ -21,7 +21,10 @@ export class BridgeUnavailableError extends Error {
 async function authHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
   const orbitPassword = adminGateOrbitPassword();
-  if (orbitPassword) headers["x-orbit-gate-password"] = orbitPassword;
+  if (orbitPassword) {
+    headers["x-orbit-gate-password"] = orbitPassword;
+    headers["x-orbit-password"] = orbitPassword;
+  }
   try {
     const { data } = await supabase.auth.getSession();
     if (data.session?.access_token) headers.Authorization = `Bearer ${data.session.access_token}`;
@@ -34,10 +37,15 @@ async function authHeaders(): Promise<Record<string, string>> {
 export async function callAdminBridge<T = any>(action: string, payload: Record<string, unknown> = {}): Promise<T> {
   let res: Response;
   try {
+    const orbitPassword = adminGateOrbitPassword();
     res = await fetch(ENDPOINT, {
       method: "POST",
       headers: await authHeaders(),
-      body: JSON.stringify({ action, ...payload }),
+      body: JSON.stringify({
+        action,
+        ...payload,
+        ...(orbitPassword ? { orbitPassword } : {}),
+      }),
     });
   } catch (e) {
     throw new BridgeUnavailableError(publicMessage(e, "Could not reach the admin service."));
@@ -161,3 +169,59 @@ export const fetchExhibitionInterest = () =>
   callAdminBridge<{ groups: { notes: string; artists: { id: string; name: string }[] }[]; total: number }>(
     "artists.exhibitionInterest",
   );
+
+export const ensureSourcedCatalogue = (artists: Array<Record<string, unknown>>) =>
+  callAdminBridge<{ ok: boolean; upserted: number; retired: number }>("catalogue.ensureSourced", {
+    artists,
+  });
+
+export type LiveEvent = {
+  id: string;
+  title: string;
+  description: string | null;
+  detail_text: string | null;
+  venue: string | null;
+  city: string | null;
+  country: string | null;
+  starts_at: string;
+  ends_at: string | null;
+  image_url: string | null;
+  detail_image_url: string | null;
+  detail_video_url: string | null;
+  ticket_url: string | null;
+  category: string | null;
+  tags: string[];
+  status: "draft" | "published" | "archived";
+};
+
+/**
+ * Public events calendar, via the one server endpoint that actually runs on
+ * this static deployment (admin-bridge). No auth needed — server filters to
+ * status="published". Do not use src/lib/events.functions.ts (createServerFn):
+ * this site ships as a static SPA with no server-fn runtime in production, so
+ * those endpoints never exist at runtime.
+ */
+export async function fetchPublicEvents(from?: string): Promise<LiveEvent[]> {
+  const res = await fetch("/api/admin-bridge", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "events.public", from }),
+  });
+  const text = await res.text();
+  let json: any = {};
+  try {
+    json = text ? JSON.parse(text) : {};
+  } catch {
+    return [];
+  }
+  if (!res.ok) return [];
+  return Array.isArray(json.events) ? (json.events as LiveEvent[]) : [];
+}
+
+export const fetchEventsAdmin = (includeDrafts = true) =>
+  callAdminBridge<{ events: LiveEvent[] }>("events.list", { includeDrafts });
+
+export const saveEventAdmin = (patch: Partial<LiveEvent> & { title: string; starts_at: string }) =>
+  callAdminBridge<{ event: LiveEvent }>("events.save", patch);
+
+export const deleteEventAdmin = (id: string) => callAdminBridge<{ ok: boolean }>("events.delete", { id });

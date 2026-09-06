@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import SiteFooter from "@/components/SiteFooter";
-import { listLiveEvents } from "@/lib/events.functions";
+import { fetchPublicEvents } from "@/lib/admin-bridge";
 
 export const Route = createFileRoute("/events")({
   component: EventsPage,
@@ -19,11 +18,10 @@ export const Route = createFileRoute("/events")({
 });
 
 function EventsPage() {
-  const fetchEvents = useServerFn(listLiveEvents);
   const from = "2026-10-01T00:00:00.000Z";
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["live-events", "public", from],
-    queryFn: () => fetchEvents({ data: { from } }),
+    queryFn: () => fetchPublicEvents(from),
   });
 
   return (
