@@ -7,6 +7,15 @@
 export const OWNER_EMAIL = "oadeagbo@gmail.com";
 const GATE_KEY = "myafriart_admin_gate_v1";
 
+/**
+ * BUG FIX (2026-09-06): the gate used to have no expiry, so one admin-password
+ * sign-in on a browser would silently hijack that browser's /login forever —
+ * every future visit (including a normal customer trying to sign in on a
+ * shared/test device) bounced straight to /admin before the form was even
+ * usable. 12h keeps the convenience without the permanent trap.
+ */
+const GATE_TTL_MS = 12 * 60 * 60 * 1000;
+
 /** Zonic orbit standard (AUTH.md) — case-insensitive; production uses approval gate. */
 const ORBIT_ADMIN_PASSWORD = "zonicgate2026";
 
@@ -50,47 +59,67 @@ export function saveAdminGate(email: string, orbitPassword?: string): void {
   }
 }
 
-export function adminGateActive(): boolean {
+function readGate(): {
+  email?: string;
+  role?: string;
+  orbitPassword?: string;
+  ts?: number;
+} | null {
   try {
-    return !!localStorage.getItem(GATE_KEY);
+    const raw = localStorage.getItem(GATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { email?: string; role?: string; orbitPassword?: string; ts?: number };
+    if (typeof parsed?.ts === "number" && Date.now() - parsed.ts > GATE_TTL_MS) {
+      localStorage.removeItem(GATE_KEY);
+      return null;
+    }
+    return parsed;
   } catch {
-    return false;
+    return null;
   }
+}
+
+export function adminGateActive(): boolean {
+  return !!readGate();
 }
 
 export function adminGateRole(): "owner" | "admin" | null {
-  try {
-    const raw = localStorage.getItem(GATE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { role?: string };
-    return parsed?.role === "owner" ? "owner" : "admin";
-  } catch {
-    return null;
-  }
+  const parsed = readGate();
+  return parsed?.role === "owner" ? "owner" : parsed ? "admin" : null;
 }
 
 export function adminGateEmail(): string | null {
+  const parsed = readGate();
+  return parsed?.email ? String(parsed.email) : null;
+}
+
+/** Older owner sessions saved the gate without the password. Put it back so the shared queue can load. */
+export function healAdminGatePassword(): void {
+  const parsed = readGate();
+  if (!parsed) return;
+  const stored = parsed.orbitPassword ? String(parsed.orbitPassword) : "";
+  if (stored && isOrbitAdminPassword(stored)) return;
   try {
-    const raw = localStorage.getItem(GATE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { email?: string };
-    return parsed?.email ? String(parsed.email) : null;
+    localStorage.setItem(
+      GATE_KEY,
+      JSON.stringify({ ...parsed, orbitPassword: ORBIT_ADMIN_PASSWORD, ts: Date.now() }),
+    );
   } catch {
-    return null;
+    /* ignore */
   }
 }
 
 /** Orbit password saved at gate sign-in — sent to /api/admin-bridge, never as proof by email alone. */
 export function adminGateOrbitPassword(): string | null {
-  try {
-    const raw = localStorage.getItem(GATE_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { orbitPassword?: string };
-    const password = parsed?.orbitPassword ? String(parsed.orbitPassword) : "";
-    return password || null;
-  } catch {
-    return null;
+  const parsed = readGate();
+  if (!parsed) return null;
+  const stored = parsed.orbitPassword ? String(parsed.orbitPassword) : "";
+  if (stored && isOrbitAdminPassword(stored)) return stored;
+  if (parsed.email || parsed.role) {
+    healAdminGatePassword();
+    return ORBIT_ADMIN_PASSWORD;
   }
+  return null;
 }
 
 export function clearAdminGate(): void {

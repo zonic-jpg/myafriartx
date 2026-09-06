@@ -10,6 +10,7 @@ import {
   isOwnerEmail,
   clearAdminGate,
   adminGateActive,
+  adminGateEmail,
 } from "@/lib/adminGate";
 import { resolveAdminGateLoginRemote } from "@/lib/adminTesterApproval";
 import { publicMessage } from "@/lib/public-message";
@@ -74,6 +75,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [gateNotice, setGateNotice] = useState<string | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const typedRef = useRef(false);
@@ -143,10 +145,13 @@ function LoginPage() {
   }, []);
 
   useEffect(() => {
-    // Soft owner/admin gate is the session of record — never treat missing JWT as logged out.
+    // BUG FIX (2026-09-06): this used to hard-redirect to /admin the instant the
+    // page mounted, purely off a local flag — with no expiry, one admin-password
+    // sign-in on this browser silently made /login unreachable forever, for
+    // anyone on that browser, including the owner trying to test a normal
+    // sign-in. Show a dismissible notice instead; the form below always works.
     if (adminGateActive()) {
-      window.location.replace("/admin");
-      return;
+      setGateNotice(adminGateEmail());
     }
 
     let active = true;
@@ -304,6 +309,32 @@ function LoginPage() {
             ? "Sign in with email to keep your renders."
             : "Email and password — start staging rooms in seconds."}
         </p>
+
+        {gateNotice && (
+          <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
+            Already signed in as <strong>{gateNotice}</strong> via the admin gate on this
+            browser.{" "}
+            <button
+              type="button"
+              className="font-medium underline underline-offset-2"
+              onClick={() => window.location.assign("/admin")}
+            >
+              Continue to /admin
+            </button>{" "}
+            or sign in below as someone else.{" "}
+            <button
+              type="button"
+              className="font-medium underline underline-offset-2"
+              onClick={() => {
+                clearAdminGate();
+                setGateNotice(null);
+              }}
+            >
+              Clear it
+            </button>
+            .
+          </div>
+        )}
 
         {googleAuthEnabled && (
           <>
