@@ -743,6 +743,39 @@ export async function handler(event) {
         return respond(200, { ok: true });
       }
 
+      // Collaborators — sourced from `artists` (auto-seeded via content_source='live')
+      // plus any admin-seeded rows (content_source='admin_seed'). Feeds the Letter
+      // Studio multiselect so admins can pick who a letter batch goes to.
+      case "collaborators.list": {
+        const { data, error } = await admin
+          .from("artists")
+          .select("id,name,country,primary_medium,website,portrait_url,content_source,outreach_status,outreach_note")
+          .order("name", { ascending: true })
+          .limit(500);
+        if (error) throw new Error(error.message);
+        return respond(200, { collaborators: data ?? [], via: actor.via });
+      }
+
+      case "collaborators.add": {
+        const name = String(body.name || "").trim().slice(0, 200);
+        if (!name) return respond(400, { error: "name required" });
+        const patch = {
+          name,
+          country: body.country ? String(body.country).slice(0, 120) : null,
+          primary_medium: body.primary_medium ? String(body.primary_medium).slice(0, 120) : null,
+          website: body.website ? String(body.website).slice(0, 500) : null,
+          outreach_note: body.outreach_note ? String(body.outreach_note).slice(0, 2000) : null,
+          content_source: "admin_seed",
+          outreach_status: "admin_added",
+          profile_status: "active",
+          exhibition_interest: false,
+          view_count: 0,
+        };
+        const { data, error } = await admin.from("artists").insert(patch).select("*").single();
+        if (error) throw new Error(error.message);
+        return respond(200, { collaborator: data, via: actor.via });
+      }
+
       default:
         return respond(400, { error: `Unknown action: ${action || "(none)"}` });
     }

@@ -225,3 +225,26 @@ export const saveEventAdmin = (patch: Partial<LiveEvent> & { title: string; star
   callAdminBridge<{ event: LiveEvent }>("events.save", patch);
 
 export const deleteEventAdmin = (id: string) => callAdminBridge<{ ok: boolean }>("events.delete", { id });
+
+export type Collaborator = {
+  id: string;
+  name: string;
+  country: string | null;
+  primary_medium: string | null;
+  website: string | null;
+  portrait_url: string | null;
+  content_source: string;
+  outreach_status: string | null;
+  outreach_note: string | null;
+};
+
+export const fetchCollaborators = () =>
+  callAdminBridge<{ collaborators: Collaborator[] }>("collaborators.list");
+
+export const addCollaborator = (patch: {
+  name: string;
+  country?: string;
+  primary_medium?: string;
+  website?: string;
+  outreach_note?: string;
+}) => callAdminBridge<{ collaborator: Collaborator }>("collaborators.add", patch);

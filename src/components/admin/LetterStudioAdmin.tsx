@@ -14,11 +14,19 @@ import {
   Sparkles,
   Trash2,
   Upload,
+  UserPlus,
+  Users,
   XCircle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { enrichRecipient } from "@/lib/ai.functions";
-import { callAdminBridge, type SentLetter } from "@/lib/admin-bridge";
+import {
+  addCollaborator,
+  callAdminBridge,
+  fetchCollaborators,
+  type Collaborator,
+  type SentLetter,
+} from "@/lib/admin-bridge";
 import { publicMessage } from "@/lib/public-message";
 import {
   LETTER_TEMPLATES,
@@ -191,6 +199,91 @@ export function LetterStudioAdmin() {
   useEffect(() => {
     void loadHistory();
   }, [loadHistory]);
+
+  // Collaborators the site has identified (auto-seeded from the artists table)
+  // plus any the admin has seeded directly — the critical "who gets this letter"
+  // step, surfaced as a multiselect that feeds straight into the recipients list.
+  const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+  const [collabLoading, setCollabLoading] = useState(false);
+  const [collabNotice, setCollabNotice] = useState<string | null>(null);
+  const [collabFilter, setCollabFilter] = useState("");
+  const [selectedCollabs, setSelectedCollabs] = useState<Set<string>>(new Set());
+  const [showAddCollab, setShowAddCollab] = useState(false);
+  const [newCollab, setNewCollab] = useState({ name: "", country: "", primary_medium: "", website: "" });
+
+  const loadCollaborators = useCallback(async () => {
+    setCollabLoading(true);
+    try {
+      const res = await callAdminBridge<{ collaborators: Collaborator[] }>("collaborators.list");
+      setCollaborators(res.collaborators ?? []);
+      setCollabNotice(null);
+    } catch (e) {
+      setCollaborators([]);
+      setCollabNotice(publicMessage(e, "Collaborators are unavailable right now."));
+    } finally {
+      setCollabLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadCollaborators();
+  }, [loadCollaborators]);
+
+  const filteredCollabs = useMemo(() => {
+    const q = collabFilter.trim().toLowerCase();
+    if (!q) return collaborators;
+    return collaborators.filter((c) =>
+      [c.name, c.country, c.primary_medium].filter(Boolean).some((v) => String(v).toLowerCase().includes(q)),
+    );
+  }, [collaborators, collabFilter]);
+
+  const toggleCollab = (id: string) =>
+    setSelectedCollabs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const addSelectedCollaboratorsToRecipients = () => {
+    if (!selectedCollabs.size) return toast.warning("Select at least one collaborator first.");
+    const chosen = collaborators.filter((c) => selectedCollabs.has(c.id));
+    const existingBrands = new Set(recs.map((r) => r.brand.trim().toLowerCase()).filter(Boolean));
+    const additions = chosen
+      .filter((c) => !existingBrands.has(c.name.trim().toLowerCase()))
+      .map((c) => ({
+        ...blankRec(),
+        brand: c.name,
+        address: c.country || "",
+        notes: [c.primary_medium, c.website].filter(Boolean).join(" · "),
+      }));
+    if (!additions.length) return toast.warning("Those collaborators are already in the recipients list.");
+    setRecs((xs) => {
+      const base = xs.length === 1 && !xs[0].brand && !xs[0].email ? [] : xs;
+      return [...base, ...additions];
+    });
+    setActive((recs.length === 1 && !recs[0].brand && !recs[0].email ? 0 : recs.length));
+    setSelectedCollabs(new Set());
+    toast.success(`Added ${additions.length} collaborator${additions.length === 1 ? "" : "s"} to recipients — add each one's email before sending.`);
+  };
+
+  const submitAddCollaborator = async () => {
+    if (!newCollab.name.trim()) return toast.warning("Give the collaborator a name first.");
+    try {
+      await addCollaborator({
+        name: newCollab.name.trim(),
+        country: newCollab.country.trim() || undefined,
+        primary_medium: newCollab.primary_medium.trim() || undefined,
+        website: newCollab.website.trim() || undefined,
+      });
+      toast.success(`${newCollab.name} added to collaborators.`);
+      setNewCollab({ name: "", country: "", primary_medium: "", website: "" });
+      setShowAddCollab(false);
+      void loadCollaborators();
+    } catch (e) {
+      toast.error(publicMessage(e, "Could not add that collaborator."));
+    }
+  };
 
   const rec = recs[active] ?? recs[0] ?? blankRec();
   const tpl = letterTemplate(type);
@@ -382,6 +475,129 @@ export function LetterStudioAdmin() {
               </button>
             ))}
           </div>
+        </div>
+
+        <div style={{ background: "#fff", border: `1px solid ${T.line}`, borderRadius: 12, padding: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+            <b style={{ fontSize: 12.5, display: "inline-flex", gap: 6, alignItems: "center" }}>
+              <Users size={13} /> Collaborators ({collaborators.length})
+            </b>
+            <button onClick={() => setShowAddCollab((v) => !v)} style={btn("#F1EEE6", T.ink2)}>
+              <UserPlus size={12} /> Seed one
+            </button>
+          </div>
+          <div style={{ fontSize: 11, color: T.stone, marginBottom: 8 }}>
+            Auto-seeded from the site's artist records, plus any you've added below. Pick who this letter batch
+            should go to — they're added to Recipients with their email left blank for you to fill in.
+          </div>
+          {showAddCollab && (
+            <div
+              style={{
+                background: "#FAFAF7",
+                border: `1px solid ${T.line}`,
+                borderRadius: 8,
+                padding: 10,
+                marginBottom: 10,
+                display: "grid",
+                gap: 6,
+              }}
+            >
+              <input
+                style={inp}
+                placeholder="Name"
+                value={newCollab.name}
+                onChange={(e) => setNewCollab((v) => ({ ...v, name: e.target.value }))}
+              />
+              <div style={{ display: "flex", gap: 6 }}>
+                <input
+                  style={inp}
+                  placeholder="Country"
+                  value={newCollab.country}
+                  onChange={(e) => setNewCollab((v) => ({ ...v, country: e.target.value }))}
+                />
+                <input
+                  style={inp}
+                  placeholder="Medium"
+                  value={newCollab.primary_medium}
+                  onChange={(e) => setNewCollab((v) => ({ ...v, primary_medium: e.target.value }))}
+                />
+              </div>
+              <input
+                style={inp}
+                placeholder="Website (optional)"
+                value={newCollab.website}
+                onChange={(e) => setNewCollab((v) => ({ ...v, website: e.target.value }))}
+              />
+              <button onClick={submitAddCollaborator} style={{ ...btn(T.accent), justifySelf: "start" }}>
+                <Plus size={12} /> Add collaborator
+              </button>
+            </div>
+          )}
+          <input
+            style={{ ...inp, marginBottom: 8 }}
+            placeholder="Search collaborators…"
+            value={collabFilter}
+            onChange={(e) => setCollabFilter(e.target.value)}
+          />
+          {collabNotice ? (
+            <div style={{ fontSize: 11.5, color: T.warn }}>{collabNotice}</div>
+          ) : collabLoading ? (
+            <div style={{ fontSize: 11.5, color: T.stone, display: "inline-flex", gap: 6, alignItems: "center" }}>
+              <Loader2 size={13} className="ls-spin" /> Loading collaborators…
+            </div>
+          ) : filteredCollabs.length === 0 ? (
+            <div style={{ fontSize: 11.5, color: T.stone }}>No collaborators match.</div>
+          ) : (
+            <div style={{ maxHeight: 220, overflowY: "auto", display: "grid", gap: 4 }}>
+              {filteredCollabs.map((c) => (
+                <label
+                  key={c.id}
+                  style={{
+                    display: "flex",
+                    gap: 8,
+                    alignItems: "center",
+                    fontSize: 12,
+                    padding: "5px 6px",
+                    borderRadius: 6,
+                    background: selectedCollabs.has(c.id) ? "#F0F6F1" : "transparent",
+                    cursor: "pointer",
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedCollabs.has(c.id)}
+                    onChange={() => toggleCollab(c.id)}
+                  />
+                  <span style={{ flex: 1 }}>
+                    <b>{c.name}</b>
+                    <span style={{ color: T.stone }}>
+                      {" "}
+                      {[c.country, c.primary_medium].filter(Boolean).join(" · ")}
+                    </span>
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 9.5,
+                      fontWeight: 700,
+                      color: c.content_source === "admin_seed" ? T.brass : T.ok,
+                      background: c.content_source === "admin_seed" ? "#FBF6EC" : "#F0F6F1",
+                      borderRadius: 5,
+                      padding: "2px 6px",
+                    }}
+                  >
+                    {c.content_source === "admin_seed" ? "admin-seeded" : "auto-seeded"}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+          <button
+            onClick={addSelectedCollaboratorsToRecipients}
+            disabled={!selectedCollabs.size}
+            style={{ ...btn(T.ink), marginTop: 10, opacity: selectedCollabs.size ? 1 : 0.5 }}
+          >
+            <Plus size={12} /> Add {selectedCollabs.size || ""} selected to recipients
+          </button>
         </div>
 
         <div style={{ background: "#fff", border: `1px solid ${T.line}`, borderRadius: 12, padding: 14 }}>
