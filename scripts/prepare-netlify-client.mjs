@@ -18,6 +18,24 @@ for (const name of ["index.html", "404.html", "_shell.html"]) {
   console.log("OK ", name);
 }
 
-writeFileSync(join(client, "_redirects"), "/*    /index.html   200\n");
+// REGRESSION FIX (2026-09-06): this used to write ONLY the SPA catch-all,
+// silently deleting the /api/* -> functions mapping (and the /auth alias)
+// on every manual ship -- admin-bridge (catalogue, submissions, letters,
+// events, everything) 404'd in production whenever this ran after a deploy
+// that didn't already have those rules cached from an earlier build. These
+// must mirror netlify.toml's [[redirects]] exactly -- that file is the
+// source of truth; update both together.
+writeFileSync(
+  join(client, "_redirects"),
+  [
+    "/auth    /login   302",
+    "/auth/*  /login   302",
+    "/api/stage-room   /.netlify/functions/stage-room   200",
+    "/api/stage-room/  /.netlify/functions/stage-room   200",
+    "/api/*   /.netlify/functions/:splat   200",
+    "/*       /index.html   200",
+    "",
+  ].join("\n"),
+);
 console.log("OK  _redirects");
 console.log("Netlify client ready:", client);
