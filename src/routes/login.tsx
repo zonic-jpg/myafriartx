@@ -4,15 +4,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { googleAuthEnabled, lovable } from "@/integrations/lovable";
-import {
-  isUniformAdminPassword,
-  saveAdminGate,
-  isOwnerEmail,
-  clearAdminGate,
-  adminGateActive,
-  adminGateEmail,
-} from "@/lib/adminGate";
-import { resolveAdminGateLoginRemote } from "@/lib/adminTesterApproval";
+import { clearAdminGate } from "@/lib/adminGate";
 import { publicMessage } from "@/lib/public-message";
 import { PasswordRecovery } from "@/components/PasswordRecovery";
 
@@ -75,7 +67,6 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [gateNotice, setGateNotice] = useState<string | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const typedRef = useRef(false);
@@ -145,26 +136,15 @@ function LoginPage() {
   }, []);
 
   useEffect(() => {
-    // BUG FIX (2026-09-06): this used to hard-redirect to /admin the instant the
-    // page mounted, purely off a local flag — with no expiry, one admin-password
-    // sign-in on this browser silently made /login unreachable forever, for
-    // anyone on that browser, including the owner trying to test a normal
-    // sign-in. Show a dismissible notice instead; the form below always works.
-    if (adminGateActive()) {
-      setGateNotice(adminGateEmail());
-    }
-
+    // This page has no awareness of the admin gate at all — that lives
+    // entirely on /admin now (see admin.tsx). A regular sign-in here only
+    // ever routes to the regular post-login destination.
     let active = true;
 
     const resolveSession = async (session: { user?: { email?: string | null } } | null) => {
       if (!session) return;
       if (isDisposableIdentity(session.user?.email)) {
-        // Scrub alice/demo JWT only — do NOT clearAdminGate (owner soft session must survive).
         await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
-        return;
-      }
-      if (adminGateActive()) {
-        if (active) window.location.replace("/admin");
         return;
       }
       const destination = await getPostLoginPath();
@@ -220,32 +200,11 @@ function LoginPage() {
         await resetSignInState();
         return;
       }
-      // Owner/admin passwords never go to Supabase (avoids "invalid credentials").
-      if (isUniformAdminPassword(password)) {
-        const gate = await resolveAdminGateLoginRemote(identity, password, "myafriartx");
-        if (!gate.ok) {
-          toast.info(gate.message || "Awaiting approval", { duration: 8000 });
-          return;
-        }
-        saveAdminGate(identity, password);
-        // Never blanket-signOut after a successful owner/orbit gate — that
-        // fires onAuthStateChange(null) and Studio then treats the owner as
-        // logged out. Scrub a leftover disposable (alice) JWT only.
-        try {
-          const leftover = await supabase.auth.getSession();
-          if (isDisposableIdentity(leftover.data.session?.user?.email)) {
-            await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
-          }
-        } catch {
-          /* gate already saved */
-        }
-        toast.success(
-          isOwnerEmail(identity) ? "Owner access granted" : "Admin access granted",
-        );
-        // Hard navigation so hash queue works (router `to` with # throws and looked like login failed).
-        window.location.assign(isOwnerEmail(identity) ? "/admin#admintester-queue" : "/admin");
-        return;
-      }
+      // Admin/owner sign-in is NOT handled here — this is the public
+      // brand/user login form. The shared admin gate lives exclusively on
+      // /admin's own form (admin.tsx); this form only ever does normal
+      // Supabase email/password auth, so there is nothing admin-related for
+      // a regular visitor to discover or trigger from this page.
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -309,32 +268,6 @@ function LoginPage() {
             ? "Sign in with email to keep your renders."
             : "Email and password — start staging rooms in seconds."}
         </p>
-
-        {gateNotice && (
-          <div className="mt-4 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-950">
-            Already signed in as <strong>{gateNotice}</strong> via the admin gate on this
-            browser.{" "}
-            <button
-              type="button"
-              className="font-medium underline underline-offset-2"
-              onClick={() => window.location.assign("/admin")}
-            >
-              Continue to /admin
-            </button>{" "}
-            or sign in below as someone else.{" "}
-            <button
-              type="button"
-              className="font-medium underline underline-offset-2"
-              onClick={() => {
-                clearAdminGate();
-                setGateNotice(null);
-              }}
-            >
-              Clear it
-            </button>
-            .
-          </div>
-        )}
 
         {googleAuthEnabled && (
           <>

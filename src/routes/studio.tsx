@@ -306,12 +306,6 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
             <Link to="/renders" className="text-muted-foreground hover:text-foreground">
               My renders
             </Link>
-            {isAdmin && (
-              <Link to="/admin" className="font-medium text-foreground hover:underline">
-                Admin
-              </Link>
-            )}
-
             <button
               onClick={() => window.location.reload()}
               className="text-muted-foreground hover:text-foreground"

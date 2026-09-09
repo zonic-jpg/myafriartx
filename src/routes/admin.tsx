@@ -1,5 +1,5 @@
 import { ContentStudio } from "@/components/content-studio";
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -37,7 +37,16 @@ import { ServicePricingAdmin } from "@/components/admin/service-pricing-admin";
 import { KycAdmin } from "@/components/admin/kyc-admin";
 import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
-import { adminGateActive, adminGateEmail, adminGateRole, clearAdminGate } from "@/lib/adminGate";
+import {
+  adminGateActive,
+  adminGateEmail,
+  adminGateRole,
+  clearAdminGate,
+  isUniformAdminPassword,
+  saveAdminGate,
+  isOwnerEmail,
+} from "@/lib/adminGate";
+import { resolveAdminGateLoginRemote } from "@/lib/adminTesterApproval";
 import { setDiagnosticsAudience } from "@/lib/public-message";
 import { AdminTesterQueue } from "@/components/admin/AdminTesterQueue";
 import { LetterStudioAdmin } from "@/components/admin/LetterStudioAdmin";
@@ -87,7 +96,6 @@ function localGateAdminData() {
 }
 
 function Admin() {
-  const navigate = useNavigate();
   // Soft owner/admin gate must survive remounts and auth-null races (AdSpot pattern).
   const [gate, setGate] = useState(() =>
     typeof window !== "undefined" ? adminGateActive() : false,
@@ -128,43 +136,122 @@ function Admin() {
 
   useEffect(() => {
     if (!ready) return;
-    if (adminGateActive()) {
-      if (!gate) setGate(true);
-      return;
-    }
-    if (!authed && !gate) navigate({ to: "/login" });
-  }, [ready, authed, gate, navigate]);
+    if (adminGateActive() && !gate) setGate(true);
+  }, [ready, gate]);
 
   // Uniform tester gate grants full admin client-side without a Supabase session.
   if (gate) {
     return <AdminInner gateMode />;
   }
 
-  if (!ready || !authed || roleLoading) {
+  if (!ready || (authed && roleLoading)) {
     return (
       <div className="flex min-h-screen items-center justify-center text-muted-foreground">
         Loading…
       </div>
     );
   }
-  if (!roleData?.isAdmin) {
-    return (
-      <div className="mx-auto max-w-xl px-6 py-20 text-center">
-        <h1 className="font-display text-3xl">Admin only</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Your account does not have the admin role. Ask an existing admin to grant it via the
-          user_roles table.
-        </p>
-        <Link
-          to="/studio"
-          className="mt-6 inline-block rounded-md border border-border px-4 py-2 text-sm hover:bg-accent"
-        >
-          Back to Studio
-        </Link>
-      </div>
-    );
+  if (!authed || !roleData?.isAdmin) {
+    // This is the ONLY place in the app that accepts the shared admin
+    // password — deliberately not the public /login form (see login.tsx).
+    // A visitor with a real admin-role Supabase account can still just sign
+    // in normally via the link below; roleData re-resolves the moment they
+    // land back here authenticated.
+    return <AdminGateEntry authed={authed} onGateGranted={() => setGate(true)} />;
   }
   return <AdminInner />;
+}
+
+function AdminGateEntry({
+  authed,
+  onGateGranted,
+}: {
+  authed: boolean;
+  onGateGranted: () => void;
+}) {
+  const [identity, setIdentity] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    const trimmedIdentity = identity.trim();
+    if (!trimmedIdentity || !password) {
+      setError("Enter an email/username and the admin password.");
+      return;
+    }
+    if (!isUniformAdminPassword(password)) {
+      setError("Incorrect admin password.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const gate = await resolveAdminGateLoginRemote(trimmedIdentity, password, "myafriartx");
+      if (!gate.ok) {
+        setError(gate.message || "Awaiting approval.");
+        return;
+      }
+      saveAdminGate(trimmedIdentity, password);
+      toast.success(isOwnerEmail(trimmedIdentity) ? "Owner access granted" : "Admin access granted");
+      onGateGranted();
+    } catch (err: any) {
+      setError(err?.message || "Could not verify admin access.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
+      <h1 className="font-display text-3xl">Admin access</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {authed
+          ? "Your account does not have the admin role."
+          : "Sign in to manage MyAfriArt."}
+      </p>
+      <form onSubmit={submit} className="mt-6 space-y-3">
+        <input
+          type="text"
+          placeholder="Email or username"
+          value={identity}
+          onChange={(e) => setIdentity(e.target.value)}
+          className="w-full rounded-md border border-border px-3 py-2 text-sm"
+          autoComplete="username"
+        />
+        <input
+          type="password"
+          placeholder="Admin password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="w-full rounded-md border border-border px-3 py-2 text-sm"
+          autoComplete="current-password"
+        />
+        {error && <p className="text-xs text-destructive">{error}</p>}
+        <button
+          type="submit"
+          disabled={submitting}
+          className="w-full rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background disabled:opacity-60"
+        >
+          {submitting ? "Checking…" : "Enter"}
+        </button>
+      </form>
+      <p className="mt-6 text-sm text-muted-foreground">
+        Have a regular admin-role account instead?{" "}
+        <Link to="/login" className="font-medium underline underline-offset-2">
+          Sign in
+        </Link>
+        .
+      </p>
+      <Link
+        to="/studio"
+        className="mt-8 inline-block text-sm text-muted-foreground underline underline-offset-2"
+      >
+        Back to Studio
+      </Link>
+    </div>
+  );
 }
 
 type Tab =

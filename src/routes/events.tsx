@@ -31,8 +31,8 @@ function EventsPage() {
           <Link to="/" className="font-display text-xl">
             MyAfriArt
           </Link>
-          <Link to="/admin" className="text-sm text-muted-foreground hover:text-foreground">
-            Admin
+          <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground">
+            Sign in
           </Link>
         </div>
       </header>
