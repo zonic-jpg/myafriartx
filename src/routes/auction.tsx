@@ -92,7 +92,15 @@ function AuctionFloor() {
           {lots.map((l) => (
             <button className={`lot ${l.status}`} key={l.id} onClick={() => setOpenId(l.id)}>
               <div className="lot-img">
-                <img src={l.image || localImageForKey(l.id || l.title)} alt="" className="h-full w-full object-cover" />
+                <img
+                  src={l.image || localImageForKey(l.id || l.title)}
+                  alt=""
+                  onError={(e) => {
+                    const fallback = localImageForKey(l.id || l.title);
+                    if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+                  }}
+                  className="h-full w-full object-cover"
+                />
                 <span className="lot-code">{l.code}</span>
                 <span className={`lot-status s-${l.status}`}>
                   {l.status === "live" ? "● Live" : l.status}
@@ -224,7 +232,15 @@ function LotDetail({
       </button>
       <div className="ld-grid">
         <div className="ld-img">
-          <img src={lot.image || localImageForKey(lot.id || lot.title)} alt="" className="h-full w-full object-cover" />
+          <img
+            src={lot.image || localImageForKey(lot.id || lot.title)}
+            alt=""
+            onError={(e) => {
+              const fallback = localImageForKey(lot.id || lot.title);
+              if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+            }}
+            className="h-full w-full object-cover"
+          />
           <span className="lot-code">{lot.code}</span>
         </div>
         <div className="ld-info">

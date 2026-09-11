@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { ImageDropzone, fileToDownscaledDataUrl } from "@/components/image-dropzone";
@@ -34,19 +34,83 @@ const EMPTY: SubmissionDraft = {
   context: "",
 };
 
+// Draft persistence — a refresh, an accidental back-button, or a dropped
+// connection mid-way through this four-step form would otherwise lose
+// everything the submitter typed, including the photo they just prepared.
+// Everything here is a JSON-serializable string (the photo is already a
+// downscaled data URL by the time it lands in state, not a raw File), so the
+// whole draft can be persisted — except when the photo pushes the payload
+// over the browser's storage quota, in which case we drop the image only and
+// keep the rest, re-prompting for the photo alone rather than losing the form.
+const SUBMIT_DRAFT_KEY = "myafriart_submit_draft_v1";
+
+type PersistedSubmitDraft = {
+  step: number;
+  draft: SubmissionDraft;
+  image: string | null;
+};
+
+function loadSubmitDraft(): PersistedSubmitDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(SUBMIT_DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    return parsed as PersistedSubmitDraft;
+  } catch {
+    return null;
+  }
+}
+
+function saveSubmitDraft(next: PersistedSubmitDraft) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SUBMIT_DRAFT_KEY, JSON.stringify(next));
+  } catch {
+    // Most likely quota exceeded because of the embedded photo data URL.
+    // Keep the text fields (what took the most effort to fill in) and drop
+    // the image rather than losing the whole draft.
+    try {
+      localStorage.setItem(SUBMIT_DRAFT_KEY, JSON.stringify({ ...next, image: null }));
+    } catch {
+      /* private/incognito mode or storage disabled — draft just won't persist */
+    }
+  }
+}
+
+function clearSubmitDraft() {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(SUBMIT_DRAFT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
   return <p className="mt-1 text-xs text-destructive">{message}</p>;
 }
 
 function SubmitPage() {
-  const [step, setStep] = useState(0);
-  const [image, setImage] = useState<string | null>(null);
+  const [step, setStep] = useState(() => loadSubmitDraft()?.step ?? 0);
+  const [image, setImage] = useState<string | null>(() => loadSubmitDraft()?.image ?? null);
   const [preparing, setPreparing] = useState(false);
-  const [draft, setDraft] = useState<SubmissionDraft>(EMPTY);
+  const [draft, setDraft] = useState<SubmissionDraft>(() => ({
+    ...EMPTY,
+    ...(loadSubmitDraft()?.draft ?? {}),
+  }));
   const [touched, setTouched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submittedId, setSubmittedId] = useState<string | null>(null);
+
+  // Save on every change so a refresh, back-button, or crash mid-flow doesn't
+  // lose what's been entered. Skipped once submitted — that draft is done.
+  useEffect(() => {
+    if (submittedId) return;
+    saveSubmitDraft({ step, draft, image });
+  }, [step, draft, image, submittedId]);
 
   const errors = useMemo(() => validateSubmission(draft, image), [draft, image]);
   const set = (patch: Partial<SubmissionDraft>) => setDraft((d) => ({ ...d, ...patch }));
@@ -85,6 +149,7 @@ function SubmitPage() {
     setSubmitting(true);
     try {
       const result = await submitArtwork(draft, image!);
+      clearSubmitDraft();
       setSubmittedId(result.id ?? "queued");
     } catch (e) {
       toast.error(publicMessage(e, "Your submission could not be saved."));

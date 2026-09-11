@@ -5,6 +5,7 @@ import { UploadCloud, Check, X, Loader2, Trash2, Send, Gauge, ShieldAlert, Copy,
 import { enrichContentImage } from "@/lib/ai.functions";
 import { bulkStage } from "@/lib/content-intake.functions";
 import { publicMessage } from "@/lib/public-message";
+import { fileToDownscaledDataUrl } from "@/components/image-dropzone";
 
 const T = { ink: "#171633", ink2: "#3A3960", paper: "#FAF8F3", brass: "#A67C34", stone: "#8A8577",
   line: "#DED8C8", ok: "#2F6B4F", warn: "#9A6414", bad: "#8E2B24", accent: "#2F7D4F",
@@ -58,10 +59,15 @@ export function ContentIntakeAdmin() {
     const arr = [...files].filter((f) => f.type.startsWith("image/"));
     const seen = items.map((x) => ({ id: x.id, h: x.hash }));
     for (const f of arr) {
-      const dataUrl: string = await new Promise((r) => { const rd = new FileReader(); rd.onload = () => r(rd.result as string); rd.readAsDataURL(f); });
+      // Downscale before it ever touches the network or lands in state — an
+      // uncompressed phone photo here is a multi-MB base64 payload sent to the
+      // vision model AND stored as the catalogue image. Never throws; falls
+      // back to the raw file on any canvas/codec failure.
+      const dataUrl = await fileToDownscaledDataUrl(f, 1920, 0.8);
+      const mediaType = /^data:([^;]+);/.exec(dataUrl)?.[1] || f.type || "image/jpeg";
       const hash = await aHash(dataUrl);
       const dup = seen.find((e) => hamming(e.h, hash) <= 4);
-      const it: Item = { id: uid(), name: f.name, dataUrl, mediaType: f.type, hash, dupOf: dup?.id || null, status: "queued", ai: null };
+      const it: Item = { id: uid(), name: f.name, dataUrl, mediaType, hash, dupOf: dup?.id || null, status: "queued", ai: null };
       seen.push({ id: it.id, h: hash });
       setItems((xs) => [...xs, it]);
       void runEnrich(it);

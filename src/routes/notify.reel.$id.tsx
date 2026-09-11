@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getReel, markReelViewed } from "@/lib/notify.functions";
+import { localImageForKey } from "@/lib/local-image-assets";
 
 export const Route = createFileRoute("/notify/reel/$id")({
   head: () => ({ meta: [{ title: "Reel — NotifyMe" }] }),
@@ -85,6 +86,10 @@ function ReelPage() {
             <img
               src={current.artwork.image_url}
               alt={current.artwork.title}
+              onError={(e) => {
+                const fallback = localImageForKey(current.artwork!.id || current.artwork!.title);
+                if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+              }}
               className="max-h-[75vh] max-w-[90vw] object-contain"
             />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-6">
@@ -111,6 +116,10 @@ function ReelPage() {
             <img
               src={current.sponsor.image_url}
               alt={current.sponsor.headline ?? "Sponsor"}
+              onError={(e) => {
+                const fallback = localImageForKey(current.sponsor!.headline || "sponsor");
+                if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+              }}
               className="max-h-[75vh] max-w-[90vw] object-contain"
             />
             <span className="absolute left-4 top-4 rounded bg-white/10 px-2 py-1 text-[10px] uppercase tracking-wider text-white/80">

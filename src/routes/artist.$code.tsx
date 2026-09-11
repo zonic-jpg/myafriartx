@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getArtistDetail, bumpView } from "@/lib/catalogue.functions";
-import { artistDefault } from "@/lib/local-image-assets";
+import { artistDefault, localImageForKey } from "@/lib/local-image-assets";
 import { outreachWebsiteHref } from "@/lib/outreach-artists";
 
 const artistQuery = (code: string) =>
@@ -143,6 +143,10 @@ function ArtistDetailPage() {
                         <img
                           src={w.image_url}
                           alt={w.title}
+                          onError={(e) => {
+                            const fallback = localImageForKey(w.id || w.title);
+                            if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+                          }}
                           className="h-full w-full object-contain transition group-hover:opacity-90"
                         />
                       ) : (

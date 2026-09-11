@@ -11,6 +11,7 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { NotifyAutoOpen } from "@/components/notify-auto-open";
 import { OrbitSessionNotice } from "@/components/OrbitSessionNotice";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import appCss from "../styles.css?url";
 
@@ -112,11 +113,13 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <OrbitSessionNotice />
-      <Outlet />
-      <SiteFooter />
-      <NotifyAutoOpen />
-      <Toaster richColors position="top-center" />
+      <ErrorBoundary scope="root">
+        <OrbitSessionNotice />
+        <Outlet />
+        <SiteFooter />
+        <NotifyAutoOpen />
+        <Toaster richColors position="top-center" />
+      </ErrorBoundary>
     </QueryClientProvider>
   );
 }

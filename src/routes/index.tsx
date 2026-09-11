@@ -1008,6 +1008,10 @@ function Landing() {
                               )}
                               alt={`Work by ${entry.artist.name}`}
                               loading="lazy"
+                              onError={(e) => {
+                                const fallback = localImageForKey(entry.artist.id || entry.artist.name);
+                                if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+                              }}
                               className="absolute inset-0 h-full w-full object-contain transition"
                             />
                           ) : (
@@ -1549,6 +1553,10 @@ function ArtworkCard({ artwork }: { artwork: ArtworkRow }) {
             src={bustImageUrl(artwork.image_url, artwork.updated_at ?? artwork.id)}
             alt={artwork.title}
             loading="lazy"
+            onError={(e) => {
+              const fallback = localImageForKey(artwork.id || artwork.title);
+              if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+            }}
             className="absolute inset-0 h-full w-full object-contain transition duration-500"
           />
         ) : (

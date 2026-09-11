@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import SiteFooter from "@/components/SiteFooter";
 import { fetchPublicEvents } from "@/lib/admin-bridge";
+import { localImageForKey } from "@/lib/local-image-assets";
 
 export const Route = createFileRoute("/events")({
   component: EventsPage,
@@ -52,7 +53,15 @@ function EventsPage() {
             {events.map((ev) => (
               <article key={ev.id} className="overflow-hidden rounded-xl border border-border bg-card">
                 {ev.image_url ? (
-                  <img src={ev.image_url} alt="" className="h-44 w-full object-cover" />
+                  <img
+                    src={ev.image_url}
+                    alt=""
+                    onError={(e) => {
+                      const fallback = localImageForKey(ev.id || ev.title);
+                      if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
+                    }}
+                    className="h-44 w-full object-cover"
+                  />
                 ) : null}
                 <div className="space-y-2 p-5">
                   <p className="text-xs uppercase tracking-wide text-muted-foreground">
