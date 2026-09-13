@@ -18,6 +18,16 @@
  *      RESEND_API_KEY + LETTERS_FROM (letters.send).
  */
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
+
+// Node 20 (this function's runtime — see netlify.toml) has no native WebSocket,
+// and @supabase/supabase-js 2.106 always tries to construct a RealtimeClient
+// on createClient(), even when nothing here ever subscribes to anything. Every
+// call was crashing before it ran ("Node.js 20 detected without native
+// WebSocket support"), which is why every admin action was returning a bare
+// 502 with no application-level error at all. This function never uses
+// realtime; the ws polyfill just satisfies the constructor.
+const SUPABASE_CLIENT_OPTS = { realtime: { transport: ws } };
 
 const OWNER_EMAIL = "oadeagbo@gmail.com";
 const ORBIT_GATE_PASSWORD = "zonicgate2026";
@@ -113,6 +123,7 @@ async function resolveActor(event, supabaseUrl, serviceKey, body = {}) {
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: `Bearer ${token}` } },
       auth: { persistSession: false, autoRefreshToken: false },
+      ...SUPABASE_CLIENT_OPTS,
     });
     const { data } = await userClient.auth.getUser();
     const user = data?.user;
@@ -121,7 +132,7 @@ async function resolveActor(event, supabaseUrl, serviceKey, body = {}) {
       if (email === OWNER_EMAIL) {
         return { ok: true, email, userId: user.id, via: "jwt-owner" };
       }
-      const admin = createClient(supabaseUrl, serviceKey);
+      const admin = createClient(supabaseUrl, serviceKey, SUPABASE_CLIENT_OPTS);
       const { data: role } = await admin
         .from("user_roles")
         .select("id")
@@ -371,6 +382,7 @@ export async function handler(event) {
   const action = String(body.action || "");
   const admin = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
+    ...SUPABASE_CLIENT_OPTS,
   });
 
   // Requesting access is the one thing an unauthenticated visitor may do.
