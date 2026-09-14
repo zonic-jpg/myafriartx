@@ -1,3 +1,5 @@
+import type { Json } from "@/integrations/supabase/types";
+
 /** Shared payment fulfillment — used by verify + webhook */
 export async function getAdmin() {
   return (await import("@/integrations/supabase/client.server")).supabaseAdmin;
@@ -34,7 +36,7 @@ export async function logWebhookEvent(
     provider,
     event_id: eventId,
     reference,
-    payload: payload as Record<string, unknown>,
+    payload: payload as Json,
   });
   if (error?.code === "23505") throw error; // duplicate for idempotency
 }

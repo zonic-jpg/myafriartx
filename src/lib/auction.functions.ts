@@ -102,14 +102,16 @@ export const listLotBids = createServerFn({ method: "GET" })
     );
     const names = await leaderNames(bidderIds);
 
-    return (rows ?? []).map((r) => ({
-      id: r.id,
-      lotId: r.lot_id,
-      bidderId: r.bidder,
-      bidderName: r.bidder ? (names.get(r.bidder) ?? "Bidder") : "—",
-      amount: Number(r.amount),
-      at: new Date(r.created_at).getTime(),
-    }));
+    return (rows ?? [])
+      .filter((r) => r.lot_id && r.bidder)
+      .map((r) => ({
+        id: r.id,
+        lotId: r.lot_id as string,
+        bidderId: r.bidder as string,
+        bidderName: names.get(r.bidder as string) ?? "Bidder",
+        amount: Number(r.amount),
+        at: r.created_at ? new Date(r.created_at).getTime() : Date.now(),
+      }));
   });
 
 export const placeAuctionBid = createServerFn({ method: "POST" })

@@ -13,7 +13,7 @@ export default defineConfig({
   workers: 1,
   timeout: 60_000,
   expect: { timeout: 15_000 },
-  reporter: [["list"]],
+  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : [["list"]],
   use: {
     // Prefer localhost over 127.0.0.1 — Vite on macOS often binds IPv6-only
     // ::1 (shown as "localhost"), so IPv4 127.0.0.1 never connects.

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireVerifiedMember } from "@/lib/kyc.functions";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 
 const __get_admin = () =>
   import("@/integrations/supabase/client.server").then((m) => m.supabaseAdmin);
@@ -92,7 +93,7 @@ export const adminUpdateCollateral = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
-    const patch: Record<string, unknown> = {
+    const patch: TablesUpdate<"collateral_pledges"> = {
       status: data.status,
       authentication_notes: data.notes,
       updated_at: new Date().toISOString(),

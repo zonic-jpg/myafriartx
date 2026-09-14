@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 
 // De-Lovabled build: server-only deps loaded lazily so they never enter the
 // client bundle (TanStack Start import-protection). Handlers still run server-side.
@@ -355,7 +356,7 @@ export const adminUpdateBrokerRequest = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     const { id, transaction_amount, ...rest } = data;
-    const patch: Record<string, unknown> = { ...rest };
+    const patch: TablesUpdate<"broker_requests"> = { ...rest };
     if (transaction_amount !== undefined) {
       const { data: cur } = await (await __get_admin())
         .from("broker_requests")
@@ -366,12 +367,12 @@ export const adminUpdateBrokerRequest = createServerFn({ method: "POST" })
       patch.transaction_amount = transaction_amount;
       patch.fee_amount = Math.round(transaction_amount * pct) / 100;
     }
-    Object.keys(patch).forEach((k) => patch[k] === undefined && delete patch[k]);
-    const { error } = await (
-      await __get_admin()
-    )
+    (Object.keys(patch) as Array<keyof typeof patch>).forEach(
+      (k) => patch[k] === undefined && delete patch[k],
+    );
+    const { error } = await (await __get_admin())
       .from("broker_requests")
-      .update(patch as Record<string, unknown>)
+      .update(patch)
       .eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -475,7 +476,6 @@ export const adminIssueCertificate = createServerFn({ method: "POST" })
       p_artist: listing?.medium ?? "",
       p_owner: nameMap.get(thread!.buyer_id) ?? "Buyer",
       p_url: url,
-      p_artwork_id: null,
     });
     if (regErr) throw new Error(regErr.message);
     return { url, verifyCode: verifyCode as string };
@@ -494,7 +494,7 @@ export const setBrokerFee = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
     const { error } = await (await __get_admin()).from("app_settings").upsert({
       key: "broker_fee_percent",
-      value: data.fee_percent as unknown as Record<string, unknown>,
+      value: data.fee_percent,
       updated_at: new Date().toISOString(),
     });
     if (error) throw new Error(error.message);

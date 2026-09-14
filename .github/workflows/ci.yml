@@ -1,0 +1,37 @@
+name: CI (MyAfriArt)
+# Guardrail #3: a blocking gate before anything reaches main. Runs on every
+# push and PR — typecheck + unit tests + production build all have to pass.
+# This is deliberately separate from deploy-supabase.yml / supabase-check.yml
+# (DB-only concerns) and from e2e.yml (slower browser tests) so a broken
+# TypeScript build or a broken `vite build` fails fast, in minutes.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck (tsc --noEmit)
+        run: npm run typecheck
+
+      - name: Unit tests (vitest)
+        run: npm test
+
+      - name: Production build (vite build)
+        # No env vars required here: verified locally that `vite build`
+        # succeeds without VITE_SUPABASE_* set (the client falls back to
+        # runtime env at request time via server.mjs, not build time).
+        run: npm run build

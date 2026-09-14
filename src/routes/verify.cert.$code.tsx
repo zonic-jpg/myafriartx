@@ -51,11 +51,11 @@ function VerifyCertPage() {
           <p className="text-sm font-semibold text-emerald-700">✓ Valid certificate</p>
           <dl className="space-y-2 text-sm">
             <Row label="Title" value={String(cert.title)} />
-            {cert.artist_name && <Row label="Artist" value={String(cert.artist_name)} />}
-            {cert.owner_name && <Row label="Owner" value={String(cert.owner_name)} />}
+            {Boolean(cert.artist_name) && <Row label="Artist" value={String(cert.artist_name)} />}
+            {Boolean(cert.owner_name) && <Row label="Owner" value={String(cert.owner_name)} />}
             <Row label="Issued" value={new Date(String(cert.issued_at)).toLocaleDateString()} />
           </dl>
-          {cert.certificate_url && (
+          {Boolean(cert.certificate_url) && (
             <a
               href={String(cert.certificate_url)}
               target="_blank"

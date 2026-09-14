@@ -1,0 +1,64 @@
+name: E2E (MyAfriArt)
+# Guardrail #2 — Playwright coverage for sign-in, the admin orbit gate, and
+# bidding: the three flows that actually broke in production this cycle.
+#
+# These tests need a real Supabase connection to mean anything (auth calls,
+# the admin gate's server-verified decision), so this workflow needs repo
+# secrets configured. Rather than red-X every PR on a fork or a repo that
+# hasn't added them yet, it checks for them first and skips cleanly with a
+# clear message — same pattern as supabase-check.yml's SUPABASE_ACCESS_TOKEN
+# check. Add these to reach Settings → Secrets and variables → Actions:
+#   VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY  (same values as your
+#   Netlify env — these are the public anon-key values, safe in Actions)
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Check required secrets
+        id: secrets
+        run: |
+          if [ -z "${{ secrets.VITE_SUPABASE_URL }}" ] || [ -z "${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}" ]; then
+            echo "::warning::VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY not set on this repo — skipping E2E. Add them under Settings > Secrets and variables > Actions to enable this workflow."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install dependencies
+        if: steps.secrets.outputs.ready == 'true'
+        run: npm ci
+
+      - name: Run Playwright
+        if: steps.secrets.outputs.ready == 'true'
+        # playwright.config.ts uses channel: "chrome" deliberately (see its
+        # own comment) — ubuntu-latest GitHub runners ship Google Chrome
+        # stable pre-installed, so no `playwright install` download is
+        # needed here, same as the project's local-dev assumption.
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: npx playwright test e2e/critical-flows.spec.ts --project=desktop
+
+      - name: Upload Playwright report
+        if: steps.secrets.outputs.ready == 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14

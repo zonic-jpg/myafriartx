@@ -1,0 +1,68 @@
+name: Post-deploy health check (MyAfriArt)
+# Guardrail #1: this is exactly the class of bug that shipped silently this
+# cycle — admin-bridge.mjs 502ing on every single call because of a Node 20 /
+# WebSocket crash in the Supabase client constructor, invisible until a real
+# admin action was clicked. This polls the LIVE production site on a
+# schedule so a broken deploy is caught within minutes, not "next time I
+# happen to click Approve".
+#
+# No secrets required — every check below hits a public, unauthenticated
+# endpoint or path, so this also runs cleanly on a fork with no repo
+# secrets configured.
+on:
+  schedule:
+    # Every 15 minutes. GitHub schedules are best-effort and can slip a few
+    # minutes under load — that's fine for a health check, not a SLA.
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    env:
+      SITE: https://myafriartx.netlify.app
+    steps:
+      - name: Homepage responds
+        run: |
+          code=$(curl -s -o /tmp/home.html -w '%{http_code}' --max-time 20 "$SITE/")
+          echo "GET / -> $code"
+          if [ "$code" -ge 500 ]; then
+            echo "::error::Homepage returned $code — see /tmp/home.html"
+            exit 1
+          fi
+
+      - name: /login responds
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$SITE/login")
+          echo "GET /login -> $code"
+          if [ "$code" -ge 500 ]; then
+            echo "::error::/login returned $code"
+            exit 1
+          fi
+
+      - name: admin-bridge is alive (events.public — no auth required)
+        # This is the exact endpoint and the exact failure mode that broke:
+        # a 502 here (bare, no JSON body) means the Netlify function crashed
+        # before it could run any application code — most recently the
+        # Node 20/WebSocket constructor bug in admin-bridge.mjs. A 200/400
+        # means the function is at least alive and reachable.
+        run: |
+          resp=$(curl -s -o /tmp/bridge.json -w '%{http_code}' --max-time 20 \
+            -X POST "$SITE/api/admin-bridge" \
+            -H 'Content-Type: application/json' \
+            -d '{"action":"events.public"}')
+          echo "POST /api/admin-bridge {action: events.public} -> $resp"
+          cat /tmp/bridge.json || true
+          if [ "$resp" = "502" ] || [ "$resp" -ge 500 ]; then
+            echo "::error::admin-bridge returned $resp — the function is crashing before it runs, not just returning an app-level error. See body above."
+            exit 1
+          fi
+
+      - name: Auction floor responds
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$SITE/auction")
+          echo "GET /auction -> $code"
+          if [ "$code" -ge 500 ]; then
+            echo "::error::/auction returned $code"
+            exit 1
+          fi

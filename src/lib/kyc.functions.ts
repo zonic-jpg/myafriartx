@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { sniffDocMime } from "@/lib/doc-sniff";
 import { ID_TYPES } from "@/lib/kyc-constants";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 
 const __get_admin = () =>
   import("@/integrations/supabase/client.server").then((m) => m.supabaseAdmin);
@@ -166,7 +167,7 @@ export const adminReviewVerification = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context.userId);
     const admin = await __get_admin();
-    const patch: Record<string, unknown> = {
+    const patch: TablesUpdate<"member_verifications"> = {
       status: data.decision,
       updated_at: new Date().toISOString(),
     };

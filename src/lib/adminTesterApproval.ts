@@ -237,30 +237,18 @@ function mergeQueue(server: PendingEntry[], local: PendingEntry[]) {
   const seen = new Set(server.map((s) => s.email));
   const merged = [...server, ...local.filter((l) => !seen.has(l.email))];
   merged.sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
-  return ensureTesterPending(merged);
+  return merged;
 }
 
-const TESTER_VERIFY_EMAIL = "tester-verify@example.com";
-
-/** Owner must always see a pending row — empty queue is an RLS/JWT miss, not a real empty inbox. */
-function ensureTesterPending(entries: PendingEntry[]): PendingEntry[] {
-  if (entries.some((e) => e.status === "pending")) return entries;
-  const seeded: PendingEntry = {
-    email: TESTER_VERIFY_EMAIL,
-    identity: "tester-verify",
-    requestedAt: new Date().toISOString(),
-    status: "pending",
-    decidedAt: null,
-    decidedBy: null,
-    source: "device",
-  };
-  try {
-    queuePendingApproval(TESTER_VERIFY_EMAIL, "myafriartx");
-  } catch {
-    /* local mirror only */
-  }
-  return [seeded, ...entries];
-}
+// BUG FIX (2026-09-14): this used to call an `ensureTesterPending` helper here
+// (and in the offline-fallback branch below) that re-seeded a fake
+// "tester-verify@example.com" row back to status "pending" whenever the
+// merged queue had zero pending entries. That is the client-side half of the
+// exact bug already fixed server-side in admin-bridge.mjs's `access.list` —
+// an owner could approve every real request and the very next queue load
+// would manufacture a brand new "pending" entry out of thin air, showing as
+// "approved yet pending is showing". Demo/test scaffolding that should never
+// have shipped; removed entirely, on both sides now.
 
 /** Orbit-password RPC — works without a JWT when the Netlify bridge is down. */
 async function listAccessRequestsViaRpc(): Promise<AccessRequest[] | null> {
@@ -298,7 +286,7 @@ export async function listAccessRequests(): Promise<{
     }
     local.sort((a, b) => b.requestedAt.localeCompare(a.requestedAt));
     return {
-      entries: ensureTesterPending(local),
+      entries: local,
       serverReachable: false,
       notice:
         e instanceof BridgeUnavailableError

@@ -188,6 +188,9 @@ export type MockArtwork = {
   is_pledged: boolean;
   artist_id: string;
   artist: MockArtist;
+  created_at: string | null;
+  updated_at: string | null;
+  dominant_palette: string[] | null;
 };
 
 function pad(n: number, width = 3) {
@@ -255,6 +258,9 @@ function buildMockCatalogue(): { artworks: MockArtwork[]; artists: MockArtist[] 
         is_pledged: false,
         artist_id: artist.id,
         artist,
+        created_at: null,
+        updated_at: null,
+        dominant_palette: null,
       });
     }
   });

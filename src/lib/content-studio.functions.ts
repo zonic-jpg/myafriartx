@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Json } from "@/integrations/supabase/types";
 
 const __get_admin = () =>
   import("@/integrations/supabase/client.server").then((m) => m.supabaseAdmin);
@@ -40,7 +41,7 @@ export const publishSiteContent = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
     const { error } = await (await __get_admin()).from("app_settings").upsert({
       key: "site_content",
-      value: data as unknown as Record<string, unknown>,
+      value: data as unknown as Json,
       updated_at: new Date().toISOString(),
     });
     if (error) throw new Error(error.message);

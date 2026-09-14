@@ -76,6 +76,7 @@ function VerificationPage() {
   }
 
   const status = record?.status ?? "unverified";
+  const details = record && "verified_at" in record ? record : null;
 
   return (
     <div className="mx-auto min-h-screen max-w-lg px-6 py-10">
@@ -93,7 +94,7 @@ function VerificationPage() {
           <p className="font-medium text-emerald-700">✓ You are verified</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Verified on{" "}
-            {record?.verified_at ? new Date(record.verified_at).toLocaleDateString() : "—"}. You
+            {details?.verified_at ? new Date(details.verified_at).toLocaleDateString() : "—"}. You
             have full access to collateral and escrow.
           </p>
         </div>
@@ -104,7 +105,7 @@ function VerificationPage() {
           <p className="font-medium text-amber-700">Under review</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Submitted{" "}
-            {record?.submitted_at ? new Date(record.submitted_at).toLocaleString() : "recently"}. We
+            {details?.submitted_at ? new Date(details.submitted_at).toLocaleString() : "recently"}. We
             typically review within 1–2 business days.
           </p>
         </div>
@@ -114,7 +115,7 @@ function VerificationPage() {
         <div className="mt-8 rounded-lg border border-destructive/30 bg-destructive/5 p-5">
           <p className="font-medium text-destructive">Submission rejected</p>
           <p className="mt-1 text-sm text-muted-foreground">
-            {record?.rejected_reason ?? "Please resubmit with a clearer document."}
+            {details?.rejected_reason ?? "Please resubmit with a clearer document."}
           </p>
         </div>
       )}
