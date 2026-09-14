@@ -446,46 +446,21 @@ export async function handler(event) {
   try {
     switch (action) {
       case "access.list": {
-        const selectQueue = () =>
-          admin
-            .from("admin_access_requests")
-            .select("id, email, identity, app, status, requested_at, decided_at, decided_by")
-            .eq("app", APP_ID)
-            .order("requested_at", { ascending: false })
-            .limit(300);
-        let { data, error } = await selectQueue();
+        // BUG FIX (2026-09-14): this used to re-seed a fake
+        // "tester-verify@example.com" row back to status "pending" every
+        // time the queue was loaded with zero pending entries — meaning an
+        // owner could approve every real request and the very next queue
+        // load would manufacture a new "pending" entry out of thin air. It
+        // looked exactly like approvals were silently failing. This was
+        // demo/test scaffolding that should never have shipped; removed.
+        const { data, error } = await admin
+          .from("admin_access_requests")
+          .select("id, email, identity, app, status, requested_at, decided_at, decided_by")
+          .eq("app", APP_ID)
+          .order("requested_at", { ascending: false })
+          .limit(300);
         if (error) throw new Error(error.message);
-        const rows = data ?? [];
-        if (!rows.some((r) => r.status === "pending")) {
-          const { data: existing } = await admin
-            .from("admin_access_requests")
-            .select("id")
-            .ilike("email", "tester-verify@example.com")
-            .eq("app", APP_ID)
-            .maybeSingle();
-          if (existing?.id) {
-            await admin
-              .from("admin_access_requests")
-              .update({
-                status: "pending",
-                identity: "tester-verify",
-                decided_at: null,
-                decided_by: null,
-              })
-              .eq("id", existing.id);
-          } else {
-            await admin.from("admin_access_requests").insert({
-              email: "tester-verify@example.com",
-              identity: "tester-verify",
-              app: APP_ID,
-              status: "pending",
-            });
-          }
-          const refreshed = await selectQueue();
-          if (refreshed.error) throw new Error(refreshed.error.message);
-          return respond(200, { requests: refreshed.data ?? [], via: actor.via });
-        }
-        return respond(200, { requests: rows, via: actor.via });
+        return respond(200, { requests: data ?? [], via: actor.via });
       }
 
       case "access.decide": {
