@@ -3,7 +3,14 @@
 // Use this for admin operations in server functions and server routes only.
 // For user-authenticated queries (with RLS), use the auth middleware instead.
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 import type { Database } from "./types";
+
+// Node has no native WebSocket, and @supabase/supabase-js always tries to
+// construct a RealtimeClient on createClient() even when nothing here
+// subscribes to anything. Pass the ws polyfill as the transport so the
+// admin client can construct instead of throwing on every server call.
+const SUPABASE_CLIENT_OPTS = { realtime: { transport: ws } };
 
 function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -25,6 +32,7 @@ function createSupabaseAdminClient() {
       persistSession: false,
       autoRefreshToken: false,
     },
+    ...SUPABASE_CLIENT_OPTS,
   });
 }
 

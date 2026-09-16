@@ -8,6 +8,13 @@
  *      VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY (JWT verify).
  */
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
+
+// Node 20 (this function's runtime) has no native WebSocket, and
+// @supabase/supabase-js always tries to construct a RealtimeClient on
+// createClient(), even though this function never uses realtime. Same fix
+// as admin-bridge.mjs: pass the ws polyfill as the transport.
+const SUPABASE_CLIENT_OPTS = { realtime: { transport: ws } };
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -220,12 +227,13 @@ export async function handler(event) {
       userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: `Bearer ${token}` } },
         auth: { persistSession: false, autoRefreshToken: false },
+        ...SUPABASE_CLIENT_OPTS,
       });
       const { data: userData } = await userClient.auth.getUser();
       userId = userData?.user?.id || null;
     }
 
-    const admin = supabaseUrl && serviceKey ? createClient(supabaseUrl, serviceKey) : null;
+    const admin = supabaseUrl && serviceKey ? createClient(supabaseUrl, serviceKey, SUPABASE_CLIENT_OPTS) : null;
 
     // Resolve artwork image URLs
     let resolvedArts = artworks.filter((a) => a?.image_url);

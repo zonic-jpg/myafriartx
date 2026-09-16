@@ -10,6 +10,7 @@
 
 [functions]
   node_bundler = "esbuild"
+  external_node_modules = ["ws", "bufferutil", "utf-8-validate"]
 
 [functions."stage-room"]
   timeout = 60

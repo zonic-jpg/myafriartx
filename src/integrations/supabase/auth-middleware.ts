@@ -2,7 +2,14 @@
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequest } from "@tanstack/react-start/server";
 import { createClient } from "@supabase/supabase-js";
+import ws from "ws";
 import type { Database } from "./types";
+
+// Node has no native WebSocket, and @supabase/supabase-js always tries to
+// construct a RealtimeClient on createClient() even when nothing here
+// subscribes to anything. Pass the ws polyfill as the transport so the
+// client can construct instead of throwing on every authenticated call.
+const SUPABASE_CLIENT_OPTS = { realtime: { transport: ws } };
 
 export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
@@ -51,6 +58,7 @@ export const requireSupabaseAuth = createMiddleware({ type: "function" }).server
         persistSession: false,
         autoRefreshToken: false,
       },
+      ...SUPABASE_CLIENT_OPTS,
     });
 
     const { data, error } = await supabase.auth.getClaims(token);
