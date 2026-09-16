@@ -41,9 +41,21 @@
   status = 200
   force = true
 
+# Only these two routes are standalone Netlify Functions (netlify/functions/*.mjs).
+# Every other /api/* path (chat, bridge/enter, webhooks/paystack, cron/auctions, ...)
+# is a TanStack Start SSR server route and must fall through to the app's own
+# SSR function — a blanket "/api/* -> /.netlify/functions/:splat" here was
+# force-redirecting all of those to non-existent functions, producing 404s
+# (this is what broke the AI Concierge and in-app chat).
 [[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
+  from = "/api/admin-bridge"
+  to = "/.netlify/functions/admin-bridge"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/admin-bridge/"
+  to = "/.netlify/functions/admin-bridge"
   status = 200
   force = true
 
