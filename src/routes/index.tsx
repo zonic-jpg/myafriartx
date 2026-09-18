@@ -826,9 +826,11 @@ function Landing() {
               <Link to="/submit" className="px-1 text-black/70 hover:text-black">
                 Submit work
               </Link>
-              <Link to="/login" className="px-1 text-black/70 hover:text-black">
-                Sign in
-              </Link>
+              {!authed && (
+                <Link to="/login" className="px-1 text-black/70 hover:text-black">
+                  Sign in
+                </Link>
+              )}
             </nav>
           </div>
         </div>
