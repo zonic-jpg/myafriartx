@@ -103,6 +103,14 @@ function RootShell({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         {children}
+        {/* Zonic orbit cross-app analytics — see public/orbit-manifest.json */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "window.ZONIC_APP_ID='myafriart';window.ZONICME_INGEST_URL=window.ZONICME_INGEST_URL||'https://qdhlbplzdblcvvaaluwu.supabase.co/functions/v1/zonic-hub-ingest';",
+          }}
+        />
+        <script src="/js/zonic-track.js" defer />
         <Scripts />
       </body>
     </html>

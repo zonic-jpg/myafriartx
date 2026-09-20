@@ -31,6 +31,7 @@ import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as VerifyCertCodeRouteImport } from './routes/verify.cert.$code'
 import { Route as NotifyReelIdRouteImport } from './routes/notify.reel.$id'
 import { Route as ApiWebhooksPaystackRouteImport } from './routes/api/webhooks/paystack'
+import { Route as ApiWebhooksFlutterwaveRouteImport } from './routes/api/webhooks/flutterwave'
 import { Route as ApiCronAuctionsRouteImport } from './routes/api/cron/auctions'
 import { Route as ApiBridgeEnterRouteImport } from './routes/api/bridge.enter'
 
@@ -144,6 +145,11 @@ const ApiWebhooksPaystackRoute = ApiWebhooksPaystackRouteImport.update({
   path: '/api/webhooks/paystack',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiWebhooksFlutterwaveRoute = ApiWebhooksFlutterwaveRouteImport.update({
+  id: '/api/webhooks/flutterwave',
+  path: '/api/webhooks/flutterwave',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCronAuctionsRoute = ApiCronAuctionsRouteImport.update({
   id: '/api/cron/auctions',
   path: '/api/cron/auctions',
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/piece/$code': typeof PieceCodeRoute
   '/api/bridge/enter': typeof ApiBridgeEnterRoute
   '/api/cron/auctions': typeof ApiCronAuctionsRoute
+  '/api/webhooks/flutterwave': typeof ApiWebhooksFlutterwaveRoute
   '/api/webhooks/paystack': typeof ApiWebhooksPaystackRoute
   '/notify/reel/$id': typeof NotifyReelIdRoute
   '/verify/cert/$code': typeof VerifyCertCodeRoute
@@ -203,6 +210,7 @@ export interface FileRoutesByTo {
   '/piece/$code': typeof PieceCodeRoute
   '/api/bridge/enter': typeof ApiBridgeEnterRoute
   '/api/cron/auctions': typeof ApiCronAuctionsRoute
+  '/api/webhooks/flutterwave': typeof ApiWebhooksFlutterwaveRoute
   '/api/webhooks/paystack': typeof ApiWebhooksPaystackRoute
   '/notify/reel/$id': typeof NotifyReelIdRoute
   '/verify/cert/$code': typeof VerifyCertCodeRoute
@@ -230,6 +238,7 @@ export interface FileRoutesById {
   '/piece/$code': typeof PieceCodeRoute
   '/api/bridge/enter': typeof ApiBridgeEnterRoute
   '/api/cron/auctions': typeof ApiCronAuctionsRoute
+  '/api/webhooks/flutterwave': typeof ApiWebhooksFlutterwaveRoute
   '/api/webhooks/paystack': typeof ApiWebhooksPaystackRoute
   '/notify/reel/$id': typeof NotifyReelIdRoute
   '/verify/cert/$code': typeof VerifyCertCodeRoute
@@ -258,6 +267,7 @@ export interface FileRouteTypes {
     | '/piece/$code'
     | '/api/bridge/enter'
     | '/api/cron/auctions'
+    | '/api/webhooks/flutterwave'
     | '/api/webhooks/paystack'
     | '/notify/reel/$id'
     | '/verify/cert/$code'
@@ -284,6 +294,7 @@ export interface FileRouteTypes {
     | '/piece/$code'
     | '/api/bridge/enter'
     | '/api/cron/auctions'
+    | '/api/webhooks/flutterwave'
     | '/api/webhooks/paystack'
     | '/notify/reel/$id'
     | '/verify/cert/$code'
@@ -310,6 +321,7 @@ export interface FileRouteTypes {
     | '/piece/$code'
     | '/api/bridge/enter'
     | '/api/cron/auctions'
+    | '/api/webhooks/flutterwave'
     | '/api/webhooks/paystack'
     | '/notify/reel/$id'
     | '/verify/cert/$code'
@@ -336,6 +348,7 @@ export interface RootRouteChildren {
   PieceCodeRoute: typeof PieceCodeRoute
   ApiBridgeEnterRoute: typeof ApiBridgeEnterRoute
   ApiCronAuctionsRoute: typeof ApiCronAuctionsRoute
+  ApiWebhooksFlutterwaveRoute: typeof ApiWebhooksFlutterwaveRoute
   ApiWebhooksPaystackRoute: typeof ApiWebhooksPaystackRoute
   VerifyCertCodeRoute: typeof VerifyCertCodeRoute
 }
@@ -496,6 +509,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiWebhooksPaystackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/webhooks/flutterwave': {
+      id: '/api/webhooks/flutterwave'
+      path: '/api/webhooks/flutterwave'
+      fullPath: '/api/webhooks/flutterwave'
+      preLoaderRoute: typeof ApiWebhooksFlutterwaveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cron/auctions': {
       id: '/api/cron/auctions'
       path: '/api/cron/auctions'
@@ -547,6 +567,7 @@ const rootRouteChildren: RootRouteChildren = {
   PieceCodeRoute: PieceCodeRoute,
   ApiBridgeEnterRoute: ApiBridgeEnterRoute,
   ApiCronAuctionsRoute: ApiCronAuctionsRoute,
+  ApiWebhooksFlutterwaveRoute: ApiWebhooksFlutterwaveRoute,
   ApiWebhooksPaystackRoute: ApiWebhooksPaystackRoute,
   VerifyCertCodeRoute: VerifyCertCodeRoute,
 }

@@ -1,0 +1,55 @@
+{
+  "appId": "myafriart",
+  "name": "MyAfriArt",
+  "version": "1.0",
+  "tagline": "Discover, collect, and stage African art",
+  "description": "MyAfriArt is a curated marketplace and discovery platform for African art — browse artists and artworks, stage pieces in your own space, and buy directly from the gallery.",
+  "url": "https://myafriartx.netlify.app",
+  "updatedAt": "2026-09-20T00:00:00.000Z",
+  "metrics": {
+    "activeUsers7d": 7340,
+    "returningUsers7d": 4120,
+    "sessions24h": 1180,
+    "avgSessionSec": 268,
+    "artworkViews7d": 9860,
+    "artistProfileViews7d": 2140,
+    "roomStagingRenders": 640,
+    "events": 268000
+  },
+  "mock": true,
+  "demographics": {
+    "mock": true,
+    "regions": [
+      { "label": "West Africa", "pct": 40 },
+      { "label": "Diaspora", "pct": 28 },
+      { "label": "East Africa", "pct": 16 },
+      { "label": "Southern Africa", "pct": 16 }
+    ],
+    "ageBands": [
+      { "label": "18–24", "pct": 18 },
+      { "label": "25–34", "pct": 38 },
+      { "label": "35–44", "pct": 28 },
+      { "label": "45+", "pct": 16 }
+    ],
+    "interests": [
+      { "label": "Art collecting", "pct": 44 },
+      { "label": "Interior staging", "pct": 26 },
+      { "label": "Artist discovery", "pct": 20 },
+      { "label": "Other", "pct": 10 }
+    ]
+  },
+  "series7d": {
+    "activeUsers": [6420, 6580, 6810, 7020, 7140, 7260, 7340],
+    "sessions": [980, 1010, 1060, 1090, 1120, 1150, 1180]
+  },
+  "featured": [
+    { "title": "Artwork discovery feed", "location": "MyAfriArt" },
+    { "title": "Room staging (artstage)", "location": "MyAfriArt" },
+    { "title": "Artist profiles & submissions", "location": "MyAfriArt" },
+    { "title": "Artwork purchase & auctions", "location": "MyAfriArt" }
+  ],
+  "ingestHint": {
+    "push": "POST ${ZONICME_INGEST_URL} with X-Zonic-Api-Key",
+    "contract": "zonic-hub-ingest records[]"
+  }
+}
