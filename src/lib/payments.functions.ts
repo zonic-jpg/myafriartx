@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { getArtistSubaccountForCheckout } from "@/lib/subaccounts.functions";
 
 const __get_admin = () =>
   import("@/integrations/supabase/client.server").then((m) => m.supabaseAdmin);
@@ -101,6 +102,11 @@ async function initFlutterwave(opts: {
   purpose: string;
   paymentId: string;
   metadata: Record<string, string>;
+  // Set only when Flutterwave split payouts are enabled AND the artwork's
+  // artist has a vetted subaccount (see subaccounts.functions.ts). Absent
+  // in every other case, in which case this call is byte-for-byte what it
+  // was before this feature existed.
+  subaccountId?: string | null;
 }): Promise<InitResult> {
   const key = process.env.FLUTTERWAVE_SECRET_KEY as string;
   const res = await fetch("https://api.flutterwave.com/v3/payments", {
@@ -114,6 +120,7 @@ async function initFlutterwave(opts: {
       customer: { email: opts.email },
       meta: { payment_id: opts.paymentId, ...opts.metadata },
       customizations: { title: "MyAfriArt", description: opts.purpose },
+      ...(opts.subaccountId ? { subaccounts: [{ id: opts.subaccountId }] } : {}),
     }),
   });
   const body = await res.json();
@@ -245,6 +252,22 @@ export const initializePayment = createServerFn({ method: "POST" })
       .single();
     if (reserveErr || !reserved) throw new Error(reserveErr?.message ?? "Payment create failed");
 
+    // Flutterwave split payouts — off by default, and a no-op unless this
+    // specific artwork's artist has been vetted with a subaccount (see
+    // PayoutsAdmin). Never affects auction/fee purposes.
+    let subaccountId: string | null = null;
+    if (data.purpose === "artwork_purchase" && data.metadata.artwork_id) {
+      const { data: artworkRow } = await admin
+        .from("artworks")
+        .select("artist_id")
+        .eq("id", data.metadata.artwork_id)
+        .maybeSingle();
+      if (artworkRow?.artist_id) {
+        const sub = await getArtistSubaccountForCheckout(artworkRow.artist_id as string);
+        subaccountId = sub?.subaccountId ?? null;
+      }
+    }
+
     let lastErr = "";
     for (const provider of order) {
       try {
@@ -257,6 +280,7 @@ export const initializePayment = createServerFn({ method: "POST" })
                 purpose: data.purpose,
                 paymentId: reserved.id,
                 metadata: data.metadata,
+                subaccountId,
               })
             : await initPaystack({
                 reference,

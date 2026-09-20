@@ -35,6 +35,7 @@ import { artistDefault, localImageForKey, localPaneImage } from "@/lib/local-ima
 import { BrokerageAdmin } from "@/components/admin/brokerage-admin";
 import { ServicePricingAdmin } from "@/components/admin/service-pricing-admin";
 import { KycAdmin } from "@/components/admin/kyc-admin";
+import { PayoutsAdmin } from "@/components/admin/payouts-admin";
 import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
 import {
@@ -275,7 +276,8 @@ type Tab =
   | "collateral"
   | "kyc"
   | "disputes"
-  | "pricing";
+  | "pricing"
+  | "payouts";
 
 function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
   const qc = useQueryClient();
@@ -385,6 +387,7 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
               "kyc",
               "disputes",
               "pricing",
+              "payouts",
             ] as Tab[]
           ).map((t) => (
             <button
@@ -435,6 +438,7 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
             {tab === "kyc" && <KycAdmin />}
             {tab === "disputes" && <DisputesAdmin />}
             {tab === "pricing" && <ServicePricingAdmin />}
+            {tab === "payouts" && <PayoutsAdmin />}
           </div>
         )}
       </main>
