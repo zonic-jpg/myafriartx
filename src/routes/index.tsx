@@ -338,7 +338,17 @@ function Landing() {
   const catalogueRef = useRef<HTMLElement | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
   const [loungeOpen, setLoungeOpen] = useState(false);
-  const [authed, setAuthed] = useState(false);
+  // `null` = "haven't heard back from Supabase yet" (SSR + the brief window
+  // before the effect below resolves), distinct from `false` ("confirmed
+  // signed out"). The nav's Sign in link must never render for `null` --
+  // only for a *confirmed* signed-out state -- otherwise every page load
+  // (including a signed-in user's) paints "Sign in" first (the server has
+  // no way to see the client's localStorage session) and only self-corrects
+  // once this effect's async getSession()/onAuthStateChange call resolves.
+  // Defaulting to `false` (as this used to) is indistinguishable from
+  // "signed out" and is exactly that race. See lounge.tsx / collateral.tsx /
+  // admin.tsx, which already use this same `boolean | null` pattern.
+  const [authed, setAuthed] = useState<boolean | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [gatePromptOpen, setGatePromptOpen] = useState(false);
   const [panes, setPanes] = useState<Pane[]>(FALLBACK_PANES);
@@ -425,10 +435,18 @@ function Landing() {
       setAuthed(!!s);
       setUserId(s?.user?.id ?? null);
     });
-    supabase.auth.getSession().then(({ data }) => {
-      setAuthed(!!data.session);
-      setUserId(data.session?.user?.id ?? null);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setAuthed(!!data.session);
+        setUserId(data.session?.user?.id ?? null);
+      })
+      .catch(() => {
+        // A transient network error here must still resolve the tri-state out
+        // of `null` -- otherwise a genuinely signed-out visitor would never see
+        // the Sign in link again (the mirror image of the bug this fixes).
+        setAuthed((prev) => (prev === null ? false : prev));
+      });
     return () => {
       sub.subscription.unsubscribe();
     };
@@ -826,7 +844,7 @@ function Landing() {
               <Link to="/submit" className="px-1 text-black/70 hover:text-black">
                 Submit work
               </Link>
-              {!authed && (
+              {authed === false && (
                 <Link to="/login" className="px-1 text-black/70 hover:text-black">
                   Sign in
                 </Link>
