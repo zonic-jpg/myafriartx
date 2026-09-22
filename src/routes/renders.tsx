@@ -70,7 +70,7 @@ function List() {
               <div key={r.id} className="overflow-hidden rounded-md border border-border bg-card">
                 {r.result_image_url ? (
                   <img
-                    src={localImageForKey(r.id)}
+                    src={r.result_image_url || localImageForKey(r.id)}
                     alt="Render"
                     className="aspect-[4/3] w-full object-cover"
                   />
