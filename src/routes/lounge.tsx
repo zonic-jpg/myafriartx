@@ -317,7 +317,7 @@ function ListingList({
         <li key={l.id} className="rounded-md border border-white/5 bg-white/[0.03] p-3">
           <div className="flex items-start gap-3">
             <img
-              src={localImageForKey(l.id || l.title, index)}
+              src={l.image_url || localImageForKey(l.id || l.title, index)}
               alt=""
               className="h-14 w-14 rounded object-cover"
             />
@@ -407,12 +407,37 @@ function CreateListingModal({
   const [price, setPrice] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [notes, setNotes] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const onPickImage = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0] ?? null;
+    setImageFile(f);
+    setImagePreview((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return f ? URL.createObjectURL(f) : null;
+    });
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
+      let image_url: string | null = null;
+      if (imageFile) {
+        const { data: auth } = await supabase.auth.getUser();
+        const uid = auth.user?.id;
+        if (!uid) throw new Error("Sign in again to upload a photo.");
+        const ext = (imageFile.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
+        const path = `${uid}/${crypto.randomUUID()}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("listings")
+          .upload(path, imageFile, { contentType: imageFile.type || "image/jpeg", upsert: false });
+        if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`);
+        const { data: pub } = supabase.storage.from("listings").getPublicUrl(path);
+        image_url = pub.publicUrl;
+      }
       await create({
         data: {
           type: kind,
@@ -421,6 +446,7 @@ function CreateListingModal({
           price: price ? Number(price) : null,
           currency,
           notes: notes || null,
+          image_url,
         },
       });
       toast.success("Listing posted");
@@ -452,6 +478,24 @@ function CreateListingModal({
           placeholder="Title"
           className="w-full rounded border border-white/10 bg-black/40 px-3 py-2"
         />
+        <div className="space-y-2">
+          <label className="block text-xs text-stone-400">
+            Photo of the piece {kind === "sell" ? "" : "(optional)"}
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={onPickImage}
+            className="w-full rounded border border-white/10 bg-black/40 px-3 py-2 text-xs file:mr-2 file:rounded file:border-0 file:bg-amber-400 file:px-2 file:py-1 file:text-xs file:font-medium file:text-black"
+          />
+          {imagePreview && (
+            <img
+              src={imagePreview}
+              alt="Selected artwork preview"
+              className="h-28 w-28 rounded object-cover"
+            />
+          )}
+        </div>
         <input
           value={medium}
           onChange={(e) => setMedium(e.target.value)}
