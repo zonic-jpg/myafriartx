@@ -288,7 +288,18 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
       ...a,
       image_url: localImageForKey(a.id || a.title || "artwork", index),
     }))
-    .filter((a: any) => media.length === 0 || media.includes(a.medium));
+    .filter((a: any) => {
+      if (media.length === 0) return true;
+      // Live rows store the lowercase art_medium enum ("oil", "mixed_media"),
+      // but the mock/editorial catalogue stores display labels ("Oil",
+      // "Mixed media"). Without normalizing, selecting any medium chip
+      // matched nothing against mock data and the whole list emptied out.
+      const normalized = String(a.medium ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/[\s-]+/g, "_");
+      return media.includes(normalized);
+    });
   const artistName = (id: string) => data?.artists.find((x: any) => x.id === id)?.name ?? "";
 
   return (
