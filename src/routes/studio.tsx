@@ -213,7 +213,7 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
           id: a.id,
           title: a.title,
           medium: a.medium,
-          image_url: localImageForKey(a.image_url) || a.image_url,
+          image_url: a.image_url || localImageForKey(a.id || a.title || "artwork"),
         }));
       return stageRoomClient({
         sourceImageBase64: photo,
@@ -286,7 +286,7 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
   const artworks = (data?.artworks ?? [])
     .map((a: any, index: number) => ({
       ...a,
-      image_url: localImageForKey(a.id || a.title || "artwork", index),
+      image_url: a.image_url || localImageForKey(a.id || a.title || "artwork", index),
     }))
     .filter((a: any) => {
       if (media.length === 0) return true;
@@ -460,7 +460,7 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
                       title={`${a.title} — ${artistName(a.artist_id)}`}
                     >
                       <img
-                        src={localImageForKey(a.id || a.title)}
+                        src={a.image_url || localImageForKey(a.id || a.title)}
                         alt={a.title}
                         className="h-full w-full object-cover"
                       />

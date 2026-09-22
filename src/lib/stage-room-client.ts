@@ -84,7 +84,7 @@ export async function canvasStagePreview(payload: StagePayload): Promise<{
 
   const n = Math.max(arts.length, 1);
   for (let i = 0; i < arts.length; i++) {
-    const url = localImageForKey(arts[i].image_url) || arts[i].image_url;
+    const url = arts[i].image_url || localImageForKey(arts[i].id || arts[i].title || "artwork", i);
     try {
       const img = await loadImage(url);
       const targetW = canvas.width * (n === 1 ? 0.28 : 0.22);
