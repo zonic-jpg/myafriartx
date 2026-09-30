@@ -261,7 +261,7 @@ export async function handler(event) {
       placement
         ? `User placement request (placement only): ${placement}`
         : "Choose the strongest wall placement automatically.",
-      "Respect perspective, realistic scale (~A2/A1 framed for paintings; pedestal for sculptures), cast realistic shadows, and match the room's existing white balance and lighting.",
+      "Respect each artwork's real medium and scale (framed piece for paintings/prints/photography ~A2/A1; pedestal only if the piece is literally a sculpture), cast realistic shadows, and match the room's existing white balance and lighting. Stage ONLY the artwork(s) listed above -- do not invent, add, duplicate, or substitute any other artwork, sculpture, pedestal, or decor object that isn't one of them.",
       `Decor style direction: ${stylePrompt}.`,
       "Do NOT alter furniture, flooring, ceiling, windows or architecture. Output a single composited image.",
     ].join("\n");

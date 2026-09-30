@@ -3,7 +3,6 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { localImageForKey } from "@/lib/local-image-assets";
 import { NotifyBell } from "@/components/notify-bell";
 import { adminGateActive, clearAdminGate } from "@/lib/adminGate";
 import { fetchStudioCatalogClient, stageRoomClient } from "@/lib/stage-room-client";
@@ -204,17 +203,22 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
     mutationFn: async () => {
       if (!photo || !styleId || picked.length === 0)
         throw new Error("Photo, style and at least one artwork required");
+      const pickedRows = (data?.artworks ?? []).filter((a: any) => picked.includes(a.id));
+      const missingPhoto = pickedRows.find((a: any) => !a.image_url);
+      if (missingPhoto) {
+        throw new Error(
+          `"${missingPhoto.title || "That artwork"}" has no photo on file yet, so it can't be staged. Pick a different piece.`,
+        );
+      }
       setLastError(null);
       setStartedAt(Date.now());
       setProgressStatus("compositing");
-      const artworks = (data?.artworks ?? [])
-        .filter((a: any) => picked.includes(a.id))
-        .map((a: any) => ({
-          id: a.id,
-          title: a.title,
-          medium: a.medium,
-          image_url: a.image_url || localImageForKey(a.id || a.title || "artwork"),
-        }));
+      const artworks = pickedRows.map((a: any) => ({
+        id: a.id,
+        title: a.title,
+        medium: a.medium,
+        image_url: a.image_url,
+      }));
       return stageRoomClient({
         sourceImageBase64: photo,
         styleId,
@@ -284,10 +288,6 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
   }
 
   const artworks = (data?.artworks ?? [])
-    .map((a: any, index: number) => ({
-      ...a,
-      image_url: a.image_url || localImageForKey(a.id || a.title || "artwork", index),
-    }))
     .filter((a: any) => {
       if (media.length === 0) return true;
       // Live rows store the lowercase art_medium enum ("oil", "mixed_media"),
@@ -459,11 +459,17 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
                       className={`group relative aspect-square overflow-hidden rounded border ${on ? "border-primary ring-2 ring-primary" : "border-border"}`}
                       title={`${a.title} — ${artistName(a.artist_id)}`}
                     >
-                      <img
-                        src={a.image_url || localImageForKey(a.id || a.title)}
-                        alt={a.title}
-                        className="h-full w-full object-cover"
-                      />
+                      {a.image_url ? (
+                        <img
+                          src={a.image_url}
+                          alt={a.title}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-muted text-center text-[10px] text-muted-foreground p-1">
+                          No photo on file
+                        </div>
+                      )}
                       {on && <div className="absolute inset-0 bg-primary/20" />}
                     </button>
                   );
