@@ -32,7 +32,7 @@ import {
 import { bustImageUrl, isUsableImageUrl } from "@/lib/cache-bust";
 import { LOCAL_MOCK_ARTWORKS } from "@/lib/mock-catalogue";
 import logo from "@/assets/myafriart-logo.png";
-import { AiChatPanel, type SponsoredItem } from "@/components/ai-chat-panel";
+import { AiChatPanel, type CatalogueEntry, type SponsoredItem } from "@/components/ai-chat-panel";
 
 function paneImageFor(pane: Pick<Pane, "id" | "image">) {
   if (isUsableImageUrl(pane.image)) return pane.image;
@@ -357,6 +357,7 @@ function Landing() {
   const [loadingCatalogue, setLoadingCatalogue] = useState(false);
   const [openChip, setOpenChip] = useState<ChipKey | null>(null);
   const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [aiQuestion, setAiQuestion] = useState<{ text: string } | null>(null);
   const [currency, setCurrency] = useState<"USD" | "NGN">("USD");
   const [usdToNgn, setUsdToNgn] = useState<number>(FALLBACK_USD_TO_NGN);
   const [contentSource, setContentSource] = useState<"live" | "mock">("mock");
@@ -603,6 +604,48 @@ function Landing() {
         : {}),
     });
   };
+
+  // Compact catalogue snapshot the AI concierge answers artist/piece questions from.
+  const aiCatalogue: CatalogueEntry[] = useMemo(() => {
+    const out: CatalogueEntry[] = [];
+    const seen = new Set<string>();
+    const addArtist = (code: string | null | undefined, name: string, detail: string) => {
+      if (!code || !name || seen.has(`a:${code}`)) return;
+      seen.add(`a:${code}`);
+      out.push({ kind: "artist", code, title: name, detail });
+    };
+    for (const ca of catalogueArtists) {
+      addArtist(
+        ca.short_code,
+        ca.name,
+        [ca.country, ca.domicile_city, ca.primary_medium].filter(Boolean).join(" · ") || "Artist",
+      );
+    }
+    for (const a of artworks) {
+      if (a.artist) {
+        addArtist(
+          a.artist.short_code,
+          a.artist.name,
+          [a.artist.country, a.artist.domicile_city].filter(Boolean).join(" · ") || "Artist",
+        );
+      }
+      const code = a.short_code ?? (a.id && !String(a.id).startsWith("local-") ? a.id : null);
+      if (code && !seen.has(`p:${code}`)) {
+        seen.add(`p:${code}`);
+        const price =
+          typeof a.price === "number" ? `${a.currency ?? "USD"} ${a.price.toLocaleString()}` : null;
+        out.push({
+          kind: "piece",
+          code,
+          title: a.title,
+          detail: [a.artist?.name, a.medium, a.year, a.artist?.country, price]
+            .filter(Boolean)
+            .join(" · "),
+        });
+      }
+    }
+    return out;
+  }, [artworks, catalogueArtists]);
 
   const facets: FacetOptions = useMemo(() => {
     const set = (vals: (string | null | undefined)[]) =>
@@ -864,7 +907,10 @@ function Landing() {
               onReset={resetDraftFilters}
               openChip={openChip}
               setOpenChip={setOpenChip}
-              onOpenChat={() => setAiChatOpen(true)}
+              onOpenChat={(question) => {
+                if (question?.trim()) setAiQuestion({ text: question.trim() });
+                setAiChatOpen(true);
+              }}
             />
           </div>
         </header>
@@ -1180,6 +1226,8 @@ function Landing() {
       <AiChatPanel
         open={aiChatOpen}
         onClose={() => setAiChatOpen(false)}
+        initialQuestion={aiQuestion}
+        catalogue={aiCatalogue}
         sponsored={panes.map<SponsoredItem>((p) => ({
           id: p.id,
           kicker: p.kicker,
@@ -1663,7 +1711,7 @@ function TopBarFilter({
   onReset: () => void;
   openChip: ChipKey | null;
   setOpenChip: (key: ChipKey | null) => void;
-  onOpenChat: () => void;
+  onOpenChat: (question?: string) => void;
 }) {
   const hasAny =
     filters.q ||
@@ -1740,7 +1788,7 @@ function TopBarFilter({
         </div>
         <button
           type="button"
-          onClick={onOpenChat}
+          onClick={() => onOpenChat()}
           aria-label="Ask the AI concierge"
           className={rectangleClass}
         >
@@ -1816,10 +1864,10 @@ function TopBarFilter({
           </button>
           <button
             type="button"
-            onClick={() => onSubmit()}
+            onClick={() => onOpenChat(filters.q)}
             className={`inline-flex ${controlH} w-9 flex-none items-center justify-center rounded-full bg-transparent text-white ring-1 ring-white/40 transition hover:bg-white/10`}
-            aria-label="Apply filters and search"
-            title="Apply filters and search"
+            aria-label="Ask the AI concierge"
+            title="Ask the AI concierge about the text in the search box"
           >
             <span aria-hidden className="text-base leading-none">
               →

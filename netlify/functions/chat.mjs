@@ -67,6 +67,15 @@ function getAiProvider() {
 const SYSTEM =
   "You are the MyAfriArt concierge — a warm, knowledgeable assistant helping visitors discover African art, artists, events, auctions, and the artstage room-preview tool. Keep replies short, useful, and friendly. Use markdown sparingly.";
 
+function withCatalogue(base, catalogue) {
+  if (!Array.isArray(catalogue) || !catalogue.length) return base;
+  const lines = catalogue
+    .filter((l) => typeof l === "string")
+    .slice(0, 80)
+    .map((l) => "- " + l.slice(0, 240));
+  return base + "\n\nCatalogue currently on the site (answer artist/piece questions from this; if something is not listed, say so rather than inventing details):\n" + lines.join("\n");
+}
+
 async function toNetlifyResponse(response) {
   const body = await response.text();
   const headers = { ...cors };
@@ -83,9 +92,11 @@ export async function handler(event) {
   }
 
   let messages;
+  let catalogue;
   try {
     const parsed = JSON.parse(event.body || "{}");
     messages = parsed.messages;
+    catalogue = parsed.catalogue;
   } catch {
     return { statusCode: 400, headers: cors, body: JSON.stringify({ error: "Invalid JSON" }) };
   }
@@ -112,7 +123,7 @@ export async function handler(event) {
 
     const result = streamText({
       model: provider(AI_MODEL),
-      system: SYSTEM,
+      system: withCatalogue(SYSTEM, catalogue),
       messages: await convertToModelMessages(messages),
     });
     return toNetlifyResponse(result.toUIMessageStreamResponse({ originalMessages: messages }));

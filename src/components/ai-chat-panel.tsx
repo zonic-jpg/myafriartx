@@ -12,17 +12,99 @@ export type SponsoredItem = {
   to: string;
 };
 
+export type CatalogueEntry = {
+  kind: "artist" | "piece";
+  code: string;
+  title: string;
+  detail: string;
+};
+
+const STOP = new Set([
+  "the",
+  "and",
+  "who",
+  "what",
+  "tell",
+  "about",
+  "me",
+  "is",
+  "are",
+  "of",
+  "a",
+  "an",
+  "for",
+  "show",
+  "info",
+  "information",
+  "on",
+  "to",
+  "in",
+  "by",
+  "with",
+  "any",
+  "do",
+  "you",
+  "have",
+  "piece",
+  "pieces",
+  "artist",
+  "artists",
+  "art",
+]);
+
+function matchCatalogue(question: string, catalogue: CatalogueEntry[]): CatalogueEntry[] {
+  const tokens = question
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((t) => t.length > 2 && !STOP.has(t));
+  if (!tokens.length) return [];
+  return catalogue
+    .map((e) => {
+      const hay = `${e.title} ${e.detail}`.toLowerCase();
+      const titleHay = e.title.toLowerCase();
+      const score = tokens.reduce(
+        (n, t) => n + (titleHay.includes(t) ? 2 : hay.includes(t) ? 1 : 0),
+        0,
+      );
+      return { e, score };
+    })
+    .filter((x) => x.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4)
+    .map((x) => x.e);
+}
+
 export function AiChatPanel({
   open,
   onClose,
   sponsored,
+  catalogue = [],
+  initialQuestion,
 }: {
   open: boolean;
   onClose: () => void;
   sponsored: SponsoredItem[];
+  catalogue?: CatalogueEntry[];
+  /** A question to send automatically when the panel opens (new object = new question). */
+  initialQuestion?: { text: string } | null;
 }) {
-  const transport = useMemo(() => new DefaultChatTransport({ api: "/api/chat" }), []);
-  const { messages, sendMessage, status, error } = useChat({ transport });
+  const catalogueRef = useRef(catalogue);
+  catalogueRef.current = catalogue;
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: "/api/chat",
+        // Ground the assistant in what is actually on the site.
+        body: () => ({
+          catalogue: catalogueRef.current
+            .slice(0, 80)
+            .map((e) => `${e.kind}: ${e.title} — ${e.detail}`),
+        }),
+      }),
+    [],
+  );
+  const { messages, sendMessage, status, error, regenerate, clearError } = useChat({ transport });
+  const lastSentInitial = useRef<{ text: string } | null>(null);
   const [input, setInput] = useState("");
   const [sponsorIdx, setSponsorIdx] = useState(0);
   const [sponsorTick, setSponsorTick] = useState(0);
@@ -46,8 +128,23 @@ export function AiChatPanel({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, status]);
 
+  useEffect(() => {
+    if (!open || !initialQuestion || lastSentInitial.current === initialQuestion) return;
+    const text = initialQuestion.text.trim();
+    lastSentInitial.current = initialQuestion;
+    if (text) void sendMessage({ text });
+  }, [open, initialQuestion, sendMessage]);
+
   if (!open) return null;
 
+  const lastUserText = (() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const m = messages[i];
+      if (m.role === "user") return m.parts.map((p) => (p.type === "text" ? p.text : "")).join("");
+    }
+    return "";
+  })();
+  const localMatches = lastUserText ? matchCatalogue(lastUserText, catalogue) : [];
   const isLoading = status === "submitted" || status === "streaming";
   const sponsor = sponsored[sponsorIdx];
 
@@ -55,7 +152,8 @@ export function AiChatPanel({
     e.preventDefault();
     const text = input.trim();
     if (!text || isLoading) return;
-    sendMessage({ text });
+    if (error) clearError();
+    void sendMessage({ text });
     setInput("");
   };
 
@@ -159,7 +257,46 @@ export function AiChatPanel({
               </div>
             </div>
           )}
-          {error && <p className="text-xs text-destructive">Something went wrong. Try again.</p>}
+          {localMatches.length > 0 && !isLoading && (
+            <div className="space-y-1.5">
+              <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground">
+                From the catalogue
+              </p>
+              {localMatches.map((e) => (
+                <a
+                  key={`${e.kind}-${e.code}`}
+                  href={e.kind === "artist" ? `/artist/${e.code}` : `/piece/${e.code}`}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-muted/40 px-3 py-2 text-sm ring-1 ring-border transition hover:ring-foreground/40"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-medium">{e.title}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {e.kind === "artist" ? "Artist" : "Piece"} · {e.detail}
+                    </span>
+                  </span>
+                  <span className="text-xs text-muted-foreground">→</span>
+                </a>
+              ))}
+            </div>
+          )}
+          {error && (
+            <div
+              role="alert"
+              className="flex items-center justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive"
+            >
+              <span>
+                The concierge couldn't answer just now
+                {error.message ? ` (${error.message.slice(0, 120)})` : ""}. Please try again.
+              </span>
+              <button
+                type="button"
+                onClick={() => void regenerate()}
+                className="flex-none rounded-full border border-destructive/50 px-2.5 py-0.5 font-medium hover:bg-destructive/10"
+              >
+                Retry
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Composer */}
