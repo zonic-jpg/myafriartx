@@ -449,7 +449,10 @@ export const checkIsAdmin = createServerFn({ method: "GET" })
       .eq("user_id", context.userId)
       .eq("role", "admin")
       .maybeSingle();
-    return { isAdmin: !!data };
+    if (data) return { isAdmin: true };
+    // Verified founding owner: self-provision the admin role row.
+    const granted = await ((await import("./auth-helpers.server")).ensureOwnerAdminRole as any)(context.userId);
+    return { isAdmin: !!granted };
   });
 
 // Image URL validation removed per user request.

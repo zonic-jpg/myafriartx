@@ -1,3 +1,4 @@
+import { isVerifiedOwner } from "@/lib/foundingOwner";
 import { createFileRoute, useNavigate, useRouter, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
@@ -26,6 +27,8 @@ async function getPostLoginPath(): Promise<PostLoginPath> {
   } = await supabase.auth.getUser();
 
   if (!user) return "/studio";
+  // The verified founding owner always lands on admin (the server provisions the role).
+  if (isVerifiedOwner(user)) return "/admin";
 
   const { data: roles, error } = await supabase
     .from("user_roles")
