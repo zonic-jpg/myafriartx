@@ -39,7 +39,7 @@ const btn: React.CSSProperties = {
   cursor: "pointer",
 };
 
-/** Supabase email password recovery — orbit/admin gate passwords are unaffected. */
+/** Supabase email password recovery. */
 export function PasswordRecovery({ brand = "MyAfriArt" }: { brand?: string }) {
   const [mode, setMode] = useState<"forgot" | "reset" | null>(null);
   const [email, setEmail] = useState("");
@@ -108,7 +108,7 @@ export function PasswordRecovery({ brand = "MyAfriArt" }: { brand?: string }) {
           ) : (
             <>
               <p style={{ fontSize: 13, color: "#374151" }}>
-                For real email accounts. Orbit admin passwords still work for testers without email reset.
+                We will email you a link to set a new password.
               </p>
               <input style={inp} type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" />
               {err && <p style={{ fontSize: 13, color: "#b00020", marginTop: 8 }}>{err}</p>}

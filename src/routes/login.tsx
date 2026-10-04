@@ -1,15 +1,20 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useRouter, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { googleAuthEnabled, lovable } from "@/integrations/lovable";
-import { clearAdminGate } from "@/lib/adminGate";
 import { publicMessage } from "@/lib/public-message";
 import { PasswordRecovery } from "@/components/PasswordRecovery";
+import { safeRedirect } from "@/lib/safeRedirect";
 
 export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Sign in — MyAfriArt" }] }),
+  // `redirect` carries the page (with its query string, e.g. /admin?tab=approvals)
+  // an unauthenticated visitor was trying to reach, so sign-in lands them there.
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
+    redirect: safeRedirect(search.redirect) ?? undefined,
+  }),
   component: LoginPage,
 });
 
@@ -62,6 +67,16 @@ function isDisposableIdentity(email: string | null | undefined): boolean {
 
 function LoginPage() {
   const navigate = useNavigate();
+  const router = useRouter();
+  const { redirect } = Route.useSearch();
+  // Go where the visitor was headed (query string intact), else by role.
+  const goAfterSignIn = async () => {
+    if (redirect) {
+      router.history.push(redirect);
+      return;
+    }
+    navigate({ to: await getPostLoginPath() });
+  };
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -136,9 +151,9 @@ function LoginPage() {
   }, []);
 
   useEffect(() => {
-    // This page has no awareness of the admin gate at all — that lives
-    // entirely on /admin now (see admin.tsx). A regular sign-in here only
-    // ever routes to the regular post-login destination.
+    // Normal account sign-in only — there is no shared admin password anywhere.
+    // Owner/admin rights come from the account itself (verified owner email or
+    // the admin role granted from Admin -> Approvals).
     let active = true;
 
     const resolveSession = async (session: { user?: { email?: string | null } } | null) => {
@@ -147,8 +162,8 @@ function LoginPage() {
         await supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
         return;
       }
-      const destination = await getPostLoginPath();
-      if (active) navigate({ to: destination });
+      if (!active) return;
+      await goAfterSignIn();
     };
 
     const routeSignedInUser = async () => {
@@ -172,7 +187,8 @@ function LoginPage() {
       active = false;
       subscription.unsubscribe();
     };
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigate, redirect]);
 
   async function resetSignInState() {
     typedRef.current = false;
@@ -180,7 +196,6 @@ function LoginPage() {
     setPassword("");
     if (emailRef.current) emailRef.current.value = "";
     if (passwordRef.current) passwordRef.current.value = "";
-    clearAdminGate();
     try {
       await supabase.auth.signOut();
     } catch {
@@ -200,11 +215,8 @@ function LoginPage() {
         await resetSignInState();
         return;
       }
-      // Admin/owner sign-in is NOT handled here — this is the public
-      // brand/user login form. The shared admin gate lives exclusively on
-      // /admin's own form (admin.tsx); this form only ever does normal
-      // Supabase email/password auth, so there is nothing admin-related for
-      // a regular visitor to discover or trigger from this page.
+      // Normal Supabase email/password auth for everyone, owner included.
+      // Email confirmation stays ON; no password is stored or hardcoded.
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({
           email,
@@ -224,7 +236,7 @@ function LoginPage() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
-      navigate({ to: await getPostLoginPath() });
+      await goAfterSignIn();
     } catch (err: any) {
       toast.error(friendlyAuthError(publicMessage(err, "Authentication failed")));
     } finally {

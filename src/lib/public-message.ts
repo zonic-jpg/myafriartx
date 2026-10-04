@@ -6,8 +6,8 @@
  * "new row violates row-level security policy for table ...". Neither means
  * anything to a visitor, and both look like the site is broken.
  *
- * Admins on a soft orbit session (no JWT) still see the raw message in the
- * console; visitor surfaces always get something they can act on.
+ * Admins still see the raw message in the console; visitor surfaces always
+ * get something they can act on.
  */
 
 type Pattern = { test: RegExp; message: string };

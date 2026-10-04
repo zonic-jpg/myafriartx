@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { NotifyBell } from "@/components/notify-bell";
-import { adminGateActive, clearAdminGate } from "@/lib/adminGate";
 import { fetchStudioCatalogClient, stageRoomClient } from "@/lib/stage-room-client";
 import { LOCAL_MOCK_STYLES } from "@/lib/stage-styles";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,47 +29,24 @@ function Studio() {
   const navigate = useNavigate();
   const [ready, setReady] = useState(false);
   const [authed, setAuthed] = useState(false);
-  const [gate, setGate] = useState(() =>
-    typeof window !== "undefined" ? adminGateActive() : false,
-  );
 
   useEffect(() => {
-    const syncGate = () => setGate(adminGateActive());
-    syncGate();
-    window.addEventListener("storage", syncGate);
-    window.addEventListener("focus", syncGate);
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      // Re-read the orbit gate on every auth event, including SIGNED_OUT.
-      // A missing JWT is not a logout when the soft session is still present.
-      syncGate();
       setAuthed(!!s);
     });
     supabase.auth.getSession().then(({ data }) => {
-      syncGate();
       setAuthed(!!data.session);
       setReady(true);
     });
-    return () => {
-      window.removeEventListener("storage", syncGate);
-      window.removeEventListener("focus", syncGate);
-      sub.subscription.unsubscribe();
-    };
+    return () => sub.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!ready) return;
-    // Live read — do not trust a stale React flag after signOut(null).
-    if (adminGateActive()) {
-      if (!gate) setGate(true);
-      return;
-    }
-    if (!authed && !gate) navigate({ to: "/login" });
-  }, [ready, authed, gate, navigate]);
+    if (ready && !authed) navigate({ to: "/login" });
+  }, [ready, authed, navigate]);
 
-  const liveGate = gate || (typeof window !== "undefined" && adminGateActive());
-  if (!ready || (!authed && !liveGate)) return <StudioSkeleton />;
-  // Gate wins over a leftover demo JWT so Admin stays visible and we never bounce to /login.
-  return <StudioInner gateMode={!!liveGate} />;
+  if (!ready || !authed) return <StudioSkeleton />;
+  return <StudioInner />;
 }
 
 /** Mirrors the real studio layout so nothing jumps when the session resolves. */
@@ -104,18 +80,14 @@ function StudioSkeleton() {
   );
 }
 
-function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
+function StudioInner() {
   const { data, isLoading } = useQuery({
-    queryKey: ["catalog", gateMode ? "gate" : "live"],
-    queryFn: () => fetchStudioCatalogClient(gateMode),
+    queryKey: ["catalog", "live"],
+    queryFn: () => fetchStudioCatalogClient(),
   });
 
-  const [isAdmin, setIsAdmin] = useState(gateMode);
+  const [isAdmin, setIsAdmin] = useState(false);
   useEffect(() => {
-    if (gateMode) {
-      setIsAdmin(true);
-      return;
-    }
     let active = true;
     (async () => {
       const {
@@ -131,7 +103,7 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
     return () => {
       active = false;
     };
-  }, [gateMode]);
+  }, []);
 
   const [photo, setPhoto] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
@@ -326,7 +298,6 @@ function StudioInner({ gateMode = false }: { gateMode?: boolean }) {
             </button>
             <button
               onClick={() => {
-                clearAdminGate();
                 void supabase.auth.signOut();
                 window.location.href = "/login";
               }}

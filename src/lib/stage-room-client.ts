@@ -1,7 +1,7 @@
 /**
  * Client-side ArtStage staging for static Netlify.
  * Prefers POST /api/stage-room (Netlify Function). Falls back to canvas hang preview
- * when the function is missing, AI is unconfigured, or the user is on admin-gate only.
+ * when the function is missing or AI is unconfigured.
  */
 import { supabase } from "@/integrations/supabase/client";
 import { LOCAL_MOCK_STYLES, mergeStyles, styleById, type StageStyle } from "@/lib/stage-styles";
@@ -18,16 +18,7 @@ export type StagePayload = {
   stylePrompt?: string;
 };
 
-export async function fetchStudioCatalogClient(gateMode = false) {
-  if (gateMode) {
-    return {
-      artworks: LOCAL_MOCK_ARTWORKS,
-      artists: LOCAL_MOCK_ARTISTS,
-      styles: LOCAL_MOCK_STYLES,
-      source: "gate-mock" as const,
-    };
-  }
-
+export async function fetchStudioCatalogClient() {
   try {
     const settings = await supabase
       .from("app_settings")

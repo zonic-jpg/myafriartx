@@ -1,7 +1,7 @@
 import { expect, type Page, test } from "@playwright/test";
 
 /**
- * These tests need a real Supabase connection (auth calls, admin gate
+ * These tests need a real Supabase connection (auth calls, admin access
  * verification) to mean anything. An environment with no VITE_SUPABASE_URL /
  * VITE_SUPABASE_PUBLISHABLE_KEY configured — e.g. a sandbox with no .env and
  * no network egress to *.supabase.co — logs a specific console warning and
@@ -23,19 +23,15 @@ async function skipIfSupabaseUnconfigured(page: Page, path: string) {
 
 /**
  * Guardrail #2 — E2E coverage for the exact flows that broke in production
- * this cycle: sign-in, the admin orbit gate, and bidding. These deliberately
+ * this cycle: sign-in, admin access, and bidding. These deliberately
  * avoid writing any real state to the live Supabase project (no real account
  * is created, no admin session is granted, no bid is placed) — they assert
  * the client-side contract that must hold no matter what the backend does,
  * so they're safe to run against the real dev server/live DB in CI.
  *
- * The actual regression already found and fixed this cycle (the fake
- * "tester-verify@example.com" pending row reappearing in the approval queue)
- * is covered at the unit level instead, in tests/admin-bridge-access-list.test.ts
- * and tests/admin-tester-approval-queue.test.ts — reproducing it end-to-end
- * would mean creating and deciding on a real row in the production
- * admin_access_requests table on every CI run, which is exactly the kind of
- * test-data pollution this project is trying to stop shipping.
+ * Authorisation rules (verified owner / admin role only, no shared password) are
+ * covered at the unit level in tests/admin-bridge-auth.test.ts and
+ * tests/signup-approvals.test.ts.
  */
 
 test.describe("sign-in (/login)", () => {
@@ -68,34 +64,23 @@ test.describe("sign-in (/login)", () => {
     await expect(page).toHaveURL(/\/login/);
   });
 
-  test("the admin gate is not reachable from the public login form", async ({ page }) => {
-    // Regression guard for the routing bug this session fixed: /login must
-    // stay pure Supabase email/password auth and never surface or accept the
-    // shared orbit admin password as an alternate path.
+  test("the public login form offers no admin-password path", async ({ page }) => {
+    // /login is pure Supabase email/password auth for everyone, owner included.
     await page.goto("/login");
     await expect(page.locator("body")).not.toContainText(/admin password/i);
   });
 });
 
-test.describe("admin orbit gate (/admin)", () => {
-  test("wrong admin password is rejected without granting access", async ({ page }) => {
-    await skipIfSupabaseUnconfigured(page, "/admin");
-    const identity = page.getByPlaceholder("Email or username");
-    const password = page.getByPlaceholder("Admin password");
-
-    // If a real Supabase admin session exists in this browser context (CI has
-    // none), the gate form isn't shown at all — skip rather than false-fail.
-    if (!(await identity.isVisible().catch(() => false))) {
-      test.skip(true, "already authenticated as admin in this browser context");
-    }
-
-    await identity.fill("e2e-guardrail@myafriart.invalid");
-    await password.fill("not-the-real-password");
-    await page.getByRole("button", { name: "Enter" }).click();
-
-    await expect(page.getByText(/Incorrect admin password/i)).toBeVisible();
-    // Must still be on the gate form, not inside the admin dashboard.
-    await expect(page.getByRole("heading", { name: "Pending approvals" })).toHaveCount(0);
+test.describe("admin (/admin)", () => {
+  test("signed-out visitors go to normal sign-in and keep the deep link", async ({ page }) => {
+    await skipIfSupabaseUnconfigured(page, "/admin?tab=approvals");
+    await expect(page).toHaveURL(/\/login\?.*redirect=/);
+    expect(decodeURIComponent(new URL(page.url()).searchParams.get("redirect") ?? "")).toBe(
+      "/admin?tab=approvals",
+    );
+    // No shared-password form, and nothing from the dashboard leaks.
+    await expect(page.getByPlaceholder("Admin password")).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Catalogue admin" })).toHaveCount(0);
   });
 });
 

@@ -199,11 +199,8 @@ export function BatchUploadAdmin({ artists, artworks, loading = false }: Props) 
   );
   const fileRef = useRef<HTMLInputElement>(null);
 
-  // BatchUploadAdmin's artists/artworks props are sourced from a dead
-  // TanStack server fn. The real owner signs in via the orbit gate (no
-  // Supabase session — production has zero rows in auth.users), so that
-  // props path silently served local mock data. Self-fetch the real
-  // catalogue once and prefer it whenever it has loaded.
+  // Self-fetch the real catalogue once and prefer it over the props
+  // (which can be mock data) whenever it has loaded.
   useEffect(() => {
     let cancelled = false;
     fetchCatalogue()

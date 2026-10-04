@@ -1,12 +1,12 @@
 /**
  * Client for POST /api/admin-bridge (netlify/functions/admin-bridge.mjs).
  *
- * Privileged reads and writes go through this one serverless door, carrying a
- * Supabase JWT when present and/or the orbit gate password verified server-side.
- * Client email headers are never used as proof of ownership.
+ * Privileged reads and writes go through this one serverless door, carrying the
+ * signed-in user's Supabase JWT. The function verifies it server-side (admin role
+ * or the verified founding owner). Client email headers are never used as proof
+ * of ownership, and there is no shared password anywhere.
  */
 import { supabase } from "@/integrations/supabase/client";
-import { adminGateOrbitPassword } from "@/lib/adminGate";
 import { publicMessage } from "@/lib/public-message";
 
 const ENDPOINT = "/api/admin-bridge";
@@ -20,16 +20,11 @@ export class BridgeUnavailableError extends Error {
 
 async function authHeaders(): Promise<Record<string, string>> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-  const orbitPassword = adminGateOrbitPassword();
-  if (orbitPassword) {
-    headers["x-orbit-gate-password"] = orbitPassword;
-    headers["x-orbit-password"] = orbitPassword;
-  }
   try {
     const { data } = await supabase.auth.getSession();
     if (data.session?.access_token) headers.Authorization = `Bearer ${data.session.access_token}`;
   } catch {
-    /* orbit gate without Supabase JWT */
+    /* signed out: the server will answer 403 */
   }
   return headers;
 }
@@ -37,15 +32,10 @@ async function authHeaders(): Promise<Record<string, string>> {
 export async function callAdminBridge<T = any>(action: string, payload: Record<string, unknown> = {}): Promise<T> {
   let res: Response;
   try {
-    const orbitPassword = adminGateOrbitPassword();
     res = await fetch(ENDPOINT, {
       method: "POST",
       headers: await authHeaders(),
-      body: JSON.stringify({
-        action,
-        ...payload,
-        ...(orbitPassword ? { orbitPassword } : {}),
-      }),
+      body: JSON.stringify({ action, ...payload }),
     });
   } catch (e) {
     throw new BridgeUnavailableError(publicMessage(e, "Could not reach the admin service."));
@@ -69,17 +59,6 @@ export async function callAdminBridge<T = any>(action: string, payload: Record<s
   }
   return json as T;
 }
-
-export type AccessRequest = {
-  id: string;
-  email: string;
-  identity: string | null;
-  app: string;
-  status: "pending" | "approved" | "rejected";
-  requested_at: string;
-  decided_at: string | null;
-  decided_by: string | null;
-};
 
 export type ArtworkSubmission = {
   id: string;
@@ -106,20 +85,6 @@ export type ArtworkSubmission = {
   artwork_id: string | null;
   created_at: string;
 };
-
-/** Orbit-password RPC fallback when /api/admin-bridge is missing on this deploy. */
-export async function listSubmissionsViaRpc(
-  status: "pending" | "approved" | "rejected" | "all" = "pending",
-): Promise<ArtworkSubmission[] | null> {
-  const password = adminGateOrbitPassword();
-  if (!password) return null;
-  const { data, error } = await supabase.rpc("list_artwork_submissions_queue" as never, {
-    p_orbit_password: password,
-    p_status: status,
-  } as never);
-  if (error || !Array.isArray(data)) return null;
-  return data as ArtworkSubmission[];
-}
 
 export type SentLetter = {
   id: string;
@@ -152,13 +117,7 @@ export type BridgeArtwork = {
   is_active?: boolean;
 };
 
-/**
- * Real artist/artwork catalogue, regardless of auth path. BatchUploadAdmin's
- * artists/artworks props are sourced from a dead TanStack server fn, so in
- * orbit-gate mode (how the real owner actually signs in — production has
- * zero rows in auth.users) they were silently mock data. This is the real
- * source.
- */
+/** Real artist/artwork catalogue for the batch-upload picker. */
 export const fetchCatalogue = () =>
   callAdminBridge<{ artists: BridgeArtist[]; artworks: BridgeArtwork[] }>("catalogue.list");
 

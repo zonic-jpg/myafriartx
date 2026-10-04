@@ -2,16 +2,14 @@
  * Netlify Function — owner/admin bridge for MyAfriArtX.
  * POST /api/admin-bridge  { action, ... }
  *
- * The production site is a static SPA, so TanStack `createServerFn` endpoints do
- * not exist at runtime and the owner may sign in through the orbit admin gate,
- * which deliberately holds no Supabase JWT. Every privileged read/write therefore
- * goes through this one function using the service role key.
+ * Privileged reads and writes go through this one serverless door using the
+ * service role key.
  *
  * Authorisation (server-side only — never trust client-supplied email headers):
- *   1. Bearer Supabase JWT whose user has the 'admin' role in user_roles, or
- *      whose email claim is OWNER_EMAIL.
- *   2. Orbit gate password in `x-orbit-gate-password` or body.orbitPassword,
- *      verified case-insensitively against the Zonic orbit standard password.
+ *   Bearer Supabase JWT whose user has the 'admin' role in user_roles, or is the
+ *   founding owner: OWNER_EMAIL with a VERIFIED (confirmed) email address.
+ *   There is NO shared/admin password path. Role allocation (who becomes an
+ *   admin) is owner-only and lives in the approvals RPCs, not here.
  *
  * Env: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (required),
  *      SUPABASE_PUBLISHABLE_KEY (JWT verification),
@@ -30,8 +28,6 @@ import ws from "ws";
 const SUPABASE_CLIENT_OPTS = { realtime: { transport: ws } };
 
 const OWNER_EMAIL = "oadeagbo@gmail.com";
-const ORBIT_GATE_PASSWORD = "zonicgate2026";
-const APP_ID = "myafriartx";
 const AUTH_FAIL_LIMIT = 20;
 const AUTH_FAIL_WINDOW_MS = 15 * 60 * 1000;
 const authFailBuckets = new Map();
@@ -50,7 +46,7 @@ const MEDIA_ENUM = [
 const cors = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Headers": "authorization, content-type, apikey, x-orbit-gate-password",
+  "Access-Control-Allow-Headers": "authorization, content-type, apikey",
   "Content-Type": "application/json",
 };
 
@@ -99,18 +95,7 @@ function recordAuthFailure(ip) {
   bucket.count += 1;
 }
 
-function isOrbitGatePassword(value) {
-  return norm(value) === ORBIT_GATE_PASSWORD;
-}
-
-function orbitPasswordFromRequest(event, body) {
-  const fromHeader = header(event, "x-orbit-gate-password");
-  if (fromHeader) return fromHeader;
-  if (body && typeof body.orbitPassword === "string") return body.orbitPassword;
-  return "";
-}
-
-async function resolveActor(event, supabaseUrl, serviceKey, body = {}) {
+async function resolveActor(event, supabaseUrl, serviceKey) {
   const ip = clientIp(event);
   if (authRateLimited(ip)) {
     return { ok: false, reason: "Too many failed admin sign-in attempts. Try again later." };
@@ -129,7 +114,8 @@ async function resolveActor(event, supabaseUrl, serviceKey, body = {}) {
     const user = data?.user;
     if (user) {
       const email = norm(user.email);
-      if (email === OWNER_EMAIL) {
+      // The founding owner is recognised by a VERIFIED email only.
+      if (email === OWNER_EMAIL && user.email_confirmed_at) {
         return { ok: true, email, userId: user.id, via: "jwt-owner" };
       }
       const admin = createClient(supabaseUrl, serviceKey, SUPABASE_CLIENT_OPTS);
@@ -143,16 +129,11 @@ async function resolveActor(event, supabaseUrl, serviceKey, body = {}) {
     }
   }
 
-  const orbitPassword = orbitPasswordFromRequest(event, body);
-  if (orbitPassword && isOrbitGatePassword(orbitPassword)) {
-    return { ok: true, email: "orbit-gate@myafriart", userId: null, via: "orbit-gate" };
-  }
-
-  if (orbitPassword || token) recordAuthFailure(ip);
+  if (token) recordAuthFailure(ip);
 
   return {
     ok: false,
-    reason: "Sign in with your Supabase account or the orbit admin password to use this action.",
+    reason: "Sign in with an admin account to use this action.",
   };
 }
 
@@ -385,41 +366,6 @@ export async function handler(event) {
     ...SUPABASE_CLIENT_OPTS,
   });
 
-  // Requesting access is the one thing an unauthenticated visitor may do.
-  if (action === "access.request") {
-    const email = norm(body.email);
-    if (!email) return respond(400, { error: "email required" });
-    if (email === OWNER_EMAIL) return respond(200, { status: "owner" });
-    const { data: existing } = await admin
-      .from("admin_access_requests")
-      .select("status")
-      .ilike("email", email)
-      .eq("app", APP_ID)
-      .maybeSingle();
-    if (existing) return respond(200, { status: existing.status });
-    const { error } = await admin.from("admin_access_requests").insert({
-      email,
-      identity: String(body.identity || "").slice(0, 200) || null,
-      app: APP_ID,
-      status: "pending",
-    });
-    if (error) return respond(500, { error: error.message });
-    return respond(200, { status: "pending" });
-  }
-
-  if (action === "access.status") {
-    const email = norm(body.email);
-    if (!email) return respond(400, { error: "email required" });
-    if (email === OWNER_EMAIL) return respond(200, { status: "owner" });
-    const { data } = await admin
-      .from("admin_access_requests")
-      .select("status")
-      .ilike("email", email)
-      .eq("app", APP_ID)
-      .maybeSingle();
-    return respond(200, { status: data?.status ?? "none" });
-  }
-
   // Public events calendar — no auth required, published rows only.
   // (The events page used TanStack createServerFn's listLiveEvents, but this
   // site ships as a static SPA with no server-fn runtime in production, so
@@ -440,55 +386,12 @@ export async function handler(event) {
     return respond(200, { events: data ?? [] });
   }
 
-  const actor = await resolveActor(event, supabaseUrl, serviceKey, body);
+  const actor = await resolveActor(event, supabaseUrl, serviceKey);
   if (!actor.ok) return respond(403, { error: actor.reason });
 
   try {
     switch (action) {
-      case "access.list": {
-        // BUG FIX (2026-09-14): this used to re-seed a fake
-        // "tester-verify@example.com" row back to status "pending" every
-        // time the queue was loaded with zero pending entries — meaning an
-        // owner could approve every real request and the very next queue
-        // load would manufacture a new "pending" entry out of thin air. It
-        // looked exactly like approvals were silently failing. This was
-        // demo/test scaffolding that should never have shipped; removed.
-        const { data, error } = await admin
-          .from("admin_access_requests")
-          .select("id, email, identity, app, status, requested_at, decided_at, decided_by")
-          .eq("app", APP_ID)
-          .order("requested_at", { ascending: false })
-          .limit(300);
-        if (error) throw new Error(error.message);
-        return respond(200, { requests: data ?? [], via: actor.via });
-      }
-
-      case "access.decide": {
-        const email = norm(body.email);
-        const decision = body.decision === "approved" ? "approved" : "rejected";
-        if (!email) return respond(400, { error: "email required" });
-        const { error } = await admin
-          .from("admin_access_requests")
-          .update({
-            status: decision,
-            decided_at: new Date().toISOString(),
-            decided_by: actor.email,
-            note: String(body.note || "").slice(0, 500) || null,
-          })
-          .ilike("email", email)
-          .eq("app", APP_ID);
-        if (error) throw new Error(error.message);
-        return respond(200, { ok: true, email, status: decision });
-      }
-
-      // Real artist/artwork data, regardless of how the caller signed in.
-      // BatchUploadAdmin used to receive these as props sourced from
-      // adminGetAll (a dead TanStack server fn), so in orbit-gate mode —
-      // the way the real owner actually signs in, since production has
-      // zero rows in auth.users — the artist picker and "already live for
-      // this artist" list were silently showing local mock data instead of
-      // the real catalogue. This gives it a real, working source regardless
-      // of auth path.
+      // Real artist/artwork data for the batch-upload picker.
       case "catalogue.ensureSourced": {
         const incoming = Array.isArray(body.artists) ? body.artists : [];
         if (!incoming.length) return respond(400, { error: "artists required" });
@@ -679,7 +582,7 @@ export async function handler(event) {
       }
 
       // Admin events CRUD — same live_events table as events.public above.
-      // Needs a real admin actor (orbit gate password or admin JWT), resolved above.
+      // Needs a real admin actor (admin JWT or verified owner), resolved above.
       case "events.list": {
         let q = admin.from("live_events").select("*").order("starts_at", { ascending: true });
         if (!body.includeDrafts) q = q.eq("status", "published");

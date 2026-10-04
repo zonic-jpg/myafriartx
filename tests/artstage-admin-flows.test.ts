@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isOrbitAdminPassword, isOwnerEmail, isUniformAdminPassword } from "../src/lib/adminGate";
-import { resolveAdminGateLogin } from "../src/lib/adminTesterApproval";
+import { isFoundingOwnerEmail, isVerifiedOwner } from "../src/lib/foundingOwner";
 import { publicMessage } from "../src/lib/public-message";
 import {
   LETTER_AUDIENCES,
@@ -10,29 +9,19 @@ import {
 import { emptyDraft, isDraftPreppable, draftStorageKey } from "../src/lib/batch-upload";
 import { sizeText, validateSubmission } from "../src/lib/submissions";
 
-describe("orbit admin password", () => {
-  it("accepts zonicGate2026 case-insensitively", () => {
-    expect(isOrbitAdminPassword("zonicGate2026")).toBe(true);
-    expect(isOrbitAdminPassword("ZONICGATE2026")).toBe(true);
+describe("founding owner", () => {
+  it("is recognised by email, case-insensitively, and only that email", () => {
+    expect(isFoundingOwnerEmail("oadeagbo@gmail.com")).toBe(true);
+    expect(isFoundingOwnerEmail("  OAdeagbo@Gmail.com ")).toBe(true);
+    expect(isFoundingOwnerEmail("tester@example.com")).toBe(false);
+    expect(isFoundingOwnerEmail(null)).toBe(false);
   });
 
-  it("grants the owner immediately and parks testers as pending", () => {
-    expect(isOwnerEmail("oadeagbo@gmail.com")).toBe(true);
-    expect(isUniformAdminPassword("zonicGate2026")).toBe(true);
-    expect(resolveAdminGateLogin("oadeagbo@gmail.com", "zonicGate2026").ok).toBe(true);
-    const tester = resolveAdminGateLogin("tester-verify@example.com", "zonicGate2026");
-    expect(tester.ok).toBe(false);
-    expect(tester.status).toBe("pending");
-    expect(String(tester.message || "")).toMatch(/Awaiting approval/i);
-  });
-
-  it("rejects retired and variant passwords", () => {
-    expect(isOrbitAdminPassword("zonicGate2026a")).toBe(false);
-    expect(isOrbitAdminPassword("zonicGate2026b")).toBe(false);
-    expect(isOrbitAdminPassword("zonicStudio2026")).toBe(false);
-    expect(isOrbitAdminPassword("admintester1")).toBe(false);
-    expect(isOrbitAdminPassword("admin123")).toBe(false);
-    expect(isOrbitAdminPassword("rubbaxadmin1")).toBe(false);
+  it("needs a VERIFIED email — an unconfirmed sign-up with the owner address is not the owner", () => {
+    expect(isVerifiedOwner({ email: "oadeagbo@gmail.com", email_confirmed_at: "2026-10-04T10:00:00Z" })).toBe(true);
+    expect(isVerifiedOwner({ email: "oadeagbo@gmail.com", email_confirmed_at: null })).toBe(false);
+    expect(isVerifiedOwner({ email: "tester@example.com", email_confirmed_at: "2026-10-04T10:00:00Z" })).toBe(false);
+    expect(isVerifiedOwner(null)).toBe(false);
   });
 });
 

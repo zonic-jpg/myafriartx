@@ -94,5 +94,5 @@ echo "──────────── RESULT ──────────
 echo "repo      = https://github.com/${OWNER}/${REPO}"
 echo "pages_url = ${PAGES_URL}"
 echo "live      = ${LIVE}"
-echo "admin     = orbit gate password (any email) · owner = oadeagbo@gmail.com"
+echo "admin     = sign in with an admin-role account · owner = oadeagbo@gmail.com (verified email)"
 [[ "$LIVE" == "yes" ]] || echo "NOTE: if still not 200, give Pages another minute then reload; 404 usually means the first build is still running."

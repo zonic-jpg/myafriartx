@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "@/components/ui/sonner";
 import { NotifyAutoOpen } from "@/components/notify-auto-open";
-import { OrbitSessionNotice } from "@/components/OrbitSessionNotice";
+import { ApprovalGate } from "@/components/ApprovalGate";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import appCss from "../styles.css?url";
@@ -122,8 +122,9 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary scope="root">
-        <OrbitSessionNotice />
-        <Outlet />
+        <ApprovalGate>
+          <Outlet />
+        </ApprovalGate>
         <SiteFooter />
         <NotifyAutoOpen />
         <Toaster richColors position="top-center" />

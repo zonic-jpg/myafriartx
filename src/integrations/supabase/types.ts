@@ -1972,56 +1972,6 @@ export type Database = {
         Returns: undefined
       }
       is_member_verified: { Args: { p_user_id: string }; Returns: boolean }
-      list_admin_access_queue: {
-        Args: { p_orbit_password: string }
-        Returns: {
-          app: string
-          decided_at: string
-          decided_by: string
-          email: string
-          id: string
-          identity: string
-          requested_at: string
-          status: string
-        }[]
-      }
-      list_artwork_submissions_queue: {
-        Args: { p_orbit_password: string; p_status?: string }
-        Returns: {
-          artist_name: string
-          artwork_id: string | null
-          category: string | null
-          context: string | null
-          country_of_origin: string | null
-          created_at: string
-          depth_cm: number | null
-          height_cm: number | null
-          id: string
-          image_path: string | null
-          image_url: string
-          medium: string | null
-          price_amount: number | null
-          price_currency: string
-          review_note: string | null
-          reviewed_at: string | null
-          reviewed_by: string | null
-          size_text: string | null
-          status: string
-          submitted_by: string | null
-          submitter_email: string | null
-          submitter_name: string | null
-          title: string
-          updated_at: string
-          width_cm: number | null
-          year_created: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "artwork_submissions"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
       place_bid: {
         Args: { p_amount: number; p_lot: string }
         Returns: {

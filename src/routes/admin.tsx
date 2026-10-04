@@ -1,5 +1,5 @@
 import { ContentStudio } from "@/components/content-studio";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -38,217 +38,127 @@ import { KycAdmin } from "@/components/admin/kyc-admin";
 import { PayoutsAdmin } from "@/components/admin/payouts-admin";
 import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
-import {
-  adminGateActive,
-  adminGateEmail,
-  adminGateRole,
-  clearAdminGate,
-  isUniformAdminPassword,
-  saveAdminGate,
-  isOwnerEmail,
-} from "@/lib/adminGate";
-import { resolveAdminGateLoginRemote } from "@/lib/adminTesterApproval";
+import { isVerifiedOwner } from "@/lib/foundingOwner";
+import { requestAdminAccess } from "@/lib/signupApproval";
 import { setDiagnosticsAudience } from "@/lib/public-message";
-import { AdminTesterQueue } from "@/components/admin/AdminTesterQueue";
+import { SignupApprovalsAdmin } from "@/components/admin/SignupApprovalsAdmin";
 import { LetterStudioAdmin } from "@/components/admin/LetterStudioAdmin";
 import { BatchUploadAdmin } from "@/components/admin/BatchUploadAdmin";
 import { SubmissionsAdmin } from "@/components/admin/SubmissionsAdmin";
 import { EventsAdmin } from "@/components/admin/EventsAdmin";
-import { LOCAL_MOCK_ARTISTS, LOCAL_MOCK_ARTWORKS } from "@/lib/mock-catalogue";
 import { seedOutreachArtists } from "@/lib/outreach-artists";
 import { publicMessage } from "@/lib/public-message";
-import { publicPaneAssets } from "@/lib/local-image-assets";
 
 export const Route = createFileRoute("/admin")({
   head: () => ({ meta: [{ title: "Admin — MyAfriArt" }] }),
+  // ?tab=approvals is the deep link in the owner's approval email.
+  validateSearch: (search: Record<string, unknown>): { tab?: string } => ({
+    tab: typeof search.tab === "string" && search.tab ? search.tab : undefined,
+  }),
   component: Admin,
 });
 
 const MEDIA = ["oil", "watercolor", "pastel", "sculpture", "photograph", "print", "mixed_media"];
 
-function localGateAdminData() {
-  const artists = LOCAL_MOCK_ARTISTS;
-  const artworks = LOCAL_MOCK_ARTWORKS;
-  const panes = Object.entries(publicPaneAssets).map(([pane_id, image_url], i) => ({
-    id: `local-pane-${pane_id}`,
-    pane_id,
-    kicker: String(pane_id).replace(/_/g, " "),
-    title: String(pane_id).replace(/_/g, " "),
-    summary: "Soft-session local pane",
-    reveal: "",
-    subtitle: null,
-    body: null,
-    cta_label: "Explore",
-    cta_href: `/${pane_id === "stage" ? "studio" : pane_id === "piece" ? "" : pane_id}`,
-    image_url,
-    image_url_mobile: image_url,
-    status: "published",
-    sort_order: i,
-    is_active: true,
-  }));
-  return {
-    artists,
-    artworks,
-    styles: [],
-    renders: [],
-    panes,
-    settings: { mock_catalogue_enabled: true },
-  };
-}
-
 function Admin() {
-  // Soft owner/admin gate must survive remounts and auth-null races (AdSpot pattern).
-  const [gate, setGate] = useState(() =>
-    typeof window !== "undefined" ? adminGateActive() : false,
-  );
+  const navigate = useNavigate();
   const [ready, setReady] = useState(false);
-  const [authed, setAuthed] = useState(false);
+  const [user, setUser] = useState<{
+    id: string;
+    email: string | null;
+    email_confirmed_at?: string | null;
+  } | null>(null);
   useEffect(() => {
-    const syncGate = () => setGate(adminGateActive());
-    syncGate();
-    window.addEventListener("storage", syncGate);
-    window.addEventListener("focus", syncGate);
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      syncGate();
-      setAuthed(!!s);
+      setUser(s?.user ? { id: s.user.id, email: s.user.email ?? null, email_confirmed_at: s.user.email_confirmed_at } : null);
     });
     supabase.auth.getSession().then(({ data }) => {
-      setAuthed(!!data.session);
-      syncGate();
+      const u = data.session?.user;
+      setUser(u ? { id: u.id, email: u.email ?? null, email_confirmed_at: u.email_confirmed_at } : null);
       setReady(true);
     });
-    return () => {
-      window.removeEventListener("storage", syncGate);
-      window.removeEventListener("focus", syncGate);
-      sub.subscription.unsubscribe();
-    };
+    return () => sub.subscription.unsubscribe();
   }, []);
+  const authed = !!user;
   const checkAdmin = useServerFn(checkIsAdmin);
   const { data: roleData, isLoading: roleLoading } = useQuery({
-    queryKey: ["isAdmin"],
+    queryKey: ["isAdmin", user?.id ?? null],
     queryFn: () => checkAdmin(),
-    enabled: authed && !gate,
+    enabled: authed,
     retry: false,
   });
 
   useEffect(() => {
-    setDiagnosticsAudience(gate || !!roleData?.isAdmin);
-  }, [gate, roleData?.isAdmin]);
+    setDiagnosticsAudience(!!roleData?.isAdmin);
+  }, [roleData?.isAdmin]);
 
+  // Signed out: normal sign-in, then come straight back here — keeping the query
+  // string so the owner's email link (?tab=approvals) still lands on that tab.
   useEffect(() => {
-    if (!ready) return;
-    if (adminGateActive() && !gate) setGate(true);
-  }, [ready, gate]);
+    if (!ready || authed) return;
+    const back = `${window.location.pathname}${window.location.search}`;
+    void navigate({ to: "/login", search: { redirect: back }, replace: true });
+  }, [ready, authed, navigate]);
 
-  // Uniform tester gate grants full admin client-side without a Supabase session.
-  if (gate) {
-    return <AdminInner gateMode />;
-  }
-
-  if (!ready || (authed && roleLoading)) {
+  if (!ready || !authed || roleLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center text-muted-foreground">
         Loading…
       </div>
     );
   }
-  if (!authed || !roleData?.isAdmin) {
-    // This is the ONLY place in the app that accepts the shared admin
-    // password — deliberately not the public /login form (see login.tsx).
-    // A visitor with a real admin-role Supabase account can still just sign
-    // in normally via the link below; roleData re-resolves the moment they
-    // land back here authenticated.
-    return <AdminGateEntry authed={authed} onGateGranted={() => setGate(true)} />;
+  if (!roleData?.isAdmin) {
+    return <NoAdminAccess email={user?.email ?? null} owner={isVerifiedOwner(user)} />;
   }
-  return <AdminInner />;
+  return <AdminInner isOwner={isVerifiedOwner(user)} />;
 }
 
-function AdminGateEntry({
-  authed,
-  onGateGranted,
-}: {
-  authed: boolean;
-  onGateGranted: () => void;
-}) {
-  const [identity, setIdentity] = useState("");
-  const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+/** Signed in, but without the admin role: ask the owner for it (one tap on their side). */
+function NoAdminAccess({ email, owner }: { email: string | null; owner: boolean }) {
+  const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [message, setMessage] = useState<string | null>(null);
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    const trimmedIdentity = identity.trim();
-    if (!trimmedIdentity || !password) {
-      setError("Enter an email/username and the admin password.");
+  async function ask() {
+    setState("sending");
+    setMessage(null);
+    const r = await requestAdminAccess();
+    if (!r.ok) {
+      setState("error");
+      setMessage(r.message ?? "Could not send the request. Try again.");
       return;
     }
-    if (!isUniformAdminPassword(password)) {
-      setError("Incorrect admin password.");
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const gate = await resolveAdminGateLoginRemote(trimmedIdentity, password, "myafriartx");
-      if (!gate.ok) {
-        setError(gate.message || "Awaiting approval.");
-        return;
-      }
-      saveAdminGate(trimmedIdentity, password);
-      toast.success(isOwnerEmail(trimmedIdentity) ? "Owner access granted" : "Admin access granted");
-      onGateGranted();
-    } catch (err: any) {
-      setError(err?.message || "Could not verify admin access.");
-    } finally {
-      setSubmitting(false);
-    }
+    setState("sent");
+    setMessage(
+      r.status === "already_admin"
+        ? "You already have admin access — reload this page."
+        : "Request sent. The owner has been notified and can approve you with one tap.",
+    );
   }
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6">
       <h1 className="font-display text-3xl">Admin access</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        {authed
-          ? "Your account does not have the admin role."
-          : "Sign in to manage MyAfriArt."}
+        {owner
+          ? "You are signed in as the owner, but the owner role has not been applied to the database yet. Apply the latest database update, then reload."
+          : `${email ? `${email} does` : "Your account does"} not have the admin role yet.`}
       </p>
-      <form onSubmit={submit} className="mt-6 space-y-3">
-        <input
-          type="text"
-          placeholder="Email or username"
-          value={identity}
-          onChange={(e) => setIdentity(e.target.value)}
-          className="w-full rounded-md border border-border px-3 py-2 text-sm"
-          autoComplete="username"
-        />
-        <input
-          type="password"
-          placeholder="Admin password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-md border border-border px-3 py-2 text-sm"
-          autoComplete="current-password"
-        />
-        {error && <p className="text-xs text-destructive">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="w-full rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background disabled:opacity-60"
-        >
-          {submitting ? "Checking…" : "Enter"}
-        </button>
-      </form>
-      <p className="mt-6 text-sm text-muted-foreground">
-        Have a regular admin-role account instead?{" "}
-        <Link to="/login" className="font-medium underline underline-offset-2">
-          Sign in
-        </Link>
-        .
-      </p>
-      <Link
-        to="/studio"
-        className="mt-8 inline-block text-sm text-muted-foreground underline underline-offset-2"
-      >
+      {!owner && (
+        <>
+          <button
+            type="button"
+            onClick={() => void ask()}
+            disabled={state === "sending" || state === "sent"}
+            className="mt-6 w-full rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background disabled:opacity-60"
+          >
+            {state === "sending" ? "Sending…" : state === "sent" ? "Request sent" : "Request admin access"}
+          </button>
+          {message && (
+            <p className={`mt-3 text-xs ${state === "error" ? "text-destructive" : "text-muted-foreground"}`}>{message}</p>
+          )}
+        </>
+      )}
+      <Link to="/studio" className="mt-8 inline-block text-sm text-muted-foreground underline underline-offset-2">
         Back to Studio
       </Link>
     </div>
@@ -277,50 +187,46 @@ type Tab =
   | "kyc"
   | "disputes"
   | "pricing"
-  | "payouts";
+  | "payouts"
+  | "approvals";
 
-function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
+const TAB_IDS: Tab[] = [
+  "submissions", "letters", "intake", "studio", "settings", "artworks", "artists", "styles", "renders",
+  "panes", "events", "media", "allocation", "lookup", "transactions", "analytics", "brokerage",
+  "collateral", "kyc", "disputes", "pricing", "payouts", "approvals",
+];
+
+function AdminInner({ isOwner }: { isOwner: boolean }) {
   const qc = useQueryClient();
   const getAll = useServerFn(adminGetAll);
-  const { data: serverData, isLoading } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["admin", "all"],
     queryFn: () => getAll(),
-    enabled: !gateMode,
     retry: false,
   });
-  const [localData] = useState(() => localGateAdminData());
-  const data = gateMode ? localData : serverData;
-  const [tab, setTab] = useState<Tab>("submissions");
+  const search = Route.useSearch();
+  const wanted = TAB_IDS.includes(search.tab as Tab) && (search.tab !== "approvals" || isOwner)
+    ? (search.tab as Tab)
+    : null;
+  const [tab, setTab] = useState<Tab>(wanted ?? "submissions");
+  useEffect(() => {
+    if (wanted) setTab(wanted);
+  }, [wanted]);
   const [lookupSeed, setLookupSeed] = useState<string>("");
   const refresh = () => {
-    if (gateMode) return;
     qc.invalidateQueries({ queryKey: ["admin", "all"] });
   };
-
-  useEffect(() => {
-    if (!gateMode) return;
-    if (window.location.hash === "#admintester-queue" || window.location.hash.includes("admintester")) {
-      requestAnimationFrame(() =>
-        document.getElementById("admintester-queue")?.scrollIntoView({ behavior: "smooth", block: "start" }),
-      );
-    }
-  }, [gateMode]);
 
   const openLookup = (q: string) => {
     setLookupSeed(q);
     setTab("lookup");
   };
 
-  const gateRole = gateMode ? adminGateRole() : null;
-  const gateEmail = gateMode ? adminGateEmail() || "admin" : null;
-  const isOwner = gateRole === "owner";
-
   return (
     <div
       className="min-h-screen bg-background"
       id="root"
-      data-auth-role={gateMode ? gateRole || "admin" : "supabase-admin"}
-      data-gate-mode={gateMode ? "1" : "0"}
+      data-auth-role={isOwner ? "owner" : "admin"}
     >
       <header className="border-b border-border">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
@@ -335,7 +241,6 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
             <button
               type="button"
               onClick={() => {
-                clearAdminGate();
                 void supabase.auth.signOut().catch(() => undefined);
                 window.location.href = "/login";
               }}
@@ -349,47 +254,18 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
 
       <main className="mx-auto max-w-6xl px-6 py-10">
         <h1 className="font-display text-3xl">Catalogue admin</h1>
-        {gateMode && (
+        {isOwner && (
           <p className="mt-2 text-sm text-muted-foreground">
-            Signed in as <b>{gateEmail}</b>
-            {isOwner ? " · Super admin" : " · Admin"} (soft session). Full catalogue tools below —
-            clicking tabs never clears this session.
+            Signed in as the owner · Super admin. Testers appear under{" "}
+            <button type="button" onClick={() => setTab("approvals")} className="underline underline-offset-2">
+              approvals
+            </button>{" "}
+            — one tap makes them an admin.
           </p>
         )}
 
-        {/* The approval queue is the first thing the owner needs to see, so it
-            sits above the tab strip rather than behind a tab. */}
-        <div className="mt-6">
-          <AdminTesterQueue />
-        </div>
-
         <div className="mt-8 flex flex-wrap gap-1 border-b border-border">
-          {(
-            [
-              "submissions",
-              "letters",
-              "intake",
-              "studio",
-              "settings",
-              "artworks",
-              "artists",
-              "styles",
-              "renders",
-              "panes",
-              "events",
-              "media",
-              "allocation",
-              "lookup",
-              "transactions",
-              "analytics",
-              "brokerage",
-              "collateral",
-              "kyc",
-              "disputes",
-              "pricing",
-              "payouts",
-            ] as Tab[]
-          ).map((t) => (
+          {TAB_IDS.filter((t) => t !== "approvals" || isOwner).map((t) => (
             <button
               key={t}
               type="button"
@@ -401,7 +277,11 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
           ))}
         </div>
 
-        {!gateMode && isLoading ? (
+        {tab === "approvals" && isOwner ? (
+          <div className="py-6">
+            <SignupApprovalsAdmin />
+          </div>
+        ) : isLoading ? (
           <div className="py-10 text-sm text-muted-foreground">Loading…</div>
         ) : (
           <div className="py-6">
@@ -411,7 +291,7 @@ function AdminInner({ gateMode = false }: { gateMode?: boolean }) {
               <BatchUploadAdmin
                 artists={data.artists ?? []}
                 artworks={data.artworks ?? []}
-                loading={!gateMode && isLoading}
+                loading={isLoading}
               />
             )}
             {tab === "studio" && <ContentStudio />}
@@ -1457,7 +1337,7 @@ function MediaAuditAdmin({ data }: { data: any }) {
         <h2 className="font-display text-2xl">Media audit</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Checks pane, artwork, and artist image URLs. Broken assets should be replaced via Panes /
-          Artworks tabs. Soft-session owners can review without a Supabase JWT.
+          Artworks tabs.
         </p>
         <p className="mt-2 text-sm">
           {rows.length} assets ·{" "}

@@ -157,8 +157,8 @@ export function LetterStudioAdmin() {
   const csvRef = useRef<HTMLInputElement>(null);
   const logoRef = useRef<HTMLInputElement>(null);
 
-  // Letterhead is shared, not per-browser. Anonymous admin-gate sessions can read
-  // it directly now that app_settings exposes the 'letterhead' key to anon.
+  // Letterhead is shared, not per-browser; app_settings exposes the 'letterhead'
+  // key for reading.
   useEffect(() => {
     let active = true;
     void (async () => {
