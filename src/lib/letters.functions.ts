@@ -72,7 +72,7 @@ export const sendLetter = createServerFn({ method: "POST" })
     const admin = await __get_admin();
 
     const key = process.env.RESEND_API_KEY;
-    const from = process.env.LETTERS_FROM ?? "MyAfriArt <partnerships@myafriart.com>";
+    const from = process.env.LETTERS_FROM ?? process.env.EMAIL_FROM ?? "MyAfriArt <partnerships@myafriart.com>";
     if (!key) throw new Error("RESEND_API_KEY not configured");
 
     const res = await fetch("https://api.resend.com/emails", {

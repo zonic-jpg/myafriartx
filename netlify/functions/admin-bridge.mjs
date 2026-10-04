@@ -283,7 +283,7 @@ async function approveSubmission(admin, submission, actorEmail, note) {
 
 async function sendLetter(admin, body, actorEmail) {
   const key = env("RESEND_API_KEY");
-  const from = env("LETTERS_FROM") || "MyAfriArt <partnerships@myafriart.com>";
+  const from = env("LETTERS_FROM") || env("EMAIL_FROM") || "MyAfriArt <partnerships@myafriart.com>";
   const base = {
     sent_by_email: actorEmail,
     audience: body.audience,

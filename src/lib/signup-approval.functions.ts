@@ -23,7 +23,7 @@ export const notifyOwnerApproval = createServerFn({ method: "POST" })
     const { notifyOwnerForUser } = await import("./signup-approval.server");
     return notifyOwnerForUser(admin as never, context.userId, data.kind, {
       resendKey: process.env.RESEND_API_KEY,
-      from: process.env.LETTERS_FROM,
+      from: process.env.LETTERS_FROM ?? process.env.EMAIL_FROM,
       appUrl: process.env.PUBLIC_APP_URL,
     });
   });
