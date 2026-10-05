@@ -16,6 +16,7 @@ export const APP_NAME = "MyAfriArt";
 export const DEFAULT_APP_URL = "https://myafriartx.netlify.app";
 export const APPROVALS_PATH = "/admin?tab=approvals";
 export const HOURLY_CAP = 20;
+export const RELAY_URL = "https://nuleyrowkiuxrnlrkrkd.supabase.co/functions/v1/owner-mail-relay";
 const DEFAULT_FROM = "MyAfriArt <partnerships@myafriart.com>";
 
 export type NotifyResult = { sent: boolean; reason?: string };
@@ -57,8 +58,6 @@ export async function notifyOwnerForUser(
   // The owner never needs an email about themselves.
   if (String(row.email).toLowerCase() === FOUNDING_OWNER_EMAIL) return { sent: false, reason: "owner" };
 
-  if (!env.resendKey) return { sent: false, reason: "email not configured (RESEND_API_KEY missing)" };
-
   // Global flood cap.
   const hourAgo = new Date(now() - 3_600_000).toISOString();
   const [a, b] = await Promise.all([
@@ -89,16 +88,23 @@ export async function notifyOwnerForUser(
     <p style="color:#666;font-size:12px">You'll be asked to sign in if needed, then land straight on the approvals page.<br>${esc(link)}</p></div>`;
 
   try {
-    const res = await fetchImpl("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${env.resendKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: env.from || DEFAULT_FROM,
-        to: [FOUNDING_OWNER_EMAIL],
-        subject: `${APP_NAME}: ${who} is waiting for approval`,
-        html,
-      }),
-    });
+    // No local Resend key: use the shared owner-mail relay (Owanbe's Resend account).
+    const res = !env.resendKey
+      ? await fetchImpl(RELAY_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ app: "myafriart", who, kind }),
+        })
+      : await fetchImpl("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${env.resendKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: env.from || DEFAULT_FROM,
+            to: [FOUNDING_OWNER_EMAIL],
+            subject: `${APP_NAME}: ${who} is waiting for approval`,
+            html,
+          }),
+        });
     if (!res.ok) {
       await release();
       return { sent: false, reason: `email provider ${res.status}` };

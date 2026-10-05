@@ -143,12 +143,24 @@ describe("notifyOwnerForUser", () => {
     expect(f).toHaveBeenCalledTimes(1);
   });
 
-  it("soft-fails without RESEND_API_KEY and does not burn the claim", async () => {
+  it("without a local RESEND_API_KEY it uses the shared relay (fixed app id, no recipient)", async () => {
     const admin = fakeAdmin(pendingRow);
     const f = vi.fn(ok);
     const r = await notifyOwnerForUser(admin as never, "u1", "signup", {}, f as never);
+    expect(r.sent).toBe(true);
+    expect(f).toHaveBeenCalledTimes(1);
+    const [url, init] = f.mock.calls[0] as unknown as [string, { body: string }];
+    expect(url).toMatch(/owner-mail-relay$/);
+    const body = JSON.parse(init.body);
+    expect(body.app).toBe("myafriart");
+    expect(body.to).toBeUndefined();
+  });
+
+  it("releases the claim when the relay fails", async () => {
+    const admin = fakeAdmin(pendingRow);
+    const f = vi.fn(async () => ({ ok: false, status: 502 }) as never);
+    const r = await notifyOwnerForUser(admin as never, "u1", "signup", {}, f as never);
     expect(r.sent).toBe(false);
-    expect(f).not.toHaveBeenCalled();
     expect(admin.state.row!.notified_at).toBeNull();
   });
 
