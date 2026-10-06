@@ -4,7 +4,7 @@ const ROUTES = [
   { re: /(auction|bid|live)/i, text: "The Live Auction is at /auction. Open a lot, place a bid, and you'll see the countdown and current high bid live." },
   { re: /(sale|lounge|buy|purchase|price|cost|checkout)/i, text: "Browse works for sale in the Sale Lounge at /lounge. Open any piece to see its price, certificate and checkout." },
   { re: /(studio|room|wall|preview|stage|frame)/i, text: "Try the Studio at /studio: upload a photo of your room and place a work on your wall at true scale before you buy." },
-  { re: /(event|exhibit|show|fair)/i, text: "Upcoming exhibitions and events are listed at /events." },
+  { re: /(event|exhibit|fair)/i, text: "Upcoming exhibitions and events are listed at /events." },
   { re: /(submit|sell|become.*artist|join.*artist|apply)/i, text: "Artists can apply and submit work at /submit. Verification is handled at /verification." },
   { re: /(verify|certificate|authentic|provenance|fake)/i, text: "Every piece carries a certificate you can check at /verify/cert/<code>, and /verification explains how artists are vetted." },
   { re: /(dispute|refund|problem|complain|return)/i, text: "For an order problem, open /disputes and describe what happened; the team will review it." },
