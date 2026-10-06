@@ -29,6 +29,7 @@ import {
   streamText,
 } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
+import { conciergeFallback } from "./_concierge-guide.mjs";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -42,14 +43,17 @@ const cors = {
 // by esbuild per-function, so importing across that boundary is fragile.
 // Same provider-agnostic contract: AI_API_URL / AI_API_KEY / AI_MODEL,
 // with LOVABLE_API_KEY honoured as a legacy alias.
-const AI_MODEL = process.env.AI_MODEL || "gpt-4o-mini";
+const AI_MODEL =
+  process.env.AI_MODEL ||
+  ((process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) && !process.env.AI_API_KEY ? "gemini-2.0-flash" : "gpt-4o-mini");
 
 function getAiProvider() {
   const lovableKey = process.env.LOVABLE_API_KEY;
-  const apiKey = process.env.AI_API_KEY || lovableKey || "";
+  const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
+  const apiKey = process.env.AI_API_KEY || lovableKey || geminiKey || "";
   const baseURL =
     process.env.AI_API_URL ||
-    (lovableKey ? "https://ai.gateway.lovable.dev/v1" : "https://api.openai.com/v1");
+    (lovableKey && !geminiKey ? "https://ai.gateway.lovable.dev/v1" : geminiKey && !process.env.AI_API_KEY ? "https://generativelanguage.googleapis.com/v1beta/openai" : "https://api.openai.com/v1");
   const headers = {};
   if (lovableKey && !process.env.AI_API_KEY) {
     headers["Lovable-API-Key"] = lovableKey;
@@ -108,11 +112,10 @@ export async function handler(event) {
     const { provider, configured } = getAiProvider();
 
     if (!configured) {
-      const text =
-        "I'm the MyAfriArt concierge. The live assistant isn't configured yet — set AI_API_KEY (any OpenAI-compatible provider, e.g. OpenAI or Groq) to switch it on. Meanwhile you can browse Artists and Pieces from the landing page, open the Studio to stage a work on your wall, or check the Live Auction and Sale Lounge.";
+      const text = conciergeFallback(messages, catalogue);
       const stream = createUIMessageStream({
         execute: ({ writer }) => {
-          const id = "concierge-not-configured";
+          const id = "concierge-guide";
           writer.write({ type: "text-start", id });
           writer.write({ type: "text-delta", id, delta: text });
           writer.write({ type: "text-end", id });

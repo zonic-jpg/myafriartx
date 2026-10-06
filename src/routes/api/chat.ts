@@ -7,6 +7,8 @@ import {
   type UIMessage,
 } from "ai";
 import { getAiProvider, AI_MODEL } from "@/lib/ai-gateway.server";
+// @ts-expect-error plain JS helper shared with the Netlify function
+import { conciergeFallback } from "@/lib/concierge-guide.js";
 
 const SYSTEM =
   "You are the MyAfriArt concierge — a warm, knowledgeable assistant helping visitors discover African art, artists, events, auctions, and the artstage room-preview tool. Keep replies short, useful, and friendly. Use markdown sparingly.";
@@ -34,14 +36,13 @@ export const Route = createFileRoute("/api/chat")({
         const { provider, configured } = getAiProvider();
         if (!configured) {
           // Graceful fallback so the concierge never hard-fails without a key.
-          const text =
-            "I'm the MyAfriArt concierge. The live assistant isn't configured yet — set AI_API_KEY (any OpenAI-compatible provider, e.g. OpenAI or Groq) to switch it on. Meanwhile you can browse Artists and Pieces from the landing page, open the Studio to stage a work on your wall, or check the Live Auction and Sale Lounge.";
+          const text: string = conciergeFallback(messages, body.catalogue);
           // Must be a UI-message stream: useChat cannot parse a bare text body.
           const stream = createUIMessageStream({
             execute: ({ writer }) => {
-              writer.write({ type: "text-start", id: "concierge-not-configured" });
-              writer.write({ type: "text-delta", id: "concierge-not-configured", delta: text });
-              writer.write({ type: "text-end", id: "concierge-not-configured" });
+              writer.write({ type: "text-start", id: "concierge-guide" });
+              writer.write({ type: "text-delta", id: "concierge-guide", delta: text });
+              writer.write({ type: "text-end", id: "concierge-guide" });
             },
           });
           return createUIMessageStreamResponse({ stream });
