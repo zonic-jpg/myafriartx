@@ -47,7 +47,7 @@ export function SignupApprovalsAdmin() {
     const r = await setRequireApprovals(on);
     setBusy(null);
     if (!r.ok) return void toast.error(r.message ?? "Could not change the setting");
-    toast.success(on ? "New sign-ups now need your approval" : "Sign-in is open to everyone again");
+    toast.success(on ? "Tester and admin access now needs your approval" : "Tester and admin sign-in is open again");
     void load();
   };
 
@@ -95,17 +95,16 @@ export function SignupApprovalsAdmin() {
             <h2 className="flex items-center gap-2 font-display text-lg">
               <ShieldCheck className="h-5 w-5 text-primary" aria-hidden /> Sign-in policy
             </h2>
-            <p className="mt-1 font-medium">Require approval for new accounts</p>
+            <p className="mt-1 font-medium">Require approval for testers & admins</p>
             <p className="text-muted-foreground">
-              Off (default): anyone can sign in. On: new accounts wait here until you approve them and choose a
-              role. People already signed up are never locked out, and you are never gated.
+              Off (default): everyone can sign in. On: only tester/admin sign-ups wait here until you approve them and choose a role. The public (users and brands) is never held. People already signed up are never locked out, and you are never gated.
             </p>
           </div>
           <Switch
             checked={queue.requireApprovals}
             disabled={busy === "toggle"}
             onCheckedChange={(v) => void toggle(v)}
-            aria-label="Require approval for new accounts"
+            aria-label="Require approval for testers & admins"
           />
         </div>
       </section>

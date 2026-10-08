@@ -177,7 +177,8 @@ begin
 
   select require_approvals, require_approvals_since into v_req, v_since from public.signup_policy where id;
 
-  if coalesce(v_req, false) = false or (v_since is not null and v_created < v_since) then
+  -- Rule 4 gates testers/admins only: the public (user/brand/reviewer) is never held.
+  if v_role <> 'admin' or coalesce(v_req, false) = false or (v_since is not null and v_created < v_since) then
     insert into public.signup_approvals (user_id, email, requested_role, status, granted_role, decided_at)
     values (v_uid, v_email, v_role, 'approved', 'user', now())
     on conflict (user_id) do nothing;
