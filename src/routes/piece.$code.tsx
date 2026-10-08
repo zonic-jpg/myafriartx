@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { getPieceDetail, bumpView } from "@/lib/catalogue.functions";
 import { initializePayment } from "@/lib/payments.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { localImageForKey } from "@/lib/local-image-assets";
+import { generativeArtworkUri } from "@/lib/local-image-assets";
 
 const pieceQuery = (code: string) =>
   queryOptions({
@@ -84,7 +84,7 @@ function PieceDetailPage() {
               src={p.image_url}
               alt={p.title}
               onError={(e) => {
-                const fallback = localImageForKey((p as any).id || (p as any).title);
+                const fallback = generativeArtworkUri((p as any).id || (p as any).title);
                 if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
               }}
               className="h-full w-full object-contain"
@@ -141,7 +141,20 @@ function PieceDetailPage() {
             </div>
           )}
 
-          {p.price != null && Number(p.price) > 0 && !p.is_pledged && (
+          {p.content_source === "mock" && (
+            <div className="rounded-xl border border-border bg-muted/40 p-4 text-sm">
+              <p className="font-medium">Sample listing</p>
+              <p className="mt-1 text-muted-foreground">
+                This is a preview work shown while the catalogue fills with verified artists. It is
+                not for sale yet. Browse the catalogue to find works you can acquire.
+              </p>
+              <Link to="/" className="mt-2 inline-block text-sm underline">
+                Back to catalogue
+              </Link>
+            </div>
+          )}
+
+          {p.content_source !== "mock" && p.price != null && Number(p.price) > 0 && !p.is_pledged && (
             <div className="space-y-2 rounded-xl border border-border p-4">
               <p className="text-sm font-medium">Acquire this work</p>
               <div className="flex flex-wrap gap-2">

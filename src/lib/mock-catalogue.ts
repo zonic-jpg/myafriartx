@@ -4,7 +4,7 @@
  * landing cards can deep-link to /artist/$code and /piece/$code and the
  * detail routes can resolve without a live database.
  */
-import { localCatalogueAssets } from "@/lib/local-image-assets";
+import { generativeArtworkUri, artworkPalette } from "@/lib/local-image-assets";
 import {
   FEATURED_SEED_ARTISTS,
   FEATURED_SEED_ARTWORKS,
@@ -218,7 +218,7 @@ function buildMockCatalogue(): { artworks: MockArtwork[]; artists: MockArtist[] 
       const dobYear = currentYear - age;
       const price = 250 + ((ci * 911 + k * 1733) % 47750);
       const yearMade = currentYear - ((ci + k) % 20);
-      const img = localCatalogueAssets[(ci + k) % localCatalogueAssets.length];
+      const img = generativeArtworkUri(`PCE-M${pad(n)}|${country}|${k}`);
       const titlePre = MOCK_TITLE_PREFIX[(ci + k) % MOCK_TITLE_PREFIX.length];
       const titleSuf = MOCK_TITLE_SUFFIX[(ci * 2 + k) % MOCK_TITLE_SUFFIX.length];
 
@@ -260,7 +260,7 @@ function buildMockCatalogue(): { artworks: MockArtwork[]; artists: MockArtist[] 
         artist,
         created_at: null,
         updated_at: null,
-        dominant_palette: null,
+        dominant_palette: artworkPalette(`PCE-M${pad(n)}|${country}|${k}`),
       });
     }
   });
