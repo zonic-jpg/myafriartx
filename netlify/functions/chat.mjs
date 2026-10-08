@@ -26,7 +26,7 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
-  streamText,
+  generateText,
 } from "ai";
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { conciergeFallback } from "./_concierge-guide.mjs";
@@ -45,7 +45,7 @@ const cors = {
 // with LOVABLE_API_KEY honoured as a legacy alias.
 const AI_MODEL =
   process.env.AI_MODEL ||
-  ((process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) && !process.env.AI_API_KEY ? "gemini-2.0-flash" : "gpt-4o-mini");
+  ((process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) && !process.env.AI_API_KEY ? "gemini-flash-latest" : "gpt-4o-mini");
 
 function getAiProvider() {
   const lovableKey = process.env.LOVABLE_API_KEY;
@@ -111,8 +111,7 @@ export async function handler(event) {
   try {
     const { provider, configured } = getAiProvider();
 
-    if (!configured) {
-      const text = conciergeFallback(messages, catalogue);
+    const sendText = (text) => {
       const stream = createUIMessageStream({
         execute: ({ writer }) => {
           const id = "concierge-guide";
@@ -122,14 +121,22 @@ export async function handler(event) {
         },
       });
       return toNetlifyResponse(createUIMessageStreamResponse({ stream }));
-    }
+    };
 
-    const result = streamText({
-      model: provider(AI_MODEL),
-      system: withCatalogue(SYSTEM, catalogue),
-      messages: await convertToModelMessages(messages),
-    });
-    return toNetlifyResponse(result.toUIMessageStreamResponse({ originalMessages: messages }));
+    if (!configured) return sendText(conciergeFallback(messages, catalogue));
+
+    try {
+      const { text } = await generateText({
+        model: provider(AI_MODEL),
+        system: withCatalogue(SYSTEM, catalogue),
+        messages: await convertToModelMessages(messages),
+      });
+      if (text && text.trim()) return sendText(text);
+    } catch (e) {
+      // Provider rejected / model retired / quota: never show the visitor an error.
+      console.error("[chat] provider error, using guide fallback:", e?.message || e);
+    }
+    return sendText(conciergeFallback(messages, catalogue));
   } catch (e) {
     console.error("[chat]", e);
     return {

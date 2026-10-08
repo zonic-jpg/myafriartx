@@ -5,7 +5,7 @@ import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 // Configure via env: AI_API_URL, AI_API_KEY, AI_MODEL. LOVABLE_API_KEY still honoured.
 const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "";
 export const AI_MODEL =
-  process.env.AI_MODEL || (GEMINI_KEY && !process.env.AI_API_KEY ? "gemini-2.0-flash" : "gpt-4o-mini");
+  process.env.AI_MODEL || (GEMINI_KEY && !process.env.AI_API_KEY ? "gemini-flash-latest" : "gpt-4o-mini");
 
 export function getAiProvider() {
   const lovableKey = process.env.LOVABLE_API_KEY;
