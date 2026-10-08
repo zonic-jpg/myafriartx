@@ -115,8 +115,8 @@ export const setRequireApprovals = (on: boolean) => call("set_require_approvals"
  */
 export async function notifyOwner(kind: "signup" | "admin_request"): Promise<void> {
   try {
-    const { notifyOwnerApproval } = await import("@/lib/signup-approval.functions");
-    await notifyOwnerApproval({ data: { kind } });
+    // Edge function on this project's own Supabase (service role is provided there).
+    await supabase.functions.invoke("notify-owner-approval", { body: { kind } });
   } catch (err) {
     console.warn("[approvals] owner notification skipped", err);
   }
