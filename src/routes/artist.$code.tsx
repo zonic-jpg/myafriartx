@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { getArtistDetail, bumpView } from "@/lib/catalogue.functions";
 import { artistDefault, localImageForKey } from "@/lib/local-image-assets";
 import { outreachWebsiteHref } from "@/lib/outreach-artists";
+import { SiteNav } from "@/components/SiteNav";
 
 const artistQuery = (code: string) =>
   queryOptions({
@@ -65,16 +66,7 @@ function ArtistDetailPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-gradient-to-r from-purple-600 to-red-500 text-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link to="/" className="font-display text-lg">
-            MyAfriArt
-          </Link>
-          <Link to="/" className="text-sm text-white/80 hover:text-white">
-            ← Back to catalogue
-          </Link>
-        </div>
-      </header>
+      <SiteNav tone="brand" />
 
       <main className="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6">
         <section className="grid gap-6 md:grid-cols-[200px,1fr]">

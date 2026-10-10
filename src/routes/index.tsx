@@ -32,6 +32,7 @@ import {
 import { bustImageUrl, isUsableImageUrl } from "@/lib/cache-bust";
 import { LOCAL_MOCK_ARTWORKS } from "@/lib/mock-catalogue";
 import logo from "@/assets/myafriart-logo.png";
+import { MenuButton, NavDrawer } from "@/components/SiteNav";
 import { AiChatPanel, type CatalogueEntry, type SponsoredItem } from "@/components/ai-chat-panel";
 
 function paneImageFor(pane: Pick<Pane, "id" | "image">) {
@@ -349,6 +350,8 @@ function Landing() {
   // "signed out" and is exactly that race. See lounge.tsx / collateral.tsx /
   // admin.tsx, which already use this same `boolean | null` pattern.
   const [authed, setAuthed] = useState<boolean | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [gatePromptOpen, setGatePromptOpen] = useState(false);
   const [panes, setPanes] = useState<Pane[]>(FALLBACK_PANES);
@@ -866,6 +869,8 @@ function Landing() {
         {/* Row 1 — brand on white */}
         <div className="bg-white border-b border-black/10">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-2 sm:px-6 sm:py-3">
+            <div className="flex min-w-0 items-center gap-1">
+            <MenuButton onClick={() => setMenuOpen(true)} />
             <Link to="/" className="flex items-center gap-2">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white ring-2 ring-black sm:h-10 sm:w-10">
                 <img
@@ -883,12 +888,20 @@ function Landing() {
                 MyAfriArtX
               </span>
             </Link>
+            </div>
             <nav className="flex flex-shrink-0 items-center gap-2 text-sm sm:gap-3">
-              <Link to="/submit" className="px-1 text-black/70 hover:text-black">
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(true)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 to-red-500 px-4 py-2 text-sm font-medium text-white md:hidden"
+              >
+                <span aria-hidden>⌕</span> Search &amp; filters
+              </button>
+              <Link to="/submit" className="hidden px-1 text-black/70 hover:text-black md:inline">
                 Submit work
               </Link>
               {authed === false && (
-                <Link to="/login" className="px-1 text-black/70 hover:text-black">
+                <Link to="/login" className="hidden px-1 text-black/70 hover:text-black md:inline">
                   Sign in
                 </Link>
               )}
@@ -896,19 +909,46 @@ function Landing() {
           </div>
         </div>
 
-        {/* Row 2 — search & filters (single panel, flush) */}
+        {/* Row 2 — search & filters. Desktop: inline bar. Mobile: slide-down sheet opened from the
+            "Search & filters" button so it never covers the artworks. */}
+        <div
+          className={
+            filtersOpen
+              ? "fixed inset-0 z-[60] overflow-y-auto bg-black/50 md:static md:overflow-visible md:bg-transparent"
+              : "hidden md:block"
+          }
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setFiltersOpen(false);
+          }}
+        >
+          <div className="md:contents">
+            <div className="flex items-center justify-between bg-white px-4 py-3 md:hidden">
+              <span className="font-medium text-zinc-900">Search &amp; filters</span>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                aria-label="Close filters"
+                className="px-2 text-2xl leading-none text-zinc-600"
+              >
+                ×
+              </button>
+            </div>
         <header className="bg-gradient-to-r from-purple-600 to-red-500 text-white border-b border-black/15 shadow-none">
           <div className="mx-auto max-w-6xl px-4 pt-3 pb-3 sm:px-6">
             <TopBarFilter
               filters={draftFilters}
               facets={facets}
               onChange={setDraftFilters}
-              onSubmit={submitDraftFilters}
+              onSubmit={(f?: CatalogueFilters) => {
+                submitDraftFilters(f);
+                setFiltersOpen(false);
+              }}
               onReset={resetDraftFilters}
               openChip={openChip}
               setOpenChip={setOpenChip}
               onOpenChat={(question) => {
                 if (question?.trim()) setAiQuestion({ text: question.trim() });
+                setFiltersOpen(false);
                 setAiChatOpen(true);
               }}
             />
@@ -926,6 +966,17 @@ function Landing() {
           setCurrency={setCurrency}
           usdToNgn={usdToNgn}
         />
+            <div className="bg-white p-3 md:hidden">
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(false)}
+                className="w-full rounded-md bg-zinc-900 px-4 py-3 text-sm font-medium text-white"
+              >
+                Show artworks
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <main className="mx-auto max-w-6xl px-4 pb-32 pt-6 sm:px-6 sm:pt-10">
@@ -1170,6 +1221,8 @@ function Landing() {
           )}
         </section>
       </main>
+
+      <NavDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
 
       <footer className="border-t border-zinc-900 bg-zinc-900 text-zinc-200 pb-24 md:pb-0">
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-2 px-4 py-5 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">

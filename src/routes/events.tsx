@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import SiteFooter from "@/components/SiteFooter";
 import { fetchPublicEvents } from "@/lib/admin-bridge";
 import { localImageForKey } from "@/lib/local-image-assets";
+import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/events")({
   component: EventsPage,
@@ -27,16 +28,7 @@ function EventsPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-5">
-          <Link to="/" className="font-display text-xl">
-            MyAfriArt
-          </Link>
-          <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground">
-            Sign in
-          </Link>
-        </div>
-      </header>
+      <SiteNav tone="plain" />
 
       <main className="mx-auto max-w-5xl px-6 py-10">
         <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Calendar</p>

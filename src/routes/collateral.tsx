@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { listMyCollateral, requestCollateral } from "@/lib/collateral.functions";
 import { getMyVerification } from "@/lib/kyc.functions";
 import SiteFooter from "@/components/SiteFooter";
+import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/collateral")({
   component: CollateralPage,
@@ -75,11 +76,7 @@ function CollateralPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b px-6 py-4">
-        <Link to="/" className="font-display text-lg">
-          MyAfriArt
-        </Link>
-      </header>
+      <SiteNav tone="plain" />
       <main className="mx-auto max-w-3xl space-y-8 px-6 py-10">
         <div>
           <h1 className="text-2xl font-semibold">Collateral portal</h1>

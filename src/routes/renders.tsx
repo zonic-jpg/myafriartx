@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyRenders } from "@/lib/studio-catalog.functions";
 import { localImageForKey } from "@/lib/local-image-assets";
+import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/renders")({
   head: () => ({ meta: [{ title: "My renders — MyAfriArt" }] }),
@@ -34,25 +35,7 @@ function List() {
   const { data, isLoading } = useQuery({ queryKey: ["my-renders"], queryFn: () => fn() });
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/" className="font-display text-xl">
-            MyAfriArt
-          </Link>
-          <div className="flex items-center gap-3 text-sm">
-            <button
-              onClick={() => window.location.reload()}
-              className="text-muted-foreground hover:text-foreground"
-              title="Reload page"
-            >
-              ↻ Refresh
-            </button>
-            <Link to="/studio" className="text-muted-foreground hover:text-foreground">
-              Studio →
-            </Link>
-          </div>
-        </div>
-      </header>
+      <SiteNav tone="plain" />
       <main className="mx-auto max-w-6xl px-6 py-10">
         <h1 className="font-display text-3xl">My renders</h1>
         {isLoading ? (

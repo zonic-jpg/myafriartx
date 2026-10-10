@@ -35,7 +35,53 @@ export type SubmissionDraft = {
   priceAmount: string;
   priceCurrency: string;
   context: string;
+  /** optional hex colours (#rrggbb), auto-detected from the photo and editable */
+  palette: string[];
 };
+
+const HEX = /^#[0-9a-f]{6}$/i;
+export function cleanPalette(list: string[] | undefined): string[] | null {
+  const out = Array.from(new Set((list ?? []).map((c) => String(c).trim().toLowerCase()).filter((c) => HEX.test(c)))).slice(0, 8);
+  return out.length ? out : null;
+}
+
+/** Dominant colours of an image (data URL), via canvas downsample + bucket quantisation. Free, runs in the browser. */
+export async function extractPalette(dataUrl: string, count = 5): Promise<string[]> {
+  if (typeof document === "undefined") return [];
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const i = new Image();
+    i.onload = () => resolve(i);
+    i.onerror = () => reject(new Error("image"));
+    i.src = dataUrl;
+  });
+  const size = 64;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return [];
+  ctx.drawImage(img, 0, 0, size, size);
+  const { data } = ctx.getImageData(0, 0, size, size);
+  const buckets = new Map<number, { n: number; r: number; g: number; b: number }>();
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] < 200) continue;
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    const key = ((r >> 4) << 8) | ((g >> 4) << 4) | (b >> 4);
+    const e = buckets.get(key) ?? { n: 0, r: 0, g: 0, b: 0 };
+    e.n++; e.r += r; e.g += g; e.b += b;
+    buckets.set(key, e);
+  }
+  const cand = [...buckets.values()]
+    .sort((a, b) => b.n - a.n)
+    .map((e) => [Math.round(e.r / e.n), Math.round(e.g / e.n), Math.round(e.b / e.n)] as const);
+  const picked: (readonly [number, number, number])[] = [];
+  for (const c of cand) {
+    if (picked.every((p) => Math.hypot(p[0] - c[0], p[1] - c[1], p[2] - c[2]) > 48)) picked.push(c);
+    if (picked.length >= count) break;
+  }
+  const hex = (n: number) => n.toString(16).padStart(2, "0");
+  return picked.map(([r, g, b]) => `#${hex(r)}${hex(g)}${hex(b)}`);
+}
 
 const numeric = (value: string) => {
   const parsed = Number(String(value ?? "").replace(/[^0-9.]/g, ""));
@@ -119,6 +165,7 @@ export async function submitArtwork(draft: SubmissionDraft, imageDataUrl: string
       context: draft.context.trim(),
       image_url: hosted.url,
       image_path: hosted.path,
+      dominant_palette: cleanPalette(draft.palette),
       status: "pending",
     })
     .select("id, created_at")

@@ -6,6 +6,7 @@ import { getPieceDetail, bumpView } from "@/lib/catalogue.functions";
 import { initializePayment } from "@/lib/payments.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { generativeArtworkUri } from "@/lib/local-image-assets";
+import { SiteNav } from "@/components/SiteNav";
 
 const pieceQuery = (code: string) =>
   queryOptions({
@@ -66,16 +67,7 @@ function PieceDetailPage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-gradient-to-r from-purple-600 to-red-500 text-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3 sm:px-6">
-          <Link to="/" className="font-display text-lg">
-            MyAfriArt
-          </Link>
-          <Link to="/" className="text-sm text-white/80 hover:text-white">
-            ← Back to catalogue
-          </Link>
-        </div>
-      </header>
+      <SiteNav tone="brand" />
 
       <main className="mx-auto grid max-w-5xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-2">
         <div className="aspect-[4/5] overflow-hidden rounded-lg border border-border bg-muted md:aspect-auto md:max-h-[75vh]">

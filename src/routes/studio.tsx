@@ -9,6 +9,7 @@ import { LOCAL_MOCK_STYLES } from "@/lib/stage-styles";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ImageDropzone, fileToDownscaledDataUrl } from "@/components/image-dropzone";
 import { publicMessage } from "@/lib/public-message";
+import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/studio")({
   head: () => ({ meta: [{ title: "Studio — MyAfriArt" }] }),
@@ -276,38 +277,7 @@ function StudioInner() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/" className="font-display text-xl">
-            MyAfriArt
-          </Link>
-          <div className="flex items-center gap-4 text-sm">
-            <NotifyBell />
-            <Link to="/notify" className="text-muted-foreground hover:text-foreground">
-              NotifyMe
-            </Link>
-            <Link to="/renders" className="text-muted-foreground hover:text-foreground">
-              My renders
-            </Link>
-            <button
-              onClick={() => window.location.reload()}
-              className="text-muted-foreground hover:text-foreground"
-              title="Reload page"
-            >
-              ↻ Refresh
-            </button>
-            <button
-              onClick={() => {
-                void supabase.auth.signOut();
-                window.location.href = "/login";
-              }}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              Sign out
-            </button>
-          </div>
-        </div>
-      </header>
+      <SiteNav tone="plain" right={<NotifyBell />} />
 
       <main className="mx-auto grid max-w-6xl gap-10 px-6 py-10 lg:grid-cols-[1fr_360px]">
         {/* Canvas */}

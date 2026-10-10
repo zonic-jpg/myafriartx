@@ -7,10 +7,12 @@ import {
   SUBMISSION_CURRENCIES,
   SUBMISSION_MEDIA,
   submitArtwork,
+  extractPalette,
   validateSubmission,
   type SubmissionDraft,
 } from "@/lib/submissions";
 import { publicMessage } from "@/lib/public-message";
+import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/submit")({
   head: () => ({ meta: [{ title: "Submit your work — MyAfriArt" }] }),
@@ -32,6 +34,7 @@ const EMPTY: SubmissionDraft = {
   priceAmount: "",
   priceCurrency: "USD",
   context: "",
+  palette: [],
 };
 
 // Draft persistence — a refresh, an accidental back-button, or a dropped
@@ -127,7 +130,13 @@ function SubmitPage() {
   const onPickFile = async (file: File) => {
     setPreparing(true);
     try {
-      setImage(await fileToDownscaledDataUrl(file));
+      const url = await fileToDownscaledDataUrl(file);
+      setImage(url);
+      try {
+        set({ palette: await extractPalette(url) });
+      } catch {
+        /* palette is optional */
+      }
     } finally {
       setPreparing(false);
     }
@@ -198,16 +207,7 @@ function SubmitPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <Link to="/" className="font-display text-xl">
-            MyAfriArt
-          </Link>
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
-            Back
-          </Link>
-        </div>
-      </header>
+      <SiteNav tone="plain" />
 
       <main className="mx-auto max-w-3xl px-6 py-10">
         <h1 className="font-display text-3xl">Submit your work</h1>
@@ -250,6 +250,56 @@ function SubmitPage() {
                 hint="One clear, straight-on photo · JPG, PNG or WebP"
               />
               <FieldError message={show("image")} />
+              {image && (
+                <div className="mt-5 rounded-lg border border-border p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="text-sm font-medium">Palette <span className="font-normal text-muted-foreground">(optional)</span></p>
+                    <button
+                      type="button"
+                      className="text-xs text-primary underline"
+                      onClick={() => void extractPalette(image).then((palette) => set({ palette })).catch(() => undefined)}
+                    >
+                      Detect from photo again
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    We read these colours from your photo. Tap a swatch to change it, × to remove it, or add your own.
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    {draft.palette.map((c, i) => (
+                      <div key={`${c}-${i}`} className="relative">
+                        <label className="block h-11 w-11 cursor-pointer overflow-hidden rounded-full border border-border shadow-sm" style={{ background: c }} title={c}>
+                          <input
+                            type="color"
+                            value={c}
+                            onChange={(e) => set({ palette: draft.palette.map((x, j) => (j === i ? e.target.value : x)) })}
+                            className="h-full w-full cursor-pointer opacity-0"
+                            aria-label={`Palette colour ${i + 1}`}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${c}`}
+                          onClick={() => set({ palette: draft.palette.filter((_, j) => j !== i) })}
+                          className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-foreground text-[11px] leading-none text-background"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                    {draft.palette.length < 8 && (
+                      <button
+                        type="button"
+                        onClick={() => set({ palette: [...draft.palette, "#c8a24a"] })}
+                        className="flex h-11 w-11 items-center justify-center rounded-full border border-dashed border-border text-lg text-muted-foreground"
+                        aria-label="Add a colour"
+                      >
+                        +
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
               <p className="mt-3 text-xs text-muted-foreground">
                 Photograph the work flat-on in even light. Large photos are resized automatically.
               </p>

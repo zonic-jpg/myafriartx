@@ -31,6 +31,13 @@ function createSupabaseClient() {
         persistSession: true,
         autoRefreshToken: true,
       },
+      // Node < 22 has no native WebSocket and supabase-js builds a RealtimeClient on
+      // createClient(). During SSR (e.g. refreshing /piece/...) that threw
+      // "Node.js 20 detected without native WebSocket support". Nothing subscribes on
+      // the server, so hand it an inert transport there.
+      ...(typeof WebSocket === "undefined"
+        ? { realtime: { transport: class NoopSocket {} as any } }
+        : {}),
     },
   );
 }

@@ -6,6 +6,8 @@ import { supabase } from "./client";
 // the browser never attaches the bearer token to serverFn RPCs.
 export const attachSupabaseAuth = createMiddleware({ type: "function" }).client(
   async ({ next }) => {
+    // During SSR (server-side loader calls) there is no browser session to attach.
+    if (typeof window === "undefined") return next();
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     return next({
