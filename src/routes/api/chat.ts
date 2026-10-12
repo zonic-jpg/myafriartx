@@ -48,12 +48,49 @@ export const Route = createFileRoute("/api/chat")({
           return createUIMessageStreamResponse({ stream });
         }
 
-        const result = streamText({
-          model: provider(AI_MODEL),
-          system: withCatalogue(SYSTEM, body.catalogue),
-          messages: await convertToModelMessages(messages),
+        // The configured AI provider can reject a request (bad/expired key, wrong model name, quota).
+        // The concierge must still answer, so any provider failure falls back to the built-in guide
+        // instead of surfacing "Bad Request" to the visitor.
+        const stream = createUIMessageStream({
+          execute: async ({ writer }) => {
+            let failed = false;
+            let sawText = false;
+            try {
+              const result = streamText({
+                model: provider(AI_MODEL),
+                system: withCatalogue(SYSTEM, body.catalogue),
+                messages: await convertToModelMessages(messages),
+                onError: ({ error }) => {
+                  failed = true;
+                  console.error("[concierge] provider error:", error instanceof Error ? error.message : error);
+                },
+              });
+              const reader = result.toUIMessageStream({ originalMessages: messages }).getReader();
+              for (;;) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const t = (value as { type: string }).type;
+                if (t === "error") {
+                  failed = true;
+                  continue;
+                }
+                if (t === "start" || t === "finish") continue;
+                if (t === "text-delta") sawText = true;
+                writer.write(value as never);
+              }
+            } catch (e) {
+              failed = true;
+              console.error("[concierge] provider threw:", e instanceof Error ? e.message : e);
+            }
+            if (failed && !sawText) {
+              const text: string = conciergeFallback(messages, body.catalogue);
+              writer.write({ type: "text-start", id: "concierge-guide" });
+              writer.write({ type: "text-delta", id: "concierge-guide", delta: text });
+              writer.write({ type: "text-end", id: "concierge-guide" });
+            }
+          },
         });
-        return result.toUIMessageStreamResponse({ originalMessages: messages });
+        return createUIMessageStreamResponse({ stream });
       },
     },
   },
