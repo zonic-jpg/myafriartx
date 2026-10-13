@@ -146,9 +146,14 @@ async function hostImage(dataUrl: string): Promise<{ url: string; path: string |
 export async function submitArtwork(draft: SubmissionDraft, imageDataUrl: string) {
   const hosted = await hostImage(imageDataUrl);
   // `artwork_submissions` postdates the generated Database types.
-  const { data, error } = await (supabase as any)
+  // Generate the id client-side and do NOT ask for the row back: pending rows are
+  // not readable by the submitter (RLS), so `.select()` after insert fails with
+  // "row-level security" even though the insert itself succeeded.
+  const id = crypto.randomUUID();
+  const { error } = await (supabase as any)
     .from("artwork_submissions")
     .insert({
+      id,
       submitter_email: draft.submitterEmail.trim().toLowerCase() || null,
       submitter_name: draft.artistName.trim(),
       artist_name: draft.artistName.trim(),
@@ -167,10 +172,8 @@ export async function submitArtwork(draft: SubmissionDraft, imageDataUrl: string
       image_path: hosted.path,
       dominant_palette: cleanPalette(draft.palette),
       status: "pending",
-    })
-    .select("id, created_at")
-    .maybeSingle();
+    });
 
   if (error) throw new Error(publicMessage(error, "Your submission could not be saved."));
-  return { id: (data as any)?.id as string | undefined, hostedInStorage: hosted.path !== null };
+  return { id: id as string | undefined, hostedInStorage: hosted.path !== null };
 }
