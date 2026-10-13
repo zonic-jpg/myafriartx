@@ -56,6 +56,54 @@ export async function fetchStudioCatalogClient() {
   }
 }
 
+/**
+ * Pick the calmest (lowest-detail) rectangle of the room photo for the artwork so it
+ * lands on bare wall instead of over bookshelves, existing pictures or furniture.
+ * Works on a small greyscale copy: gradient energy + an integral image, searching the
+ * upper-middle band of the picture where walls are, with a slight pull to the centre.
+ */
+function findEmptyWall(room: HTMLImageElement, W: number, H: number, bw: number, bh: number) {
+  const SW = 96;
+  const SH = Math.max(24, Math.round((H / W) * SW));
+  const c = document.createElement("canvas");
+  c.width = SW;
+  c.height = SH;
+  const g = c.getContext("2d", { willReadFrequently: true });
+  const fallback = { x: (W - bw) / 2, y: H * 0.2 };
+  if (!g) return fallback;
+  g.drawImage(room, 0, 0, SW, SH);
+  const d = g.getImageData(0, 0, SW, SH).data;
+  const lum = new Float32Array(SW * SH);
+  for (let i = 0; i < SW * SH; i++) lum[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+  const E = new Float64Array((SW + 1) * (SH + 1));
+  for (let y = 0; y < SH; y++) {
+    let row = 0;
+    for (let x = 0; x < SW; x++) {
+      const gx = x + 1 < SW ? Math.abs(lum[y * SW + x + 1] - lum[y * SW + x]) : 0;
+      const gy = y + 1 < SH ? Math.abs(lum[(y + 1) * SW + x] - lum[y * SW + x]) : 0;
+      row += gx + gy;
+      E[(y + 1) * (SW + 1) + x + 1] = E[y * (SW + 1) + x + 1] + row;
+    }
+  }
+  const rect = (x0: number, y0: number, x1: number, y1: number) =>
+    E[y1 * (SW + 1) + x1] - E[y0 * (SW + 1) + x1] - E[y1 * (SW + 1) + x0] + E[y0 * (SW + 1) + x0];
+  const rw = Math.max(2, Math.round((bw / W) * SW));
+  const rh = Math.max(2, Math.round((bh / H) * SH));
+  if (rw >= SW - 1 || rh >= SH - 1) return fallback;
+  const yMin = Math.round(SH * 0.06);
+  const yMax = Math.min(Math.round(SH * 0.62) - rh, SH - rh - 1);
+  let best = { score: Infinity, x: Math.round((SW - rw) / 2), y: yMin };
+  for (let y = yMin; y <= Math.max(yMin, yMax); y++) {
+    for (let x = 1; x <= SW - rw - 1; x++) {
+      const mean = rect(x, y, x + rw, y + rh) / (rw * rh);
+      const centre = Math.abs(x + rw / 2 - SW / 2) / SW;
+      const score = mean * (1 + centre * 0.5) + y * 0.01;
+      if (score < best.score) best = { score, x, y };
+    }
+  }
+  return { x: (best.x / SW) * W, y: (best.y / SH) * H };
+}
+
 /** Simple canvas composite: draw up to 3 artworks onto the room photo. */
 export async function canvasStagePreview(payload: StagePayload): Promise<{
   id: string;
@@ -74,28 +122,38 @@ export async function canvasStagePreview(payload: StagePayload): Promise<{
   ctx.drawImage(room, 0, 0, canvas.width, canvas.height);
 
   const n = Math.max(arts.length, 1);
+  const imgs: (HTMLImageElement | null)[] = [];
   for (let i = 0; i < arts.length; i++) {
     const url = arts[i].image_url || localImageForKey(arts[i].id || arts[i].title || "artwork", i);
     try {
-      const img = await loadImage(url);
-      const targetW = canvas.width * (n === 1 ? 0.28 : 0.22);
-      const scale = targetW / img.naturalWidth;
-      const w = targetW;
-      const h = img.naturalHeight * scale;
-      const gap = canvas.width * 0.04;
-      const totalW = n * w + (n - 1) * gap;
-      const x = (canvas.width - totalW) / 2 + i * (w + gap);
-      const y = canvas.height * 0.22;
-      // frame
-      ctx.fillStyle = "rgba(20,16,12,0.92)";
-      ctx.fillRect(x - 8, y - 8, w + 16, h + 16);
-      ctx.drawImage(img, x, y, w, h);
-      // soft shadow
-      ctx.fillStyle = "rgba(0,0,0,0.18)";
-      ctx.fillRect(x + 6, y + h + 8, w, 10);
+      imgs.push(await loadImage(url));
     } catch {
-      /* skip broken artwork url */
+      imgs.push(null); // skip broken artwork url
     }
+  }
+  const ok = imgs.filter((x): x is HTMLImageElement => !!x);
+  if (ok.length) {
+    const gap = canvas.width * 0.03;
+    const targetW = canvas.width * (n === 1 ? 0.26 : 0.19);
+    const sizes = ok.map((img) => ({ w: targetW, h: (img.naturalHeight / img.naturalWidth) * targetW }));
+    const blockW = sizes.reduce((a, z) => a + z.w, 0) + gap * (sizes.length - 1);
+    const blockH = Math.max(...sizes.map((z) => z.h));
+    const spot = findEmptyWall(room, canvas.width, canvas.height, blockW + 16, blockH + 16);
+    let x = spot.x + 8;
+    ok.forEach((img, i) => {
+      const { w, h } = sizes[i];
+      const y = spot.y + 8 + (blockH - h) / 2;
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,0.38)";
+      ctx.shadowBlur = canvas.width * 0.018;
+      ctx.shadowOffsetX = canvas.width * 0.005;
+      ctx.shadowOffsetY = canvas.width * 0.008;
+      ctx.fillStyle = "rgba(20,16,12,0.95)";
+      ctx.fillRect(x - 8, y - 8, w + 16, h + 16);
+      ctx.restore();
+      ctx.drawImage(img, x, y, w, h);
+      x += w + gap;
+    });
   }
 
   if (style) {
