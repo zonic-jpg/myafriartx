@@ -20,7 +20,7 @@ export function conciergeFallback(messages, catalogue) {
   const lines = (Array.isArray(catalogue) ? catalogue : []).filter((l) => typeof l === "string");
   const hits = words.length
     ? lines
-        .map((l) => ({ l, s: words.filter((w) => l.toLowerCase().includes(w)).length }))
+        .map((l) => ({ l, s: words.filter((w) => fuzzyHas(l, w)).length }))
         .filter((x) => x.s > 0)
         .sort((a, b) => b.s - a.s)
         .slice(0, 4)
@@ -35,4 +35,28 @@ export function conciergeFallback(messages, catalogue) {
     );
   }
   return out.join("\n\n");
+}
+
+// Typo-tolerant word match: substring, or within 1 edit (2 for long words) of any word in the text.
+function lev(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    let rowMin = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (cur[j] < rowMin) rowMin = cur[j];
+    }
+    if (rowMin > max) return max + 1;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+export function fuzzyHas(text, token) {
+  const t = String(text).toLowerCase();
+  if (t.includes(token)) return true;
+  if (token.length < 4) return false;
+  const max = token.length >= 8 ? 2 : 1;
+  return t.split(/[^a-z0-9]+/).some((w) => w.length >= 3 && lev(w, token, max) <= max);
 }

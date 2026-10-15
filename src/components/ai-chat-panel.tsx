@@ -52,6 +52,9 @@ const STOP = new Set([
   "art",
 ]);
 
+// @ts-expect-error plain JS helper
+import { fuzzyHas } from "@/lib/concierge-guide.js";
+
 function matchCatalogue(question: string, catalogue: CatalogueEntry[]): CatalogueEntry[] {
   const tokens = question
     .toLowerCase()
@@ -63,7 +66,7 @@ function matchCatalogue(question: string, catalogue: CatalogueEntry[]): Catalogu
       const hay = `${e.title} ${e.detail}`.toLowerCase();
       const titleHay = e.title.toLowerCase();
       const score = tokens.reduce(
-        (n, t) => n + (titleHay.includes(t) ? 2 : hay.includes(t) ? 1 : 0),
+        (n, t) => n + (fuzzyHas(titleHay, t) ? 2 : fuzzyHas(hay, t) ? 1 : 0),
         0,
       );
       return { e, score };
