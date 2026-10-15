@@ -30,7 +30,7 @@ import {
   paneStage,
 } from "@/lib/local-image-assets";
 import { bustImageUrl, isUsableImageUrl } from "@/lib/cache-bust";
-import { LOCAL_MOCK_ARTWORKS } from "@/lib/mock-catalogue";
+import { LOCAL_MOCK_ARTWORKS, isMockCatalogueCode } from "@/lib/mock-catalogue";
 import logo from "@/assets/myafriart-logo.png";
 import { MenuButton, NavDrawer } from "@/components/SiteNav";
 import { AiChatPanel, type CatalogueEntry, type SponsoredItem } from "@/components/ai-chat-panel";
@@ -475,7 +475,14 @@ function Landing() {
                 : localImageForKey(row.id || row.title, index),
             }))
           : LOCAL_MOCK_ARTWORKS;
-        setArtworks(localRows);
+        // Real works always come first. While the real catalogue is still small, marked
+        // "Sample" works fill the page so it never looks empty; they vanish as real work grows.
+        const SAMPLE_FLOOR = 24;
+        const withSamples =
+          rows.length && rows.length < SAMPLE_FLOOR
+            ? [...localRows, ...LOCAL_MOCK_ARTWORKS.slice(0, SAMPLE_FLOOR - rows.length)]
+            : localRows;
+        setArtworks(withSamples as ArtworkRow[]);
         setCatalogueArtists((artists?.artists ?? []) as CatalogueArtist[]);
         setContentSource(rows.length ? "live" : "mock");
       } catch {
@@ -1680,6 +1687,10 @@ function GatePrompt({ onClose, onSignIn }: { onClose: () => void; onSignIn: () =
 }
 
 function ArtworkCard({ artwork }: { artwork: ArtworkRow }) {
+  const sample =
+    artwork.content_source === "mock" ||
+    (typeof artwork.id === "string" && artwork.id.startsWith("local-")) ||
+    isMockCatalogueCode(String(artwork.short_code ?? artwork.id ?? ""));
   const price =
     typeof artwork.price === "number"
       ? `${artwork.currency ?? "USD"} ${artwork.price.toLocaleString()}`
@@ -1702,6 +1713,11 @@ function ArtworkCard({ artwork }: { artwork: ArtworkRow }) {
           <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
             No image
           </div>
+        )}
+        {sample && (
+          <span className="absolute left-2 top-2 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white">
+            Sample
+          </span>
         )}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-3">
