@@ -25,6 +25,7 @@ const EMPTY: SubmissionDraft = {
   artistName: "",
   submitterEmail: "",
   title: "",
+  caption: "",
   medium: "oil",
   widthCm: "",
   heightCm: "",
@@ -327,6 +328,18 @@ function SubmitPage() {
                   placeholder="Harmattan Morning"
                 />
                 <FieldError message={show("title")} />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={label}>Caption <span className="font-normal text-muted-foreground">(optional)</span></label>
+                <textarea
+                  className={input}
+                  rows={2}
+                  maxLength={280}
+                  value={draft.caption ?? ""}
+                  onChange={(e) => set({ caption: e.target.value.slice(0, 280) })}
+                  placeholder="A short line for readers, separate from the title"
+                />
+                <p className="mt-1 text-right text-xs text-muted-foreground">{(draft.caption ?? "").length}/280</p>
               </div>
               <div>
                 <label className={label}>Medium</label>

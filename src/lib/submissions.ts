@@ -26,6 +26,8 @@ export type SubmissionDraft = {
   artistName: string;
   submitterEmail: string;
   title: string;
+  /** Optional short caption shown beside the work (max 280 chars). */
+  caption?: string;
   medium: string;
   widthCm: string;
   heightCm: string;
@@ -158,6 +160,7 @@ export async function submitArtwork(draft: SubmissionDraft, imageDataUrl: string
       submitter_name: draft.artistName.trim(),
       artist_name: draft.artistName.trim(),
       title: draft.title.trim(),
+      caption: (draft.caption ?? "").trim().slice(0, 280) || null,
       medium: draft.medium || null,
       width_cm: numeric(draft.widthCm),
       height_cm: numeric(draft.heightCm),

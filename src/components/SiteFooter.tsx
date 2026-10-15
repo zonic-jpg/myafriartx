@@ -40,7 +40,7 @@ export default function SiteFooter({ content = DEFAULT }: { content?: typeof DEF
 
   return (
     <>
-      <nav className="flex flex-col items-center gap-4 border-t border-neutral-200 bg-white px-4 py-6">
+      <nav className="flex flex-col items-center gap-4 border-t border-neutral-200 bg-white px-6 py-6 md:px-16">
         <div className="flex justify-center gap-9 flex-wrap">
           {(["privacy", "faqs", "contact"] as Key[]).map((k) => (
             <button

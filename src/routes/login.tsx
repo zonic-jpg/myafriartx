@@ -13,20 +13,21 @@ export const Route = createFileRoute("/login")({
   head: () => ({ meta: [{ title: "Sign in — MyAfriArt" }] }),
   // `redirect` carries the page (with its query string, e.g. /admin?tab=approvals)
   // an unauthenticated visitor was trying to reach, so sign-in lands them there.
-  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { redirect?: string; mode?: "signup" } => ({
     redirect: safeRedirect(search.redirect) ?? undefined,
+    mode: search.mode === "signup" ? "signup" : undefined,
   }),
   component: LoginPage,
 });
 
-type PostLoginPath = "/admin" | "/studio";
+type PostLoginPath = "/admin" | "/";
 
 async function getPostLoginPath(): Promise<PostLoginPath> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) return "/studio";
+  if (!user) return "/";
   // The verified founding owner always lands on admin (the server provisions the role).
   if (isVerifiedOwner(user)) return "/admin";
 
@@ -37,10 +38,10 @@ async function getPostLoginPath(): Promise<PostLoginPath> {
 
   if (error) {
     console.error("[login] failed to resolve user role", error);
-    return "/studio";
+    return "/";
   }
 
-  return roles?.some((entry) => entry.role === "admin") ? "/admin" : "/studio";
+  return roles?.some((entry) => entry.role === "admin") ? "/admin" : "/";
 }
 
 function friendlyAuthError(message: string | undefined): string {
@@ -80,7 +81,7 @@ function LoginPage() {
     }
     navigate({ to: await getPostLoginPath() });
   };
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(Route.useSearch().mode === "signup" ? "signup" : "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);

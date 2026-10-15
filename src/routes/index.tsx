@@ -897,13 +897,31 @@ function Landing() {
               >
                 <span aria-hidden>⌕</span> Search &amp; filters
               </button>
+              <Link to="/lounge" className="hidden px-1 text-black/70 hover:text-black md:inline">
+                Art Lounge
+              </Link>
+              <Link to="/events" className="hidden px-1 text-black/70 hover:text-black md:inline">
+                Live events
+              </Link>
+              <Link to="/studio" className="hidden px-1 text-black/70 hover:text-black md:inline">
+                Stage a room
+              </Link>
               <Link to="/submit" className="hidden px-1 text-black/70 hover:text-black md:inline">
                 Submit work
               </Link>
               {authed === false && (
-                <Link to="/login" className="hidden px-1 text-black/70 hover:text-black md:inline">
-                  Sign in
-                </Link>
+                <>
+                  <Link to="/login" className="hidden px-1 text-black/70 hover:text-black md:inline">
+                    Sign in
+                  </Link>
+                  <Link
+                    to="/login"
+                    search={{ mode: "signup" }}
+                    className="inline-flex rounded-full bg-black px-3 py-1.5 text-xs font-medium text-white hover:bg-black/85 sm:px-4 sm:text-sm"
+                  >
+                    Sign up
+                  </Link>
+                </>
               )}
             </nav>
           </div>
