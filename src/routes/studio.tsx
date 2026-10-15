@@ -357,8 +357,11 @@ function StudioInner() {
             </div>
           </Field>
 
-          <Field label="Style">
-            <div className="grid grid-cols-2 gap-2">
+          <Field label="Restyle the room (optional)">
+            <p className="mb-2 text-xs text-muted-foreground">Leave as is to keep your room exactly as photographed. Only change this if you want the AI to restyle the surroundings.</p>
+            <details className="rounded-md border border-border p-2">
+            <summary className="cursor-pointer text-sm text-muted-foreground">Show style options</summary>
+            <div className="mt-2 grid grid-cols-2 gap-2">
               {styles.map((s: any) => (
                 <button
                   key={s.id}
@@ -372,6 +375,7 @@ function StudioInner() {
                 </button>
               ))}
             </div>
+            </details>
           </Field>
 
           <Field label={`Artworks (${picked.length}/3)`}>
@@ -444,7 +448,7 @@ function StudioInner() {
                 ? "Composing your room…"
                 : lastError
                   ? "Try again"
-                  : "Stage the room"}
+                  : "Show on my wall"}
             </button>
 
             {stage.isPending && (

@@ -132,6 +132,9 @@ export async function canvasStagePreview(payload: StagePayload): Promise<{
     }
   }
   const ok = imgs.filter((x): x is HTMLImageElement => !!x);
+  if (arts.length && !ok.length) {
+    throw new Error("We couldn't load the selected artwork photos, so nothing was placed. Please try again or pick a different piece.");
+  }
   if (ok.length) {
     const gap = canvas.width * 0.03;
     const targetW = canvas.width * (n === 1 ? 0.26 : 0.19);
@@ -154,14 +157,6 @@ export async function canvasStagePreview(payload: StagePayload): Promise<{
       ctx.drawImage(img, x, y, w, h);
       x += w + gap;
     });
-  }
-
-  if (style) {
-    ctx.fillStyle = "rgba(0,0,0,0.45)";
-    ctx.fillRect(16, canvas.height - 48, Math.min(420, canvas.width - 32), 32);
-    ctx.fillStyle = "#f5efe6";
-    ctx.font = "600 14px system-ui,sans-serif";
-    ctx.fillText(`Preview · ${style.name}`, 28, canvas.height - 28);
   }
 
   const resultUrl = canvas.toDataURL("image/jpeg", 0.9);
@@ -230,11 +225,20 @@ function ensureDataUrl(s: string) {
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error("Image load failed"));
-    img.src = src;
+  const tryLoad = (u: string, cors: boolean) =>
+    new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image();
+      if (cors) img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Image load failed"));
+      img.src = u;
+    });
+  // Data/blob URLs never need CORS. Remote artwork photos try CORS first (so the canvas stays
+  // exportable), then fall back to fetching the bytes and loading them from a local blob URL.
+  return tryLoad(src, true).catch(async () => {
+    const res = await fetch(src, { mode: "cors" });
+    if (!res.ok) throw new Error("Image load failed");
+    const blob = await res.blob();
+    return tryLoad(URL.createObjectURL(blob), false);
   });
 }
