@@ -89,7 +89,7 @@ function DisputesPage() {
                   </p>
                   <p className="text-muted-foreground">
                     ₦{Number(p.amount_ngn).toLocaleString()} ·{" "}
-                    {new Date(p.created_at).toLocaleDateString()} · ref {p.provider_ref}
+                    {new Date(p.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} · Order #{String(p.provider_ref ?? p.id).slice(-6).toUpperCase()}
                   </p>
                 </div>
                 <span
@@ -99,7 +99,7 @@ function DisputesPage() {
                       : "bg-emerald-500/15 text-emerald-700"
                   }`}
                 >
-                  {p.status}
+                  {p.status === "succeeded" ? "Paid" : p.status === "refunded" ? "Refunded" : p.status}
                 </span>
               </div>
 

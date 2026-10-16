@@ -301,6 +301,12 @@
   align-items: center;
   justify-content: center;
 }
+.lot-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 .lot-img b {
   font-size: 46px;
   color: rgba(60, 40, 20, 0.22);

@@ -68,11 +68,11 @@ function AuctionFloor() {
   return (
     <div className="auc">
       <header className="auc-top">
-        <div className="auc-kicker">Live auction</div>
+        <div className="auc-kicker">{lots.some((l) => l.status === "live") ? "Live auction" : "Auction results"}</div>
         <h1>Friday Evening Sale</h1>
         <p>
           Timed bidding with reserves, {Math.round(BUYERS_PREMIUM * 100)}% buyer&apos;s premium, and
-          two-minute anti-sniping — persisted to Supabase.
+          and two-minute anti-sniping, so late bids extend the clock. Every bid is recorded instantly.
         </p>
         {!userId && (
           <p className="mt-2 text-sm">
@@ -102,7 +102,7 @@ function AuctionFloor() {
                 />
                 <span className="lot-code">{l.code}</span>
                 <span className={`lot-status s-${l.status}`}>
-                  {l.status === "live" ? "● Live" : l.status}
+                  {l.status === "live" ? "● Live" : l.status === "passed" ? "No sale" : l.status}
                 </span>
               </div>
               <div className="lot-body">
@@ -117,7 +117,7 @@ function AuctionFloor() {
                     <b>{money(l.bidCount ? l.currentBid : l.startingBid)}</b>
                   </div>
                   <div className="lot-time">
-                    {l.status === "live" ? countdown(l.endsAt) : l.status}
+                    {l.status === "live" ? countdown(l.endsAt) : l.status === "passed" ? "No sale" : l.status}
                   </div>
                 </div>
               </div>
