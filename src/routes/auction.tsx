@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import SiteFooter from "@/components/SiteFooter";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listAuctionLots,
@@ -134,7 +133,6 @@ function AuctionFloor() {
           onRefresh={() => refetch()}
         />
       )}
-      <SiteFooter />
     </div>
   );
 }

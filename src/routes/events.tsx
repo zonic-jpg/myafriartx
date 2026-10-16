@@ -1,6 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import SiteFooter from "@/components/SiteFooter";
 import { fetchPublicEvents } from "@/lib/admin-bridge";
 import { localImageForKey } from "@/lib/local-image-assets";
 import { SiteNav } from "@/components/SiteNav";
@@ -91,8 +90,6 @@ function EventsPage() {
           <p className="mt-10 text-sm text-muted-foreground">No upcoming published events.</p>
         )}
       </main>
-
-      <SiteFooter />
     </div>
   );
 }

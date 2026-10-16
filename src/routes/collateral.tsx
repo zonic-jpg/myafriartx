@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyCollateral, requestCollateral } from "@/lib/collateral.functions";
 import { getMyVerification } from "@/lib/kyc.functions";
-import SiteFooter from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/collateral")({
@@ -160,7 +159,6 @@ function CollateralPage() {
           {rows.length === 0 && <p className="text-sm text-muted-foreground">No pledges yet.</p>}
         </section>
       </main>
-      <SiteFooter />
     </div>
   );
 }

@@ -887,7 +887,7 @@ function Landing() {
                 />
               </span>
               <span
-                className="font-display text-xl tracking-tight sm:text-2xl bg-clip-text text-transparent"
+                className="hidden font-display text-xl tracking-tight sm:inline sm:text-2xl bg-clip-text text-transparent"
                 style={{
                   backgroundImage: "linear-gradient(90deg,#7e22ce 0%,#dc2626 55%,#f97316 100%)",
                 }}
@@ -904,6 +904,19 @@ function Landing() {
               >
                 <span aria-hidden>⌕</span> Search &amp; filters
               </button>
+              <Link
+                to="/"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }}
+                className="hidden px-1 text-black/70 hover:text-black md:inline"
+              >
+                Discover
+              </Link>
+              <Link to="/auction" className="hidden px-1 text-black/70 hover:text-black md:inline">
+                Auctions
+              </Link>
               <Link to="/lounge" className="hidden px-1 text-black/70 hover:text-black md:inline">
                 Art Lounge
               </Link>
@@ -916,6 +929,15 @@ function Landing() {
               <Link to="/submit" className="hidden px-1 text-black/70 hover:text-black md:inline">
                 Submit work
               </Link>
+              <details className="relative hidden md:block">
+                <summary className="cursor-pointer list-none px-1 text-black/70 hover:text-black">My account ▾</summary>
+                <div className="absolute right-0 z-[70] mt-2 w-44 rounded-md border border-black/10 bg-white py-1 text-sm shadow-lg">
+                  <Link to="/notify" className="block px-3 py-2 text-black/80 hover:bg-black/5">NotifyMe</Link>
+                  <Link to="/renders" className="block px-3 py-2 text-black/80 hover:bg-black/5">My renders</Link>
+                  <Link to="/collateral" className="block px-3 py-2 text-black/80 hover:bg-black/5">Collateral</Link>
+                  <Link to="/disputes" className="block px-3 py-2 text-black/80 hover:bg-black/5">Disputes</Link>
+                </div>
+              </details>
               {authed === false && (
                 <>
                   <Link to="/login" className="hidden px-1 text-black/70 hover:text-black md:inline">
@@ -994,7 +1016,11 @@ function Landing() {
             <div className="bg-white p-3 md:hidden">
               <button
                 type="button"
-                onClick={() => setFiltersOpen(false)}
+                onClick={() => {
+                  submitDraftFilters();
+                  setFiltersOpen(false);
+                  setTimeout(() => document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+                }}
                 className="w-full rounded-md bg-zinc-900 px-4 py-3 text-sm font-medium text-white"
               >
                 Show artworks
@@ -1108,7 +1134,7 @@ function Landing() {
         </section>
 
         {/* Catalogue grid */}
-        <section ref={catalogueRef} className="mt-12 sm:mt-16">
+        <section id="catalogue" ref={catalogueRef} className="mt-12 sm:mt-16">
           <div className="mb-4 flex flex-wrap items-end justify-end gap-3">
             <p className="text-xs text-muted-foreground">
               {loadingCatalogue
@@ -1253,7 +1279,14 @@ function Landing() {
         <div className="mx-auto flex max-w-6xl flex-col items-start gap-2 px-4 py-5 text-xs sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-6">
           <div>© MyAfriArt</div>
           <nav className="flex items-center gap-4">
-            <Link to="/" className="font-medium text-white hover:text-white/80">
+            <Link
+              to="/"
+              onClick={(e) => {
+                e.preventDefault();
+                document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+              className="font-medium text-white hover:text-white/80"
+            >
               Discover
             </Link>
             <Link to="/lounge" className="font-medium text-white hover:text-white/80">

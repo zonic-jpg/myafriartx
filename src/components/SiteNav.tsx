@@ -96,7 +96,12 @@ export function NavDrawer({
             <Link
               key={l.to}
               to={l.to}
-              onClick={onClose}
+              onClick={() => {
+                onClose();
+                if (l.to === "/" && typeof window !== "undefined" && window.location.pathname === "/") {
+                  setTimeout(() => document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
+                }
+              }}
               className="px-5 py-3 text-[15px] text-zinc-200 hover:bg-white/10 hover:text-white"
               activeProps={{ className: "bg-white/10 text-white" }}
               activeOptions={{ exact: l.to === "/" }}
@@ -164,7 +169,8 @@ export function SiteNav({
   const authed = useAuthed();
   const brand = tone === "brand";
   const linkCls = brand ? "text-white/85 hover:text-white" : "text-muted-foreground hover:text-foreground";
-  const inline = NAV_LINKS.filter((l) => ["/lounge", "/events", "/studio", "/submit"].includes(l.to));
+  const inline = NAV_LINKS.filter((l) => ["/", "/auction", "/lounge", "/events", "/studio", "/submit"].includes(l.to));
+  const account = NAV_LINKS.filter((l) => ["/notify", "/renders", "/collateral", "/disputes"].includes(l.to));
 
   return (
     <>
@@ -186,6 +192,16 @@ export function SiteNav({
                 {l.label}
               </Link>
             ))}
+            <details className="relative">
+              <summary className={`cursor-pointer list-none ${linkCls}`}>My account ▾</summary>
+              <div className="absolute right-0 z-50 mt-2 w-44 rounded-md border border-border bg-background py-1 text-sm text-foreground shadow-lg">
+                {account.map((l) => (
+                  <Link key={l.to} to={l.to} className="block px-3 py-2 hover:bg-muted">
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
+            </details>
             {right}
             {authed ? (
               <button type="button" onClick={signOutAndLeave} className={linkCls}>
