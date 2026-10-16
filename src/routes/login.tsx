@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { googleAuthEnabled, lovable } from "@/integrations/lovable";
 import { publicMessage } from "@/lib/public-message";
-import { PasswordRecovery } from "@/components/PasswordRecovery";
 import { safeRedirect } from "@/lib/safeRedirect";
 
 export const Route = createFileRoute("/login")({
@@ -393,8 +392,6 @@ function LoginPage() {
             {loading ? "…" : mode === "signin" ? "Sign in" : "Create account"}
           </button>
         </form>
-
-        <PasswordRecovery brand="MyAfriArt" />
 
         <button
           type="button"

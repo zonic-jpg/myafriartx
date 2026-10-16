@@ -39,7 +39,14 @@ const btn: React.CSSProperties = {
   cursor: "pointer",
 };
 
-/** Supabase email password recovery. */
+// Captured at import time (client only), before supabase-js strips the tokens from the URL.
+const _h = typeof location !== "undefined" ? location.hash : "";
+const LANDED_RECOVERY = /type=recovery/.test(_h) || /^#recovery/.test(_h);
+const LANDED_LINK_ERROR = /error_code=|error_description=/.test(_h)
+  ? "That reset link has expired or was already used. Enter your email to get a fresh one."
+  : null;
+
+/** Supabase email password recovery. Mounted app-wide so the emailed link works from any page. */
 export function PasswordRecovery({ brand = "MyAfriArt" }: { brand?: string }) {
   const [mode, setMode] = useState<"forgot" | "reset" | null>(null);
   const [email, setEmail] = useState("");
@@ -50,6 +57,11 @@ export function PasswordRecovery({ brand = "MyAfriArt" }: { brand?: string }) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    if (LANDED_RECOVERY) setMode("reset");
+    else if (LANDED_LINK_ERROR) {
+      setErr(LANDED_LINK_ERROR);
+      setMode("forgot");
+    }
     const open = () => {
       const h = location.hash.replace(/^#/, "");
       if (h === "forgot") setMode("forgot");
@@ -78,7 +90,7 @@ export function PasswordRecovery({ brand = "MyAfriArt" }: { brand?: string }) {
     setBusy(true);
     setErr(null);
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/login#recovery`,
+      redirectTo: `${window.location.origin}/`,
     });
     setBusy(false);
     if (error) setErr(error.message);
@@ -93,7 +105,8 @@ export function PasswordRecovery({ brand = "MyAfriArt" }: { brand?: string }) {
     setBusy(false);
     if (error) setErr(error.message);
     else {
-      setMsg("Password updated. You can sign in.");
+      setMsg("Password updated. You're signed in.");
+      try { history.replaceState(null, "", location.pathname); } catch {}
       setTimeout(close, 1500);
     }
   };

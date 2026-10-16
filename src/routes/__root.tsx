@@ -11,6 +11,7 @@ import {
 import { Toaster } from "@/components/ui/sonner";
 import { NotifyAutoOpen } from "@/components/notify-auto-open";
 import { ApprovalGate } from "@/components/ApprovalGate";
+import { PasswordRecovery } from "@/components/PasswordRecovery";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import appCss from "../styles.css?url";
@@ -124,6 +125,7 @@ function RootComponent() {
       <ErrorBoundary scope="root">
         <ApprovalGate>
           <Outlet />
+          <PasswordRecovery brand="MyAfriArt" />
         </ApprovalGate>
         <SiteFooter />
         <NotifyAutoOpen />
