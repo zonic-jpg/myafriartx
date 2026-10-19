@@ -170,8 +170,8 @@ async function isAdminUser(userId: string) {
     .select("id")
     .eq("user_id", userId)
     .eq("role", "admin")
-    .maybeSingle();
-  return !!data;
+    .limit(1);
+  return !!data && data.length > 0;
 }
 
 /** Caller must be the dispute's opener or an admin. Returns their role in the thread. */

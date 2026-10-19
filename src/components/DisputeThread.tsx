@@ -18,13 +18,20 @@ export function DisputeThread({ disputeId, viewer }: { disputeId: string; viewer
   const load = () =>
     listFn({ data: { disputeId } })
       .then((r) => setMsgs(r as Msg[]))
-      .catch(() => setMsgs([]));
+      .catch(() => setMsgs((prev) => prev ?? []));
 
   useEffect(() => {
     load();
-    const t = setInterval(load, 20000);
-    return () => clearInterval(t);
   }, [disputeId]);
+
+  // Poll only while the thread is open and the tab is visible.
+  useEffect(() => {
+    if (!open) return;
+    const t = setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 15000);
+    return () => clearInterval(t);
+  }, [open, disputeId]);
 
   useEffect(() => {
     if (open) endRef.current?.scrollIntoView({ block: "nearest" });
