@@ -1,3 +1,4 @@
+import { SiteNav } from "@/components/SiteNav";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -67,6 +68,7 @@ function AuctionFloor() {
 
   return (
     <div className="auc">
+      <SiteNav tone="plain" />
       <header className="auc-top">
         <div className="auc-kicker">{lots.some((l) => l.status === "live") ? "Live auction" : "Auction results"}</div>
         <h1>Friday Evening Sale</h1>

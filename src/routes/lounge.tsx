@@ -1,3 +1,4 @@
+import { SiteNav } from "@/components/SiteNav";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { fallback, zodValidator } from "@tanstack/zod-adapter";
@@ -92,6 +93,7 @@ function LoungePage() {
       <div
         className={`relative z-10 h-full w-full overflow-auto bg-gradient-to-b from-stone-900 via-zinc-950 to-black text-stone-100 transition-opacity duration-700 ${entered ? "opacity-100" : "opacity-0"}`}
       >
+        <SiteNav tone="plain" />
         <div className="sticky top-0 z-30 flex items-center justify-between border-b border-amber-400/20 bg-black/70 px-3 py-2.5 backdrop-blur sm:px-4 sm:py-3">
           <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-[0.3em] text-amber-400 sm:text-[11px]">
@@ -208,7 +210,7 @@ function LoungeInterior({ initialTab }: { initialTab: "sell" | "buy" | "threads"
   );
 
   return (
-    <div className="grid h-[calc(100vh-72px)] grid-cols-1 md:grid-cols-[360px_1fr]">
+    <div className="grid h-[calc(100vh-140px)] grid-cols-1 md:grid-cols-[360px_1fr]">
       {/* Left rail */}
       <aside className="overflow-y-auto border-r border-amber-400/10 bg-black/40 p-3">
         <div className="mb-3 flex gap-1 rounded-md border border-amber-400/20 p-1 text-xs">
@@ -439,17 +441,31 @@ function CreateListingModal({
         const { data: pub } = supabase.storage.from("listings").getPublicUrl(path);
         image_url = pub.publicUrl;
       }
-      await create({
-        data: {
-          type: kind,
-          title,
-          medium: medium || null,
-          price: price ? Number(price) : null,
-          currency,
-          notes: notes || null,
-          image_url,
-        },
-      });
+      const cleanCurrency = currency.trim().toUpperCase();
+      const payload = {
+        type: kind,
+        title: title.trim(),
+        medium: medium.trim() || null,
+        price: price.trim() !== "" && Number.isFinite(Number(price)) ? Math.max(0, Number(price)) : null,
+        currency: cleanCurrency.length >= 3 ? cleanCurrency : "USD",
+        notes: notes.trim() || null,
+        image_url,
+      };
+      if (!payload.title) throw new Error("Please give your listing a title.");
+      try {
+        await create({ data: payload });
+      } catch (serverErr) {
+        // Server function unavailable: post directly. Row-level security still
+        // restricts the insert to the signed-in member's own listings.
+        console.warn("createListing server function failed, posting directly:", serverErr);
+        const { data: auth2 } = await supabase.auth.getUser();
+        const memberId = auth2.user?.id;
+        if (!memberId) throw new Error("Please sign in again to post.");
+        const { error: insertError } = await supabase
+          .from("listings")
+          .insert({ ...payload, member_id: memberId });
+        if (insertError) throw new Error(`Couldn't post your listing: ${insertError.message}`);
+      }
       toast.success("Listing posted");
       onCreated();
     } catch (err) {

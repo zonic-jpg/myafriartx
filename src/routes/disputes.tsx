@@ -1,3 +1,4 @@
+import { SiteNav } from "@/components/SiteNav";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
@@ -67,6 +68,8 @@ function DisputesPage() {
   }
 
   return (
+    <>
+    <SiteNav tone="plain" />
     <div className="mx-auto min-h-screen max-w-2xl px-6 py-10">
       <Link to="/" className="text-sm text-primary underline">
         ← MyAfriArt
@@ -165,5 +168,6 @@ function DisputesPage() {
         )}
       </div>
     </div>
+    </>
   );
 }
