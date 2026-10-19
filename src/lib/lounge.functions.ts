@@ -184,7 +184,7 @@ export const getThread = createServerFn({ method: "GET" })
     const [{ data: messages }, { data: listing }, { data: broker }] = await Promise.all([
       context.supabase
         .from("messages")
-        .select("id, sender_id, body, created_at")
+        .select("id, sender_id, body, created_at, deleted_at")
         .eq("thread_id", thread.id)
         .order("created_at", { ascending: true })
         .limit(500),
@@ -208,7 +208,7 @@ export const getThread = createServerFn({ method: "GET" })
       .maybeSingle();
     return {
       thread: { ...thread, you_are: thread.buyer_id === userId ? "buyer" : "seller" },
-      messages: messages ?? [],
+      messages: (messages ?? []).map((m) => (m.deleted_at ? { ...m, body: "" } : m)),
       listing,
       broker_request: broker ?? null,
       other_name: prof?.display_name ?? "Member",
@@ -225,6 +225,16 @@ export const sendMessage = createServerFn({ method: "POST" })
       .from("messages")
       .insert({ thread_id: data.thread_id, sender_id: context.userId, body: data.body });
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ message_id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: ok, error } = await context.supabase.rpc("delete_own_message", { p_message_id: data.message_id });
+    if (error) throw new Error(error.message);
+    if (!ok) throw new Error("You can only delete your own messages");
     return { ok: true };
   });
 

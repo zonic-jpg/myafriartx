@@ -15,6 +15,7 @@ import {
   listMyThreads,
   getThread,
   sendMessage,
+  deleteMessage,
   requestBrokerage,
   getBrokerFee,
 } from "@/lib/lounge.functions";
@@ -548,6 +549,7 @@ function CreateListingModal({
 function ThreadView({ threadId, onChanged }: { threadId: string; onChanged: () => void }) {
   const fetchThread = useServerFn(getThread);
   const send = useServerFn(sendMessage);
+  const delMsg = useServerFn(deleteMessage);
   const reqBroker = useServerFn(requestBrokerage);
   const fetchFee = useServerFn(getBrokerFee);
   const fetchEscrow = useServerFn(getThreadEscrow);
@@ -581,7 +583,7 @@ function ThreadView({ threadId, onChanged }: { threadId: string; onChanged: () =
       .on(
         "postgres_changes",
         {
-          event: "INSERT",
+          event: "*",
           schema: "public",
           table: "messages",
           filter: `thread_id=eq.${threadId}`,
@@ -763,9 +765,30 @@ function ThreadView({ threadId, onChanged }: { threadId: string; onChanged: () =
                 <div
                   className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${mine ? "bg-amber-400 text-black" : "bg-white/10 text-stone-100"}`}
                 >
-                  {m.body}
-                  <div className={`mt-1 text-[10px] ${mine ? "text-black/60" : "text-stone-400"}`}>
-                    {new Date(m.created_at).toLocaleString()}
+                  {m.deleted_at ? (
+                    <span className="italic opacity-70">This message was deleted</span>
+                  ) : (
+                    m.body
+                  )}
+                  <div className={`mt-1 flex items-center gap-2 text-[10px] ${mine ? "text-black/60" : "text-stone-400"}`}>
+                    <span>{new Date(m.created_at).toLocaleString()}</span>
+                    {mine && !m.deleted_at && (
+                      <button
+                        type="button"
+                        className="underline underline-offset-2 hover:opacity-100 opacity-80"
+                        onClick={async () => {
+                          if (!window.confirm("Delete this message for everyone?")) return;
+                          try {
+                            await delMsg({ data: { message_id: m.id } });
+                            refresh();
+                          } catch {
+                            alert("Couldn't delete that message. Please try again.");
+                          }
+                        }}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               </li>
