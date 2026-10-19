@@ -42,6 +42,10 @@ function parseDataUrl(s) {
   return { mime: m[1], data: m[2] };
 }
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ART_MEDIA = new Set(["oil", "watercolor", "pastel", "sculpture", "photograph", "print", "mixed_media", "acrylic", "drawing"]);
+const isUuid = (v) => typeof v === "string" && UUID_RE.test(v);
+
 function ensureDataUrl(s) {
   return s.startsWith("data:") ? s : `data:image/jpeg;base64,${s}`;
 }
@@ -145,6 +149,10 @@ async function runAiCascade({ prompt, roomDataUrl, artworkUrls }) {
         errors.push(`Could not fetch artwork ${u.slice(0, 80)}`);
       }
     }
+  }
+
+  if (artworkUrls.length && !artInlines.length) {
+    return { image: null, provider: null, errors: [...errors, "None of the selected artwork images could be loaded"], artworkLoadFailed: true };
   }
 
   const lovableKey = env("AI_API_KEY", "LOVABLE_API_KEY");
@@ -255,8 +263,9 @@ export async function handler(event) {
       .slice(0, 500);
 
     const prompt = [
-      "Photorealistic edit of the provided room photograph.",
-      "Stage the following artworks on the most suitable empty wall surface(s) in the room:",
+      "You are given several images. IMAGE 1 is the room photograph to edit. The remaining images, in order, are the exact artworks to place: copy each artwork's real composition, colours and subject faithfully, do not redraw or reinterpret them.",
+      "Photorealistic edit of the room photograph (image 1).",
+      "Stage the following artworks (images 2 onward, in this order) on the most suitable empty wall surface(s) in the room:",
       ...resolvedArts.map((a, i) => `- Artwork ${i + 1}: "${a.title || "Untitled"}" (${a.medium || "art"}).`),
       placement
         ? `User placement request (placement only): ${placement}`
@@ -273,6 +282,12 @@ export async function handler(event) {
       artworkUrls: resolvedArts.map((a) => a.image_url),
     });
 
+    if (!ai.image && ai.artworkLoadFailed) {
+      return respond(422, {
+        error: "We couldn't load the selected artwork pictures, so nothing was staged. Please try again.",
+        provider_errors: ai.errors || [],
+      });
+    }
     if (!ai.image) {
       return respond(502, {
         error: "AI staging failed — no image returned",
@@ -285,47 +300,51 @@ export async function handler(event) {
     let resultUrl = ai.image;
     let sourceUrl = roomDataUrl;
 
-    if (admin && userId) {
+    const db = admin || userClient;
+    if (db && userId) {
       try {
         const sourcePath = `${userId}/${crypto.randomUUID()}.jpg`;
         const sourceBuf = base64ToBuffer(roomDataUrl);
-        await admin.storage.from("rooms").upload(sourcePath, sourceBuf, {
+        await db.storage.from("rooms").upload(sourcePath, sourceBuf, {
           contentType: "image/jpeg",
           upsert: false,
         });
-        const { data: signedSrc } = await admin.storage.from("rooms").createSignedUrl(sourcePath, 3600);
+        const { data: signedSrc } = await db.storage.from("rooms").createSignedUrl(sourcePath, 3600);
         sourceUrl = signedSrc?.signedUrl || roomDataUrl;
 
-        const { data: render, error: insErr } = await admin
+        const savedArtworkIds = (artworkIds.length ? artworkIds : resolvedArts.map((a) => a.id)).filter(isUuid);
+        const { data: render, error: insErr } = await db
           .from("renders")
           .insert({
             user_id: userId,
             source_image_url: sourcePath,
             style_id: body.styleId && String(body.styleId).includes("-") ? body.styleId : null,
-            artwork_ids: artworkIds.length ? artworkIds : resolvedArts.map((a) => a.id).filter(Boolean),
-            media_filter: body.mediaFilter || [],
+            artwork_ids: savedArtworkIds,
+            media_filter: (Array.isArray(body.mediaFilter) ? body.mediaFilter : []).filter((m) => ART_MEDIA.has(m)),
             status: "processing",
             prompt,
           })
           .select()
           .single();
 
+        if (insErr) console.error("[stage-room] renders insert failed:", insErr.message);
         if (!insErr && render) {
           renderId = render.id;
           const resultBuf = base64ToBuffer(ai.image);
           const resultPath = `${userId}/${render.id}.png`;
-          await admin.storage.from("renders").upload(resultPath, resultBuf, {
+          await db.storage.from("renders").upload(resultPath, resultBuf, {
             contentType: "image/png",
             upsert: true,
           });
-          const { data: signedRes } = await admin.storage
+          const { data: signedRes } = await db.storage
             .from("renders")
             .createSignedUrl(resultPath, 3600);
           resultUrl = signedRes?.signedUrl || ai.image;
-          await admin
+          const { error: updErr } = await db
             .from("renders")
             .update({ status: "completed", result_image_url: resultPath, prompt })
             .eq("id", render.id);
+          if (updErr) console.error("[stage-room] renders update failed:", updErr.message);
         }
       } catch (persistErr) {
         console.error("[stage-room] persist soft-fail", persistErr?.message || persistErr);

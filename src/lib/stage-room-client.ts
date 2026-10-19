@@ -168,6 +168,27 @@ export async function canvasStagePreview(payload: StagePayload): Promise<{
   };
 }
 
+/**
+ * Turn an artwork picture into a compact embedded JPEG (max 1024px) so the staging server
+ * receives the real pixels of the selected piece and never has to fetch a relative or
+ * cross-origin URL (which is what made the AI ignore the chosen artwork).
+ */
+export async function artworkToDataUrl(url: string, maxSide = 1024): Promise<string> {
+  if (url.startsWith("data:")) return url;
+  const absolute = new URL(url, window.location.origin).toString();
+  const img = await loadImage(absolute);
+  const scale = Math.min(1, maxSide / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+  const w = Math.max(1, Math.round((img.naturalWidth || img.width) * scale));
+  const h = Math.max(1, Math.round((img.naturalHeight || img.height) * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas unavailable");
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL("image/jpeg", 0.88);
+}
+
 export async function stageRoomClient(payload: StagePayload): Promise<{
   id: string;
   resultUrl: string;
@@ -175,8 +196,19 @@ export async function stageRoomClient(payload: StagePayload): Promise<{
   provider?: string;
 }> {
   const style = styleById(payload.styleId);
+  // Embed the selected artworks' real pixels in the request.
+  const embedded = await Promise.all(
+    (payload.artworks || []).map(async (a) => {
+      try {
+        return { ...a, image_url: await artworkToDataUrl(a.image_url) };
+      } catch {
+        return a; // server will try to fetch it; canvas fallback handles the rest
+      }
+    }),
+  );
   const body = {
     ...payload,
+    artworks: embedded,
     stylePrompt: payload.stylePrompt || style?.prompt_fragment || "",
     styleName: style?.name || "Custom",
   };

@@ -1,3 +1,4 @@
+import { EnlargeableImage } from "@/components/EnlargeableImage";
 import { SiteNav } from "@/components/SiteNav";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -232,9 +233,9 @@ function LotDetail({
       </button>
       <div className="ld-grid">
         <div className="ld-img">
-          <img
+          <EnlargeableImage
             src={lot.image || localImageForKey(lot.id || lot.title)}
-            alt=""
+            alt={lot.title}
             onError={(e) => {
               const fallback = localImageForKey(lot.id || lot.title);
               if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;

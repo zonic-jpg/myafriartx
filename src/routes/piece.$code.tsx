@@ -6,6 +6,7 @@ import { getPieceDetail, bumpView } from "@/lib/catalogue.functions";
 import { initializePayment } from "@/lib/payments.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { generativeArtworkUri } from "@/lib/local-image-assets";
+import { EnlargeableImage } from "@/components/EnlargeableImage";
 import { SiteNav } from "@/components/SiteNav";
 
 const pieceQuery = (code: string) =>
@@ -72,7 +73,7 @@ function PieceDetailPage() {
       <main className="mx-auto grid max-w-5xl gap-8 px-4 py-8 sm:px-6 md:grid-cols-2">
         <div className="aspect-[4/5] overflow-hidden rounded-lg border border-border bg-muted md:aspect-auto md:max-h-[75vh]">
           {p.image_url && (
-            <img
+            <EnlargeableImage
               src={p.image_url}
               alt={p.title}
               onError={(e) => {

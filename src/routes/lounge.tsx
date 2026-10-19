@@ -1,3 +1,4 @@
+import { EnlargeableImage } from "@/components/EnlargeableImage";
 import { SiteNav } from "@/components/SiteNav";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -319,9 +320,9 @@ function ListingList({
       {listings.map((l, index) => (
         <li key={l.id} className="rounded-md border border-white/5 bg-white/[0.03] p-3">
           <div className="flex items-start gap-3">
-            <img
+            <EnlargeableImage
               src={l.image_url || localImageForKey(l.id || l.title, index)}
-              alt=""
+              alt={l.title}
               className="h-14 w-14 rounded object-cover"
             />
             <div className="min-w-0 flex-1">
