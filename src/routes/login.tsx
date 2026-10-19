@@ -85,6 +85,7 @@ function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [formErr, setFormErr] = useState<string | null>(null);
   const emailRef = useRef<HTMLInputElement | null>(null);
   const passwordRef = useRef<HTMLInputElement | null>(null);
   const typedRef = useRef(false);
@@ -210,6 +211,7 @@ function LoginPage() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
+    setFormErr(null);
     setLoading(true);
     try {
       const identity = String(email ?? "").trim();
@@ -241,7 +243,8 @@ function LoginPage() {
       }
       await goAfterSignIn();
     } catch (err: any) {
-      toast.error(friendlyAuthError(publicMessage(err, "Authentication failed")));
+      const msg = friendlyAuthError(publicMessage(err, "Authentication failed"));
+      setFormErr(msg);
     } finally {
       setLoading(false);
     }
@@ -283,6 +286,16 @@ function LoginPage() {
             ? "Sign in with email to keep your renders."
             : "Email and password — start staging rooms in seconds."}
         </p>
+
+        {formErr && (
+          <p
+            role="alert"
+            ref={(el) => el?.scrollIntoView({ block: "nearest", behavior: "smooth" })}
+            className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            {formErr}
+          </p>
+        )}
 
         {googleAuthEnabled && (
           <>
@@ -341,7 +354,7 @@ function LoginPage() {
                 typedRef.current = true;
                 setEmail(e.target.value);
               }}
-              placeholder="oadeagbo@gmail.com"
+              placeholder="you@example.com"
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
             />
           </div>

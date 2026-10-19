@@ -7,6 +7,8 @@ export const ZONIC_APPS = [
   { id: "adspotx", label: "AdSpot", href: "https://adspotx.netlify.app" },
   { id: "owanbex", label: "Owanbe", href: "https://owanbex.netlify.app" },
   { id: "zonicme", label: "ZonicMe", href: "https://zonicme.netlify.app" },
+  { id: "sydef", label: "Sydef", href: "https://main.d30v1knuamflfh.amplifyapp.com" },
+  { id: "confirmahead", label: "ConfirmAhead", href: "https://confirmahead.netlify.app" },
 ] as const;
 
 export function siblingZonicApps(currentId: string) {
