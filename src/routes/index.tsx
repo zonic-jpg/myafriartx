@@ -710,6 +710,12 @@ function Landing() {
     };
   }, [artworks, catalogueArtists]);
 
+  // Counts shown to visitors reflect REAL catalogue only; marked Sample works are
+  // reported separately so they never inflate the artist / artwork totals.
+  const isSampleWork = (a: ArtworkRow): boolean =>
+    a.content_source === "mock" ||
+    (typeof a.id === "string" && a.id.startsWith("local-")) ||
+    isMockCatalogueCode(String(a.short_code ?? a.id ?? ""));
   const filteredArtworks = useMemo(() => {
     const q = filters.q.trim().toLowerCase();
     const clean = (v: string | null | undefined) => (v ?? "").trim().toLowerCase();
@@ -1139,7 +1145,12 @@ function Landing() {
             <p className="text-xs text-muted-foreground">
               {loadingCatalogue
                 ? "Loading…"
-                : `${filteredArtists.length} artist${filteredArtists.length === 1 ? "" : "s"} · ${filteredArtworks.length} piece${filteredArtworks.length === 1 ? "" : "s"}`}
+                : (() => {
+                    const realWorks = filteredArtworks.filter((a) => !isSampleWork(a)).length;
+                    const sampleWorks = filteredArtworks.length - realWorks;
+                    const realArtists = filteredArtists.filter((e) => !(e.sample && isSampleWork(e.sample))).length;
+                    return `${realArtists} artist${realArtists === 1 ? "" : "s"} · ${realWorks} piece${realWorks === 1 ? "" : "s"}${sampleWorks ? ` · plus ${sampleWorks} sample work${sampleWorks === 1 ? "" : "s"}` : ""}`;
+                  })()}
             </p>
           </div>
 

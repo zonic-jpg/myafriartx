@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ImageDropzone, fileToDownscaledDataUrl } from "@/components/image-dropzone";
 import { publicMessage } from "@/lib/public-message";
 import { SiteNav } from "@/components/SiteNav";
+import { localImageForKey } from "@/lib/local-image-assets";
 
 export const Route = createFileRoute("/studio")({
   head: () => ({ meta: [{ title: "Studio — MyAfriArt" }] }),
@@ -82,10 +83,27 @@ function StudioSkeleton() {
 }
 
 function StudioInner() {
-  const { data, isLoading } = useQuery({
+  const { data: rawData, isLoading } = useQuery({
     queryKey: ["catalog", "live"],
     queryFn: () => fetchStudioCatalogClient(),
   });
+  // Every artwork always has a picture: real photo when present, otherwise the
+  // deterministic local image, so the picker never renders blank tiles.
+  const data = useMemo(
+    () =>
+      rawData
+        ? {
+            ...rawData,
+            artworks: (rawData.artworks ?? []).map((a: any, index: number) => ({
+              ...a,
+              image_url: a.image_url || localImageForKey(a.id || a.title || "artwork", index),
+            })),
+          }
+        : rawData,
+    [rawData],
+  );
+  const PAGE_SIZE = 9;
+  const [pickerPage, setPickerPage] = useState(0);
 
   const [isAdmin, setIsAdmin] = useState(false);
   useEffect(() => {
@@ -273,6 +291,9 @@ function StudioInner() {
         .replace(/[\s-]+/g, "_");
       return media.includes(normalized);
     });
+  const pageCount = Math.max(1, Math.ceil(artworks.length / PAGE_SIZE));
+  const safePage = Math.min(pickerPage, pageCount - 1);
+  const pageArtworks = artworks.slice(safePage * PAGE_SIZE, safePage * PAGE_SIZE + PAGE_SIZE);
   const artistName = (id: string) => data?.artists.find((x: any) => x.id === id)?.name ?? "";
 
   return (
@@ -378,6 +399,7 @@ function StudioInner() {
             </details>
           </Field>
 
+          <div className="border-t border-border pt-6">
           <Field label={`Artworks (${picked.length}/3)`}>
             {isLoading ? (
               <div className="grid grid-cols-3 gap-2">
@@ -387,7 +409,7 @@ function StudioInner() {
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-2">
-                {artworks.map((a: any) => {
+                {pageArtworks.map((a: any) => {
                   const on = picked.includes(a.id);
                   return (
                     <button
@@ -426,7 +448,31 @@ function StudioInner() {
                 )}
               </div>
             )}
+            {!isLoading && pageCount > 1 && (
+              <div className="mt-3 flex items-center justify-between text-xs">
+                <button
+                  type="button"
+                  disabled={safePage === 0}
+                  onClick={() => setPickerPage(safePage - 1)}
+                  className="rounded-md border border-border px-3 py-1.5 hover:bg-accent disabled:opacity-40"
+                >
+                  ← Previous
+                </button>
+                <span className="text-muted-foreground">
+                  Page {safePage + 1} of {pageCount}
+                </span>
+                <button
+                  type="button"
+                  disabled={safePage >= pageCount - 1}
+                  onClick={() => setPickerPage(safePage + 1)}
+                  className="rounded-md border border-border px-3 py-1.5 hover:bg-accent disabled:opacity-40"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
           </Field>
+          </div>
 
           <Field label="Placement request">
             <textarea
