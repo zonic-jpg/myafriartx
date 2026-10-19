@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { adminListDisputes, adminResolveDispute } from "@/lib/disputes.functions";
+import { DisputeThread } from "@/components/DisputeThread";
 
 type Filter = "open" | "resolved" | "rejected" | "all";
 
@@ -101,6 +102,8 @@ export function DisputesAdmin() {
                 <strong>Resolution:</strong> {String(d.resolution)}
               </p>
             )}
+
+            <DisputeThread disputeId={String(d.id)} viewer="admin" />
 
             {d.status === "open" && (
               <div className="mt-3 space-y-2">

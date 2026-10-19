@@ -163,3 +163,60 @@ export const adminResolveDispute = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+async function isAdminUser(userId: string) {
+  const { data } = await (await __get_admin())
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  return !!data;
+}
+
+/** Caller must be the dispute's opener or an admin. Returns their role in the thread. */
+async function disputeAccess(disputeId: string, userId: string): Promise<"member" | "admin"> {
+  const admin = await __get_admin();
+  const { data: d } = await admin
+    .from("payment_disputes")
+    .select("id, opened_by")
+    .eq("id", disputeId)
+    .maybeSingle();
+  if (!d) throw new Error("Dispute not found");
+  if (await isAdminUser(userId)) return "admin";
+  if (d.opened_by === userId) return "member";
+  throw new Error("Forbidden");
+}
+
+export const listDisputeMessages = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ disputeId: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await disputeAccess(data.disputeId, context.userId);
+    const { data: rows, error } = await (await __get_admin())
+      .from("dispute_messages")
+      .select("id, sender_role, body, created_at")
+      .eq("dispute_id", data.disputeId)
+      .order("created_at", { ascending: true })
+      .limit(300);
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+/** Either side can message at ANY stage (open, resolved or rejected). */
+export const postDisputeMessage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ disputeId: z.string().uuid(), body: z.string().trim().min(1).max(2000) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const role = await disputeAccess(data.disputeId, context.userId);
+    const { error } = await (await __get_admin()).from("dispute_messages").insert({
+      dispute_id: data.disputeId,
+      sender_id: context.userId,
+      sender_role: role,
+      body: data.body,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

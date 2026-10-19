@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyDisputablePayments, openDispute } from "@/lib/disputes.functions";
+import { DisputeThread } from "@/components/DisputeThread";
 
 export const Route = createFileRoute("/disputes")({
   component: DisputesPage,
@@ -114,6 +115,7 @@ function DisputesPage() {
                       <strong>Outcome:</strong> {p.dispute.resolution}
                     </p>
                   )}
+                  <DisputeThread disputeId={p.dispute.id} viewer="member" />
                 </div>
               ) : p.status === "succeeded" ? (
                 disputing === p.id ? (
