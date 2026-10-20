@@ -1763,6 +1763,11 @@ function ArtworkCard({ artwork }: { artwork: ArtworkRow }) {
             Sample
           </span>
         )}
+        {artwork.lifecycle_status === "sold" && (
+          <span className="absolute right-2 top-2 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary-foreground">
+            Sold
+          </span>
+        )}
       </div>
       <div className="flex flex-1 flex-col gap-1 p-3">
         <p className="line-clamp-1 font-display text-sm leading-tight">{artwork.title}</p>

@@ -6,7 +6,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { LOCAL_MOCK_STYLES, mergeStyles, styleById, type StageStyle } from "@/lib/stage-styles";
 import { LOCAL_MOCK_ARTWORKS, LOCAL_MOCK_ARTISTS } from "@/lib/mock-catalogue";
-import { localImageForKey } from "@/lib/local-image-assets";
+import { generativeArtworkUri } from "@/lib/local-image-assets";
 
 export type StagePayload = {
   sourceImageBase64: string;
@@ -124,7 +124,7 @@ export async function canvasStagePreview(payload: StagePayload): Promise<{
   const n = Math.max(arts.length, 1);
   const imgs: (HTMLImageElement | null)[] = [];
   for (let i = 0; i < arts.length; i++) {
-    const url = arts[i].image_url || localImageForKey(arts[i].id || arts[i].title || "artwork", i);
+    const url = arts[i].image_url || generativeArtworkUri(arts[i].id || arts[i].title || "artwork");
     try {
       imgs.push(await loadImage(url));
     } catch {

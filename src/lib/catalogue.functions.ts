@@ -103,7 +103,7 @@ export const getCataloguePieces = createServerFn({ method: "GET" }).handler(asyn
         "id, short_code, title, medium, year, image_url, price, currency, lifecycle_status, view_count, content_source, created_at, artist:artists!inner(id, short_code, name, country, gender, domicile_city, date_of_birth)",
       )
       .eq("is_active", true)
-      .eq("lifecycle_status", "in_catalogue")
+      .in("lifecycle_status", ["in_catalogue", "sold"])
       .eq("content_source", source)
       .order("created_at", { ascending: false })
       .limit(500),

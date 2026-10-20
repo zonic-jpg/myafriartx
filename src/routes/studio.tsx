@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ImageDropzone, fileToDownscaledDataUrl } from "@/components/image-dropzone";
 import { publicMessage } from "@/lib/public-message";
 import { SiteNav } from "@/components/SiteNav";
-import { localImageForKey } from "@/lib/local-image-assets";
+import { generativeArtworkUri } from "@/lib/local-image-assets";
 
 export const Route = createFileRoute("/studio")({
   head: () => ({ meta: [{ title: "Studio — MyAfriArt" }] }),
@@ -96,7 +96,7 @@ function StudioInner() {
             ...rawData,
             artworks: (rawData.artworks ?? []).map((a: any, index: number) => ({
               ...a,
-              image_url: a.image_url || localImageForKey(a.id || a.title || "artwork", index),
+              image_url: a.image_url || generativeArtworkUri(a.id || a.title || "artwork"),
             })),
           }
         : rawData,
