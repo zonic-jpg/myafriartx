@@ -48,9 +48,16 @@ function applyAllocation<T>(
   const totalPct = present.reduce((sum, a) => sum + a.percent, 0);
 
   // No allocations configured (or none of them match content): use everything.
+  // Return the full, stably ordered list (newest first): sampling here made the
+  // artist/piece counts change every 6 hours (e.g. 62 one day, 61 the next).
   if (!present.length || totalPct === 0) {
-    const all = Object.values(pool).flat();
-    return shuffle(all).slice(0, cap);
+    const all = Object.values(pool).flat() as Array<T & { created_at?: string | null; id?: string }>;
+    return all
+      .sort((a, b) => {
+        const byDate = String(b.created_at ?? "").localeCompare(String(a.created_at ?? ""));
+        return byDate !== 0 ? byDate : String(a.id ?? "").localeCompare(String(b.id ?? ""));
+      })
+      .slice(0, Math.max(cap, 500)) as T[];
   }
 
   // Compute quota per country, then take from each pool.
