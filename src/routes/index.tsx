@@ -1139,6 +1139,32 @@ function Landing() {
           </button>
         </section>
 
+        {/* Artist call-to-action */}
+        <section id="for-artists" className="mt-8 sm:mt-10" aria-labelledby="for-artists-title">
+          <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-zinc-950 via-zinc-900 to-amber-950/40 p-6 shadow-xl sm:p-10">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="max-w-2xl">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-amber-400">
+                  For artists
+                </p>
+                <h2 id="for-artists-title" className="mt-2 font-display text-2xl leading-tight text-stone-50 sm:text-4xl">
+                  Are you an artist?
+                </h2>
+                <p className="mt-3 text-sm text-stone-300 sm:text-base">
+                  Showcase your work, share your story, and connect with a wider audience.
+                </p>
+              </div>
+              <a
+                href="/submit"
+                onClick={() => trackClick("submit_your_work", "homepage_artist_section")}
+                className="inline-flex shrink-0 items-center justify-center gap-2 self-start rounded-md bg-amber-500 px-6 py-3 text-sm font-medium text-zinc-950 transition hover:bg-amber-400 sm:self-auto"
+              >
+                Submit Your Work →
+              </a>
+            </div>
+          </div>
+        </section>
+
         {/* Catalogue grid */}
         <section id="catalogue" ref={catalogueRef} className="mt-12 sm:mt-16">
           <div className="mb-4 flex flex-wrap items-end justify-end gap-3">

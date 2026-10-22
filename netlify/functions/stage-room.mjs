@@ -94,8 +94,7 @@ async function lovableEdit({ prompt, roomDataUrl, artworkDataUrls, apiKey }) {
   return { image: dataUrl, provider: "lovable" };
 }
 
-async function geminiEdit({ prompt, room, artworks, apiKey }) {
-  const model = env("GEMINI_IMAGE_MODEL", "AI_IMAGE_MODEL") || "gemini-2.5-flash-image";
+async function geminiEdit({ prompt, room, artworks, apiKey, model }) {
   const parts = [
     { inline_data: { mime_type: room.mime, data: room.data } },
     ...artworks.slice(0, 3).map((a) => ({ inline_data: { mime_type: a.mime, data: a.data } })),
@@ -121,7 +120,12 @@ async function geminiEdit({ prompt, room, artworks, apiKey }) {
     (p) => p.inlineData?.data || p.inline_data?.data,
   );
   const b64 = out?.inlineData?.data || out?.inline_data?.data;
-  if (!b64) return { image: null, error: "Gemini returned no image" };
+  if (!b64) {
+    const cand = d?.candidates?.[0];
+    const text = (cand?.content?.parts || []).map((x) => x.text).filter(Boolean).join(" ").slice(0, 200);
+    const why = d?.promptFeedback?.blockReason || cand?.finishReason || "unknown";
+    return { image: null, error: `Gemini (${model}) returned no image [${why}]${text ? `: ${text}` : ""}` };
+  }
   const mime = out?.inlineData?.mimeType || out?.inline_data?.mime_type || "image/png";
   return { image: `data:${mime};base64,${b64}`, provider: model };
 }
@@ -169,14 +173,18 @@ async function runAiCascade({ prompt, roomDataUrl, artworkUrls }) {
 
   const googleKey = env("GOOGLE_API_KEY", "GEMINI_API_KEY");
   if (googleKey) {
-    const out = await geminiEdit({
-      prompt,
-      room,
-      artworks: artInlines,
-      apiKey: googleKey,
-    });
-    if (out.image) return { image: out.image, provider: out.provider, errors };
-    errors.push(out.error);
+    const models = [...new Set([env("GEMINI_IMAGE_MODEL", "AI_IMAGE_MODEL"), "gemini-2.5-flash-image", "gemini-3-pro-image-preview"].filter(Boolean))];
+    for (const m of models) {
+      const out = await geminiEdit({
+        prompt,
+        room,
+        artworks: artInlines,
+        apiKey: googleKey,
+        model: m,
+      });
+      if (out.image) return { image: out.image, provider: out.provider, errors };
+      errors.push(out.error);
+    }
   }
 
   return { image: null, provider: null, errors };
