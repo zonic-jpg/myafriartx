@@ -333,6 +333,9 @@ function ListingList({
                   {l.type === "sell" ? "Selling" : "Looking"}
                 </span>
                 <span className="truncate font-display text-sm text-amber-100">{l.title}</span>
+                {(l as { is_demo?: boolean }).is_demo && (
+                  <span className="rounded bg-stone-500/30 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-stone-300">Demo</span>
+                )}
               </div>
               <p className="mt-1 text-xs text-stone-400">
                 {l.member_name} · {l.medium || "—"} ·{" "}

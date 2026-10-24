@@ -43,7 +43,7 @@ export const listListings = createServerFn({ method: "GET" })
     let q = context.supabase
       .from("listings")
       .select(
-        "id, member_id, type, title, medium, price, currency, notes, image_url, status, created_at",
+        "id, member_id, type, title, medium, price, currency, notes, image_url, status, created_at, is_demo",
       )
       .eq("status", "open")
       .order("created_at", { ascending: false })
