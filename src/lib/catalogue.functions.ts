@@ -111,7 +111,7 @@ export const getCataloguePieces = createServerFn({ method: "GET" }).handler(asyn
       )
       .eq("is_active", true)
       .in("lifecycle_status", ["in_catalogue", "sold"])
-      .eq("content_source", source)
+      .in("content_source", source === "mock" ? ["mock", "live"] : ["live"])
       .order("created_at", { ascending: false })
       .limit(500),
   ]);
@@ -150,7 +150,7 @@ export const getCatalogueArtists = createServerFn({ method: "GET" }).handler(asy
     (await __get_admin())
       .from("artists")
       .select(cols)
-      .eq("content_source", source)
+      .in("content_source", source === "mock" ? ["mock", "live"] : ["live"])
       .order("created_at", { ascending: false })
       .limit(500);
 
