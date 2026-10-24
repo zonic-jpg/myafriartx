@@ -43,6 +43,7 @@ import { requestAdminAccess } from "@/lib/signupApproval";
 import { setDiagnosticsAudience } from "@/lib/public-message";
 import { SignupApprovalsAdmin } from "@/components/admin/SignupApprovalsAdmin";
 import { LetterStudioAdmin } from "@/components/admin/LetterStudioAdmin";
+import { ArtistCsvImport } from "@/components/admin/ArtistCsvImport";
 import { BatchUploadAdmin } from "@/components/admin/BatchUploadAdmin";
 import { SubmissionsAdmin } from "@/components/admin/SubmissionsAdmin";
 import { EventsAdmin } from "@/components/admin/EventsAdmin";
@@ -440,6 +441,7 @@ function ArtistsAdmin({
 
   return (
     <div>
+      <ArtistCsvImport onDone={onChange} />
       <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
         <p className="mr-auto max-w-xl text-xs text-muted-foreground">
           Seeding upserts regional outreach profiles from{" "}
