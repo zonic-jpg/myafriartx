@@ -1,4 +1,6 @@
-/** Per-service Free | Freemium | Paid — draft + activate (MyAfriArtX). */
+/** Per-service Free | Freemium | Paid. Stored in the database (service_pricing) and enforced server-side. */
+import { supabase } from "@/integrations/supabase/client";
+
 export type ServicePricingMode = "free" | "freemium" | "paid";
 
 export type ServicePricingRow = {
@@ -7,64 +9,53 @@ export type ServicePricingRow = {
   mode: ServicePricingMode;
   priceNgn: number;
   guestAllowance: number;
-  active: boolean;
 };
 
-const ACTIVE_KEY = "myafriartx_service_pricing_v1";
-const DRAFT_KEY = "myafriartx_service_pricing_draft_v1";
+export type ServiceGateResult = {
+  mode: ServicePricingMode;
+  priceNgn: number;
+  guestAllowance: number;
+  signedIn: boolean;
+  hasAccess: boolean;
+  allowed: boolean;
+};
 
-export const MYAFRIARTX_SERVICE_CATALOG: Omit<ServicePricingRow, "active">[] = [
-  { id: "catalogue", label: "Public catalogue", mode: "free", priceNgn: 0, guestAllowance: 0 },
-  { id: "auctions", label: "Live auctions", mode: "free", priceNgn: 0, guestAllowance: 0 },
-  { id: "collateral", label: "Collateral loans", mode: "free", priceNgn: 0, guestAllowance: 0 },
-  { id: "verification", label: "Provenance verification", mode: "free", priceNgn: 5000, guestAllowance: 1 },
-  { id: "studio", label: "Artist studio uploads", mode: "free", priceNgn: 0, guestAllowance: 0 },
-];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const db = supabase as any;
 
-function read(key: string): Record<string, ServicePricingRow> {
-  try {
-    return JSON.parse(localStorage.getItem(key) || "{}") || {};
-  } catch {
-    return {};
-  }
+export async function listServicePricing(): Promise<ServicePricingRow[]> {
+  const { data, error } = await db.from("service_pricing").select("id,label,mode,price_ngn,guest_allowance").order("id");
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r: Record<string, unknown>) => ({
+    id: String(r.id),
+    label: String(r.label),
+    mode: r.mode as ServicePricingMode,
+    priceNgn: Number(r.price_ngn) || 0,
+    guestAllowance: Number(r.guest_allowance) || 0,
+  }));
 }
 
-function write(key: string, all: Record<string, ServicePricingRow>) {
-  localStorage.setItem(key, JSON.stringify(all));
+export async function activateServicePricing(row: ServicePricingRow): Promise<void> {
+  const { error } = await db.rpc("admin_set_service_pricing", {
+    p_id: row.id,
+    p_mode: row.mode,
+    p_price: Math.round(row.priceNgn || 0),
+    p_guest: Math.round(row.guestAllowance || 0),
+  });
+  if (error) throw new Error(error.message);
 }
 
-function defaults(): Record<string, ServicePricingRow> {
-  return Object.fromEntries(MYAFRIARTX_SERVICE_CATALOG.map((s) => [s.id, { ...s, active: true }]));
-}
-
-export function listActiveServicePricing(): ServicePricingRow[] {
-  const base = defaults();
-  const active = { ...base, ...read(ACTIVE_KEY) };
-  return MYAFRIARTX_SERVICE_CATALOG.map((s) => ({ ...base[s.id], ...active[s.id], active: active[s.id]?.active !== false }));
-}
-
-export function getServiceDraft(id: string): ServicePricingRow {
-  const active = listActiveServicePricing().find((s) => s.id === id);
-  const draft = read(DRAFT_KEY)[id];
-  return { ...(active || defaults()[id]), ...draft, id };
-}
-
-export function saveServiceDraft(id: string, patch: Partial<ServicePricingRow>): ServicePricingRow {
-  const draft = read(DRAFT_KEY);
-  const prev = getServiceDraft(id);
-  draft[id] = { ...prev, ...patch, id, active: false };
-  write(DRAFT_KEY, draft);
-  return draft[id];
-}
-
-export function activateServicePricing(id: string): ServicePricingRow {
-  const draft = read(DRAFT_KEY);
-  const row = { ...getServiceDraft(id), ...(draft[id] || {}), active: true };
-  const active = { ...defaults(), ...read(ACTIVE_KEY), [id]: row };
-  write(ACTIVE_KEY, active);
-  delete draft[id];
-  write(DRAFT_KEY, draft);
-  return row;
+export async function serviceGate(id: string): Promise<ServiceGateResult> {
+  const { data, error } = await db.rpc("service_gate", { p_service: id });
+  if (error || !data) return { mode: "free", priceNgn: 0, guestAllowance: 0, signedIn: false, hasAccess: false, allowed: true };
+  return {
+    mode: data.mode,
+    priceNgn: Number(data.price_ngn) || 0,
+    guestAllowance: Number(data.guest_allowance) || 0,
+    signedIn: !!data.signed_in,
+    hasAccess: !!data.has_access,
+    allowed: data.allowed !== false,
+  };
 }
 
 export function isServicePricingVisible(row: Pick<ServicePricingRow, "mode">): boolean {

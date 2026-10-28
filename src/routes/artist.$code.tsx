@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { getArtistDetail, bumpView } from "@/lib/catalogue.functions";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { artistDefault, localImageForKey } from "@/lib/local-image-assets";
 import { outreachWebsiteHref } from "@/lib/outreach-artists";
 import { SiteNav } from "@/components/SiteNav";
@@ -43,6 +44,7 @@ function ArtistErrorComponent({ error, reset }: ErrorComponentProps) {
 function ArtistDetailPage() {
   const { code } = Route.useParams();
   const { data } = useSuspenseQuery(artistQuery(code));
+  const isAdmin = useIsAdmin();
   const bump = useServerFn(bumpView);
 
   useEffect(() => {
@@ -81,9 +83,11 @@ function ArtistDetailPage() {
             />
           </div>
           <div className="space-y-2">
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">
-              {a.short_code} · UUID {a.id}
-            </p>
+            {isAdmin && (
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                {a.short_code} · UUID {a.id}
+              </p>
+            )}
             <h1 className="font-display text-3xl">{a.name}</h1>
             <p className="text-sm text-muted-foreground">
               {[a.primary_medium, a.country, a.domicile_city].filter(Boolean).join(" · ")}
@@ -149,7 +153,7 @@ function ArtistDetailPage() {
                     </div>
                     <p className="mt-1 truncate text-sm font-medium">{w.title}</p>
                     <p className="text-xs text-muted-foreground">
-                      {isOutreach ? "Unclaimed reference" : `${w.short_code} · ${w.lifecycle_status}`}
+                      {isOutreach ? "Unclaimed reference" : isAdmin ? `${w.short_code} · ${w.lifecycle_status}` : ""}
                     </p>
                   </>
                 );

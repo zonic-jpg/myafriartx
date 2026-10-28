@@ -8,6 +8,8 @@ import { recordPaneView, getLandingPanes } from "@/lib/pane-views.functions";
 import { recordEntryClick } from "@/lib/entry-clicks.functions";
 import { getCataloguePieces, getCatalogueArtists } from "@/lib/catalogue.functions";
 import { useSessionId } from "@/hooks/use-session-id";
+import { useIsAdmin } from "@/hooks/use-is-admin";
+import { ServiceGate } from "@/components/ServiceGate";
 
 import { useFocusTrap } from "@/hooks/use-focus-trap";
 import {
@@ -1167,6 +1169,7 @@ function Landing() {
 
         {/* Catalogue grid */}
         <section id="catalogue" ref={catalogueRef} className="mt-12 sm:mt-16">
+          <ServiceGate service="catalogue">
           <div className="mb-4 flex flex-wrap items-end justify-end gap-3">
             <p className="text-xs text-muted-foreground">
               {loadingCatalogue
@@ -1202,10 +1205,12 @@ function Landing() {
                       !String(entry.artist.id).startsWith("local-")
                         ? entry.artist.id
                         : null);
+                    // Same photo as the artist's profile page: portrait first, then a work, then default.
+                    const portrait = entry.portraitUrl ?? (entry.artist as { portrait_url?: string | null }).portrait_url ?? null;
                     const card = (
                       <>
                         <div className="relative aspect-square overflow-hidden bg-muted">
-                          {entry.sample?.image_url ? (
+                          {!portrait && entry.sample?.image_url ? (
                             <img
                               src={bustImageUrl(
                                 entry.sample.image_url,
@@ -1222,9 +1227,7 @@ function Landing() {
                           ) : (
                             <img
                               src={
-                                entry.portraitUrl
-                                  ? bustImageUrl(entry.portraitUrl, entry.artist.id)
-                                  : artistDefault
+                                portrait ? portrait : artistDefault
                               }
                               alt={entry.artist.name}
                               loading="lazy"
@@ -1307,7 +1310,7 @@ function Landing() {
               </div>
             </div>
           )}
-        </section>
+        </ServiceGate></section>
       </main>
 
       <NavDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
@@ -1757,6 +1760,7 @@ function GatePrompt({ onClose, onSignIn }: { onClose: () => void; onSignIn: () =
 }
 
 function ArtworkCard({ artwork }: { artwork: ArtworkRow }) {
+  const isAdmin = useIsAdmin();
   const sample =
     artwork.content_source === "mock" ||
     (typeof artwork.id === "string" && artwork.id.startsWith("local-")) ||
@@ -1805,7 +1809,7 @@ function ArtworkCard({ artwork }: { artwork: ArtworkRow }) {
           <span>{artwork.medium}</span>
           {price && <span className="text-foreground">{price}</span>}
         </div>
-        {artwork.short_code && (
+        {isAdmin && artwork.short_code && (
           <p className="text-[10px] text-muted-foreground">{artwork.short_code}</p>
         )}
       </div>

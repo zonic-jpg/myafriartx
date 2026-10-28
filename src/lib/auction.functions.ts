@@ -61,7 +61,9 @@ export function mapDbLot(row: DbLot, leaderName: string | null): Lot & { reserve
   };
 }
 
+const __gate = () => import("./service-gate.server");
 export const listAuctionLots = createServerFn({ method: "GET" }).handler(async () => {
+  if (!(await (await __gate()).serviceAllowed("auctions"))) return { lots: [], gated: true as const };
   const admin = await __get_admin();
   await admin.rpc("settle_expired_auction_lots");
 
@@ -120,6 +122,7 @@ export const placeAuctionBid = createServerFn({ method: "POST" })
     z.object({ lotId: z.string().uuid(), amount: z.number().int().positive() }).parse(d),
   )
   .handler(async ({ data, context }) => {
+    await (await __gate()).assertServiceAccess("auctions", context.userId, "Live auctions");
     const { data: lot, error } = await context.supabase.rpc("place_bid", {
       p_lot: data.lotId,
       p_amount: data.amount,

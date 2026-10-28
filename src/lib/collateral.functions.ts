@@ -44,6 +44,7 @@ export const requestCollateral = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    await (await import("./service-gate.server")).assertServiceAccess("collateral", context.userId, "Collateral loans");
     // Lending against physical assets is the highest-risk flow: hard KYC gate.
     await requireVerifiedMember(context.userId, "pledge art as collateral");
 

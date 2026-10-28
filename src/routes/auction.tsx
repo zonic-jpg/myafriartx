@@ -1,4 +1,5 @@
 import { EnlargeableImage } from "@/components/EnlargeableImage";
+import { ServiceGate } from "@/components/ServiceGate";
 import { SiteNav } from "@/components/SiteNav";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -70,6 +71,7 @@ function AuctionFloor() {
   return (
     <div className="auc">
       <SiteNav tone="plain" />
+      <ServiceGate service="auctions">
       <header className="auc-top">
         <div className="auc-kicker">{lots.some((l) => l.status === "live") ? "Live auction" : "Auction results"}</div>
         <h1>Friday Evening Sale</h1>
@@ -136,6 +138,7 @@ function AuctionFloor() {
           onRefresh={() => refetch()}
         />
       )}
+      </ServiceGate>
     </div>
   );
 }

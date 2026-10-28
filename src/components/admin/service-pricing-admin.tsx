@@ -1,105 +1,125 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  MYAFRIARTX_SERVICE_CATALOG,
   activateServicePricing,
-  getServiceDraft,
   isServicePricingVisible,
-  listActiveServicePricing,
-  saveServiceDraft,
+  listServicePricing,
   type ServicePricingMode,
+  type ServicePricingRow,
 } from "@/lib/service-pricing";
 
 export function ServicePricingAdmin() {
-  const [, tick] = useState(0);
-  const refresh = () => tick((n) => n + 1);
-  const live = listActiveServicePricing();
+  const [live, setLive] = useState<ServicePricingRow[] | null>(null);
+  const [draft, setDraft] = useState<Record<string, ServicePricingRow>>({});
+  const [msg, setMsg] = useState<Record<string, { ok: boolean; text: string }>>({});
+  const [busy, setBusy] = useState("");
+
+  const load = async () => {
+    try {
+      const rows = await listServicePricing();
+      setLive(rows);
+      setDraft(Object.fromEntries(rows.map((r) => [r.id, r])));
+    } catch (e) {
+      setLive([]);
+      setMsg({ _: { ok: false, text: "Could not load pricing: " + (e as Error).message } });
+    }
+  };
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const patch = (id: string, p: Partial<ServicePricingRow>) => setDraft((d) => ({ ...d, [id]: { ...d[id], ...p } }));
+
+  const activate = async (id: string) => {
+    setBusy(id);
+    try {
+      await activateServicePricing(draft[id]);
+      setMsg((m) => ({ ...m, [id]: { ok: true, text: "Live now. Visitors see this immediately." } }));
+      await load();
+    } catch (e) {
+      setMsg((m) => ({ ...m, [id]: { ok: false, text: (e as Error).message } }));
+    } finally {
+      setBusy("");
+    }
+  };
 
   return (
     <div className="space-y-4 rounded-lg border border-border bg-card p-5">
       <h3 className="font-display text-lg">Service pricing</h3>
       <p className="text-sm text-muted-foreground">
-        Free · Freemium · Paid per service. Save draft, then Activate. Pricing hidden when Free.
+        Free: open to everyone. Freemium: members free, guests get a short taste. Paid: members must unlock it once; admins
+        always have access. Changes apply to the live site as soon as you press Activate.
       </p>
+      {msg._ && <p className="text-sm text-destructive">{msg._.text}</p>}
+      {live === null && <p className="text-sm text-muted-foreground">Loading…</p>}
       <div className="grid gap-4 md:grid-cols-2">
-        {MYAFRIARTX_SERVICE_CATALOG.map((cat) => {
-          const draft = getServiceDraft(cat.id);
-          const activeRow = live.find((s) => s.id === cat.id);
-          const showPricing = isServicePricingVisible(draft);
+        {(live ?? []).map((cat) => {
+          const d = draft[cat.id] ?? cat;
+          const changed = d.mode !== cat.mode || d.priceNgn !== cat.priceNgn || d.guestAllowance !== cat.guestAllowance;
           return (
-            <div key={cat.id} className="rounded-md border border-border p-4 space-y-3">
+            <div key={cat.id} className="space-y-3 rounded-md border border-border p-4">
               <div className="flex items-center justify-between gap-2">
                 <strong>{cat.label}</strong>
                 <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                  {draft.active === false ? "draft" : activeRow?.mode || "free"}
+                  live: {cat.mode}
+                  {changed ? " · unsaved change" : ""}
                 </span>
               </div>
               <label className="block text-xs text-muted-foreground">
                 Mode
                 <select
                   className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                  value={draft.mode}
-                  onChange={(e) => {
-                    saveServiceDraft(cat.id, { mode: e.target.value as ServicePricingMode });
-                    refresh();
-                  }}
+                  value={d.mode}
+                  onChange={(e) => patch(cat.id, { mode: e.target.value as ServicePricingMode })}
                 >
                   <option value="free">Free</option>
                   <option value="freemium">Freemium</option>
                   <option value="paid">Paid</option>
                 </select>
               </label>
-              {draft.mode === "freemium" && (
+              {d.mode === "freemium" && (
                 <label className="block text-xs text-muted-foreground">
-                  Guest allowance
+                  Guest allowance (free visits before sign-in)
                   <input
                     type="number"
                     min={0}
                     className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    value={draft.guestAllowance}
-                    onChange={(e) => {
-                      saveServiceDraft(cat.id, { guestAllowance: +e.target.value });
-                      refresh();
-                    }}
+                    value={d.guestAllowance}
+                    onChange={(e) => patch(cat.id, { guestAllowance: +e.target.value })}
                   />
                 </label>
               )}
-              {showPricing && draft.mode === "paid" && (
+              {isServicePricingVisible(d) && d.mode === "paid" && (
                 <label className="block text-xs text-muted-foreground">
-                  Price (₦)
+                  One-time price (₦)
                   <input
                     type="number"
                     min={0}
                     className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
-                    value={draft.priceNgn}
-                    onChange={(e) => {
-                      saveServiceDraft(cat.id, { priceNgn: +e.target.value });
-                      refresh();
-                    }}
+                    value={d.priceNgn}
+                    onChange={(e) => patch(cat.id, { priceNgn: +e.target.value })}
                   />
                 </label>
               )}
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  className="rounded-md border border-border px-3 py-1.5 text-sm"
-                  onClick={() => {
-                    saveServiceDraft(cat.id, draft);
-                    refresh();
-                  }}
+                  disabled={busy === cat.id || !changed}
+                  className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground disabled:opacity-50"
+                  onClick={() => activate(cat.id)}
                 >
-                  Save
+                  {busy === cat.id ? "Applying…" : "Activate"}
                 </button>
-                <button
-                  type="button"
-                  className="rounded-md bg-primary px-3 py-1.5 text-sm text-primary-foreground"
-                  onClick={() => {
-                    activateServicePricing(cat.id);
-                    refresh();
-                  }}
-                >
-                  Activate
-                </button>
+                {changed && (
+                  <button type="button" className="rounded-md border border-border px-3 py-1.5 text-sm" onClick={() => patch(cat.id, cat)}>
+                    Undo
+                  </button>
+                )}
               </div>
+              {msg[cat.id] && (
+                <p role="status" className={"text-xs " + (msg[cat.id].ok ? "text-muted-foreground" : "text-destructive")}>
+                  {msg[cat.id].text}
+                </p>
+              )}
             </div>
           );
         })}

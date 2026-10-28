@@ -7,6 +7,7 @@ import { initializePayment } from "@/lib/payments.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { generativeArtworkUri } from "@/lib/local-image-assets";
 import { EnlargeableImage } from "@/components/EnlargeableImage";
+import { useIsAdmin } from "@/hooks/use-is-admin";
 import { SiteNav } from "@/components/SiteNav";
 
 const pieceQuery = (code: string) =>
@@ -45,6 +46,7 @@ function PieceErrorComponent({ error, reset }: ErrorComponentProps) {
 function PieceDetailPage() {
   const { code } = Route.useParams();
   const { data } = useSuspenseQuery(pieceQuery(code));
+  const isAdmin = useIsAdmin();
   const bump = useServerFn(bumpView);
   const payFn = useServerFn(initializePayment);
   const [buyMsg, setBuyMsg] = useState("");
@@ -86,9 +88,11 @@ function PieceDetailPage() {
         </div>
         <div className="space-y-4">
           <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">
-              {p.short_code} · UUID {p.id}
-            </p>
+            {isAdmin && (
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                {p.short_code} · UUID {p.id}
+              </p>
+            )}
             <h1 className="font-display text-3xl">{p.title}</h1>
             {p.artist && (
               <Link

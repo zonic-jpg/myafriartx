@@ -56,6 +56,19 @@ async function resolveAuthoritativeAmountNgn(
     return Math.round(amount);
   }
 
+  if (purpose === "service_access") {
+    const serviceId = metadata.service_id;
+    if (!serviceId) throw new Error("service_id required");
+    const { data: svc } = await admin
+      .from("service_pricing" as never)
+      .select("mode, price_ngn")
+      .eq("id", serviceId)
+      .maybeSingle();
+    const row = svc as { mode?: string; price_ngn?: number } | null;
+    if (!row || row.mode !== "paid" || !(Number(row.price_ngn) > 0)) throw new Error("This service is not for sale");
+    return Math.round(Number(row.price_ngn));
+  }
+
   // Fee-based purposes: read the configured fee server-side; never trust client.
   const feeKey =
     purpose === "brokerage_fee"
@@ -167,6 +180,7 @@ export const initializePayment = createServerFn({ method: "POST" })
           "auction_settlement",
           "brokerage_fee",
           "collateral_fee",
+          "service_access",
         ]),
         // Accepted for backward compatibility but IGNORED for pricing — the
         // authoritative amount is resolved server-side below.

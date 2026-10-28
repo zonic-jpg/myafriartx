@@ -13,6 +13,7 @@ const __get_admin = () =>
 const assertAdmin = async (...__a: any[]): Promise<any> =>
   ((await import("./auth-helpers.server")).assertAdmin as any)(...__a);
 
+const __gate = () => import("./service-gate.server");
 const CATALOGUE_CAP = 40;
 
 // Seeded shuffle: the sample is stable across refreshes and only rotates every 6 hours,
@@ -95,6 +96,7 @@ function applyAllocation<T>(
 // Public: Catalogue pieces
 // ============================================================
 export const getCataloguePieces = createServerFn({ method: "GET" }).handler(async () => {
+  if (!(await (await __gate()).serviceAllowed("catalogue"))) return { pieces: [], totalAvailable: 0, gated: true as const };
   const { data: settings } = await (await __get_admin())
     .from("app_settings")
     .select("value")
@@ -139,6 +141,7 @@ const ARTIST_OUTREACH_COLS =
   "primary_medium, website, profile_status, outreach_note, outreach_source, outreach_status";
 
 export const getCatalogueArtists = createServerFn({ method: "GET" }).handler(async () => {
+  if (!(await (await __gate()).serviceAllowed("catalogue"))) return { artists: [], totalAvailable: 0, gated: true as const };
   const { data: settings } = await (await __get_admin())
     .from("app_settings")
     .select("value")

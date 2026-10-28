@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { listMyCollateral, requestCollateral } from "@/lib/collateral.functions";
 import { getMyVerification } from "@/lib/kyc.functions";
+import { ServiceGate } from "@/components/ServiceGate";
 import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/collateral")({
@@ -76,6 +77,7 @@ function CollateralPage() {
   return (
     <div className="min-h-screen bg-background">
       <SiteNav tone="plain" />
+      <ServiceGate service="collateral">
       <main className="mx-auto max-w-3xl space-y-8 px-6 py-10">
         <div>
           <h1 className="text-2xl font-semibold">Collateral portal</h1>
@@ -159,6 +161,7 @@ function CollateralPage() {
           {rows.length === 0 && <p className="text-sm text-muted-foreground">No pledges yet.</p>}
         </section>
       </main>
+      </ServiceGate>
     </div>
   );
 }
