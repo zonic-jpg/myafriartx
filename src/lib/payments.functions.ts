@@ -221,6 +221,9 @@ export const initializePayment = createServerFn({ method: "POST" })
     const order = providerOrder();
 
     if (order.length === 0) {
+      if (process.env.ALLOW_MOCK_PAYMENTS !== "true") {
+        throw new Error("Payments are not available yet. Please try again soon.");
+      }
       // Last resort — no gateway configured. Preserve the mock checkout path
       // exactly as before so local/dev/staging keeps working.
       const reference = ref();
@@ -366,6 +369,9 @@ export const verifyPayment = createServerFn({ method: "POST" })
 
     if (error || !payment) throw new Error("Payment not found");
     if (payment.status === "succeeded") return { ok: true, paymentId: payment.id };
+    if (payment.provider === "mock" && process.env.ALLOW_MOCK_PAYMENTS !== "true") {
+      throw new Error("Mock payments are disabled");
+    }
 
     if (payment.provider === "flutterwave" || payment.provider === "paystack") {
       const { ok, amountNgn: paidNgn } =
