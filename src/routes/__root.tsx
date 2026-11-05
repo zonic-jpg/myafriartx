@@ -111,6 +111,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
               "window.ZONIC_APP_ID='myafriart';window.ZONICME_INGEST_URL=window.ZONICME_INGEST_URL||'https://qdhlbplzdblcvvaaluwu.supabase.co/functions/v1/zonic-hub-ingest';",
           }}
         />
+        <script src="/auto-refresh.js" defer />
         <script src="/js/zonic-track.js" defer />
         <Scripts />
       </body>
