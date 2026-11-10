@@ -63,3 +63,16 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Orbit feeds are read cross-origin by the ZonicMe hub, so they need CORS.
+[[headers]]
+  for = "/orbit-manifest.json"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=60, must-revalidate"
+
+[[headers]]
+  for = "/orbit/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Cache-Control = "public, max-age=60, must-revalidate"
