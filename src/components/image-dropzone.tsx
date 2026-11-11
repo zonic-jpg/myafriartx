@@ -52,6 +52,35 @@ export async function fileToDownscaledDataUrl(file: File, maxEdge = 1600, qualit
   }
 }
 
+/**
+ * Prepare an image for the admin upload endpoint (JPG/PNG/WEBP, max 10 MB decoded).
+ * Normal-sized JPG/PNG/WEBP files go up untouched (full artwork quality). Anything
+ * else — a 12 MB phone photo, a HEIC from an iPhone, an odd MIME type — is converted
+ * to a high-quality JPEG in the browser first, and the filename is rewritten to
+ * `.jpg` so the server's "content must match extension" check stays satisfied.
+ */
+export async function prepareImageForUpload(
+  file: File,
+): Promise<{ base64: string; filename: string }> {
+  const okType = /^image\/(jpeg|png|webp)$/.test(file.type);
+  const MAX_RAW = 6 * 1024 * 1024;
+  if (okType && file.size <= MAX_RAW) {
+    const base64 = await new Promise<string>((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(String(r.result));
+      r.onerror = () => reject(r.error);
+      r.readAsDataURL(file);
+    });
+    return { base64, filename: file.name };
+  }
+  const base64 = await fileToDownscaledDataUrl(file, 3200, 0.9);
+  if (!base64.startsWith("data:image/jpeg")) {
+    throw new Error("This image format can't be read by your browser. Please export it as JPG, PNG or WebP and try again.");
+  }
+  const stem = (file.name.replace(/\.[^.]+$/, "") || "image").slice(0, 120);
+  return { base64, filename: `${stem}.jpg` };
+}
+
 type Props = {
   value: string | null;
   onSelect: (file: File) => void;

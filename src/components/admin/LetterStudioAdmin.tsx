@@ -1,3 +1,5 @@
+import { parseCsvText } from "@/components/admin/ArtistCsvImport";
+import { escHtml } from "@/lib/html-escape";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -343,24 +345,27 @@ export function LetterStudioAdmin() {
 
   /** The emailed letter — same content as the preview, including the real logo. */
   const letterHtml = (r: Rec) => {
-    const body = tpl.build(r.brand || "your brand");
-    const g = letterGreeting(tpl, r.proprietor, r.brand);
-    const subj = tpl.subject(r.brand || "your brand");
-    const logo = absoluteUrl(logoSrc);
+    // The brand goes through the template builders, so escape it first; static template
+    // text (ORG, CTA, audience copy) is ours and already safe.
+    const eb = escHtml(r.brand || "your brand");
+    const body = tpl.build(eb);
+    const g = r.proprietor?.trim() ? escHtml(r.proprietor.trim()) : letterGreeting(tpl, "", eb);
+    const subj = tpl.subject(eb);
+    const logo = escHtml(absoluteUrl(logoSrc));
     return `<div style="font-family:Georgia,serif;color:#171633;max-width:640px;line-height:1.6">
       <div style="border-bottom:1px solid #DED8C8;padding-bottom:12px">
-        <img src="${logo}" alt="${ORG}" width="140" style="display:block;width:140px;height:auto;max-height:56px;object-fit:contain;margin-bottom:10px" />
-        <div style="font-size:19px;font-weight:600">${ORG}</div>
-        <div style="font-size:11px;color:#3A3960;white-space:pre-line">${head.address}\n${head.email}</div>
+        <img src="${logo}" alt="${escHtml(ORG)}" width="140" style="display:block;width:140px;height:auto;max-height:56px;object-fit:contain;margin-bottom:10px" />
+        <div style="font-size:19px;font-weight:600">${escHtml(ORG)}</div>
+        <div style="font-size:11px;color:#3A3960;white-space:pre-line">${escHtml(head.address)}\n${escHtml(head.email)}</div>
       </div>
-      <div style="font-size:11px;color:#8A8577;margin-top:16px">${today}</div>
-      ${r.brand ? `<div style="margin-top:10px;font-weight:600">${r.brand}</div>` : ""}
-      ${r.address ? `<div style="color:#3A3960">${r.address}</div>` : ""}
+      <div style="font-size:11px;color:#8A8577;margin-top:16px">${escHtml(today)}</div>
+      ${r.brand ? `<div style="margin-top:10px;font-weight:600">${escHtml(r.brand)}</div>` : ""}
+      ${r.address ? `<div style="color:#3A3960;white-space:pre-line">${escHtml(r.address)}</div>` : ""}
       <div style="margin-top:16px;font-weight:600">${subj}</div>
       <p>Dear ${g},</p>${body.map((x) => `<p>${x}</p>`).join("")}
-      <p style="font-style:italic;color:#3A3960">${tpl.cta}</p>
-      <p style="margin-top:24px">${head.signatory}<br>${head.signatoryTitle} · ${ORG}</p>
-      <div style="text-align:center;color:#2F7D4F;font-size:11px;margin-top:24px;border-top:1px solid #DED8C8;padding-top:8px">${head.url}</div>
+      <p style="font-style:italic;color:#3A3960">${escHtml(tpl.cta)}</p>
+      <p style="margin-top:24px">${escHtml(head.signatory)}<br>${escHtml(head.signatoryTitle)} · ${escHtml(ORG)}</p>
+      <div style="text-align:center;color:#2F7D4F;font-size:11px;margin-top:24px;border-top:1px solid #DED8C8;padding-top:8px">${escHtml(head.url)}</div>
     </div>`;
   };
 
@@ -392,13 +397,15 @@ export function LetterStudioAdmin() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
-      const lines = String(reader.result).split(/\r?\n/).filter(Boolean);
-      const cols = lines.shift()!.split(",").map((c) => c.trim().toLowerCase());
+      // Real CSV parsing: quoted commas ("12 Marina, Lagos"), escaped quotes, Excel BOM, CRLF.
+      const table = parseCsvText(String(reader.result)).filter((r) => r.some((c) => String(c).trim()));
+      if (table.length < 2) return toast.warning("No rows found in that CSV.");
+      const cols = table[0].map((c) => String(c).trim().toLowerCase());
       const idx = (name: string) => cols.indexOf(name);
-      const rows = lines
-        .map((line) => {
-          const cells = line.split(",");
-          const get = (n: string) => (idx(n) >= 0 ? (cells[idx(n)] || "").trim() : "");
+      const rows = table
+        .slice(1)
+        .map((cells) => {
+          const get = (n: string) => (idx(n) >= 0 ? String(cells[idx(n)] ?? "").trim() : "");
           return {
             ...blankRec(),
             brand: get("brand") || get("company") || get("name"),
@@ -721,11 +728,15 @@ export function LetterStudioAdmin() {
             <button
               onClick={() => {
                 const w = window.open("", "_blank");
-                if (w) {
-                  w.document.write(letterHtml(rec));
-                  w.document.close();
-                  w.print();
-                }
+                if (!w) return toast.warning("Allow pop-ups for this site to print or save as PDF.");
+                w.document.write(letterHtml(rec));
+                w.document.close();
+                // Print only once the logo has loaded, otherwise the PDF comes out without it.
+                const imgs = Array.from(w.document.images);
+                const settled = Promise.all(
+                  imgs.map((im) => (im.complete ? Promise.resolve() : new Promise<void>((r) => { im.onload = im.onerror = () => r(); }))),
+                );
+                void Promise.race([settled, new Promise((r) => setTimeout(r, 4000))]).then(() => w.print());
               }}
               style={btn(T.ink2)}
             >

@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { prepareImageForUpload } from "@/components/image-dropzone";
 import { toast } from "sonner";
 import {
   adminGetAll,
@@ -738,13 +739,8 @@ function ArtworksAdmin({
   async function onFile(f: File) {
     setUploading(true);
     try {
-      const b64: string = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result));
-        r.onerror = () => rej(r.error);
-        r.readAsDataURL(f);
-      });
-      const { url } = await upload({ data: { base64: b64, filename: f.name } });
+      const prepared = await prepareImageForUpload(f);
+      const { url } = await upload({ data: prepared });
       setEditing((e: any) => ({ ...e, image_url: url }));
       toast.success("Image uploaded");
     } catch (e: any) {
@@ -1452,13 +1448,8 @@ function PanesAdmin({ data, onChange }: { data: any; onChange: () => void }) {
   async function onFile(f: File, target: "desktop" | "mobile") {
     setUploading(target);
     try {
-      const b64: string = await new Promise((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(String(r.result));
-        r.onerror = () => rej(r.error);
-        r.readAsDataURL(f);
-      });
-      const { url } = await upload({ data: { base64: b64, filename: f.name } });
+      const prepared = await prepareImageForUpload(f);
+      const { url } = await upload({ data: prepared });
       const key = target === "desktop" ? "image_url" : "image_url_mobile";
       setEditing((e: any) => ({ ...e, [key]: url }));
       toast.success(`${target === "desktop" ? "Desktop" : "Mobile"} image uploaded`);
