@@ -7,7 +7,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const __get_admin = () =>
   import("@/integrations/supabase/client.server").then((m) => m.supabaseAdmin);
 
-const EntryPointSchema = z.enum(["sell_your_work", "stage_virtually"]);
+const EntryPointSchema = z.enum(["sell_your_work", "stage_virtually", "submit_your_work"]);
 const LocationSchema = z.string().min(1).max(120);
 const SessionIdSchema = z
   .string()

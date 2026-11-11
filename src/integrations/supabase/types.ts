@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
@@ -86,12 +86,17 @@ export type Database = {
           era: string | null
           exhibition_interest: boolean
           exhibition_notes: string | null
+          flutterwave_subaccount_id: string | null
           gender: string | null
           id: string
           name: string
           outreach_note: string | null
           outreach_source: string | null
           outreach_status: string | null
+          payout_account_last4: string | null
+          payout_bank_code: string | null
+          payout_updated_at: string | null
+          payout_verified_name: string | null
           portrait_url: string | null
           primary_medium: string | null
           profile_status: string
@@ -111,12 +116,17 @@ export type Database = {
           era?: string | null
           exhibition_interest?: boolean
           exhibition_notes?: string | null
+          flutterwave_subaccount_id?: string | null
           gender?: string | null
           id?: string
           name: string
           outreach_note?: string | null
           outreach_source?: string | null
           outreach_status?: string | null
+          payout_account_last4?: string | null
+          payout_bank_code?: string | null
+          payout_updated_at?: string | null
+          payout_verified_name?: string | null
           portrait_url?: string | null
           primary_medium?: string | null
           profile_status?: string
@@ -136,12 +146,17 @@ export type Database = {
           era?: string | null
           exhibition_interest?: boolean
           exhibition_notes?: string | null
+          flutterwave_subaccount_id?: string | null
           gender?: string | null
           id?: string
           name?: string
           outreach_note?: string | null
           outreach_source?: string | null
           outreach_status?: string | null
+          payout_account_last4?: string | null
+          payout_bank_code?: string | null
+          payout_updated_at?: string | null
+          payout_verified_name?: string | null
           portrait_url?: string | null
           primary_medium?: string | null
           profile_status?: string
@@ -156,11 +171,13 @@ export type Database = {
         Row: {
           artist_name: string
           artwork_id: string | null
+          caption: string | null
           category: string | null
           context: string | null
           country_of_origin: string | null
           created_at: string
           depth_cm: number | null
+          dominant_palette: string[] | null
           height_cm: number | null
           id: string
           image_path: string | null
@@ -184,11 +201,13 @@ export type Database = {
         Insert: {
           artist_name: string
           artwork_id?: string | null
+          caption?: string | null
           category?: string | null
           context?: string | null
           country_of_origin?: string | null
           created_at?: string
           depth_cm?: number | null
+          dominant_palette?: string[] | null
           height_cm?: number | null
           id?: string
           image_path?: string | null
@@ -212,11 +231,13 @@ export type Database = {
         Update: {
           artist_name?: string
           artwork_id?: string | null
+          caption?: string | null
           category?: string | null
           context?: string | null
           country_of_origin?: string | null
           created_at?: string
           depth_cm?: number | null
+          dominant_palette?: string[] | null
           height_cm?: number | null
           id?: string
           image_path?: string | null
@@ -456,6 +477,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      audit_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string | null
+          detail: Json | null
+          id: number
+          occurred_at: string
+          source: string
+          target_id: string | null
+          target_table: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id?: string | null
+          detail?: Json | null
+          id?: never
+          occurred_at?: string
+          source?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string | null
+          detail?: Json | null
+          id?: never
+          occurred_at?: string
+          source?: string
+          target_id?: string | null
+          target_table?: string | null
+        }
+        Relationships: []
       }
       broker_requests: {
         Row: {
@@ -804,6 +861,41 @@ export type Database = {
           },
         ]
       }
+      dispute_messages: {
+        Row: {
+          body: string
+          created_at: string
+          dispute_id: string
+          id: string
+          sender_id: string
+          sender_role: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          dispute_id: string
+          id?: string
+          sender_id: string
+          sender_role: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          dispute_id?: string
+          id?: string
+          sender_id?: string
+          sender_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispute_messages_dispute_id_fkey"
+            columns: ["dispute_id"]
+            isOneToOne: false
+            referencedRelation: "payment_disputes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entry_clicks: {
         Row: {
           created_at: string
@@ -1095,6 +1187,7 @@ export type Database = {
           currency: string
           id: string
           image_url: string | null
+          is_demo: boolean
           medium: string | null
           member_id: string
           notes: string | null
@@ -1111,6 +1204,7 @@ export type Database = {
           currency?: string
           id?: string
           image_url?: string | null
+          is_demo?: boolean
           medium?: string | null
           member_id: string
           notes?: string | null
@@ -1127,6 +1221,7 @@ export type Database = {
           currency?: string
           id?: string
           image_url?: string | null
+          is_demo?: boolean
           medium?: string | null
           member_id?: string
           notes?: string | null
@@ -1265,6 +1360,7 @@ export type Database = {
         Row: {
           body: string
           created_at: string
+          deleted_at: string | null
           id: string
           sender_id: string
           thread_id: string
@@ -1272,6 +1368,7 @@ export type Database = {
         Insert: {
           body: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           sender_id: string
           thread_id: string
@@ -1279,6 +1376,7 @@ export type Database = {
         Update: {
           body?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           sender_id?: string
           thread_id?: string
@@ -1747,6 +1845,131 @@ export type Database = {
           },
         ]
       }
+      service_access: {
+        Row: {
+          granted_at: string
+          payment_id: string | null
+          service_id: string
+          user_id: string
+        }
+        Insert: {
+          granted_at?: string
+          payment_id?: string | null
+          service_id: string
+          user_id: string
+        }
+        Update: {
+          granted_at?: string
+          payment_id?: string | null
+          service_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_access_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "service_pricing"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_pricing: {
+        Row: {
+          guest_allowance: number
+          id: string
+          label: string
+          mode: string
+          price_ngn: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          guest_allowance?: number
+          id: string
+          label: string
+          mode?: string
+          price_ngn?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          guest_allowance?: number
+          id?: string
+          label?: string
+          mode?: string
+          price_ngn?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      signup_approvals: {
+        Row: {
+          admin_notified_at: string | null
+          admin_requested_at: string | null
+          decided_at: string | null
+          decided_by: string | null
+          email: string
+          granted_role: string | null
+          notified_at: string | null
+          requested_at: string
+          requested_role: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          admin_notified_at?: string | null
+          admin_requested_at?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          email: string
+          granted_role?: string | null
+          notified_at?: string | null
+          requested_at?: string
+          requested_role?: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          admin_notified_at?: string | null
+          admin_requested_at?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          email?: string
+          granted_role?: string | null
+          notified_at?: string | null
+          requested_at?: string
+          requested_role?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      signup_policy: {
+        Row: {
+          id: boolean
+          require_approvals: boolean
+          require_approvals_since: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: boolean
+          require_approvals?: boolean
+          require_approvals_since?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: boolean
+          require_approvals?: boolean
+          require_approvals_since?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       sponsor_panes: {
         Row: {
           created_at: string
@@ -1951,15 +2174,32 @@ export type Database = {
       }
     }
     Functions: {
+      _apply_member_role: {
+        Args: { _role: string; _user_id: string }
+        Returns: undefined
+      }
       admin_access_status: { Args: { p_email: string }; Returns: string }
+      admin_demo_listings_count: { Args: never; Returns: number }
+      admin_remove_demo_listings: { Args: never; Returns: number }
+      admin_set_service_pricing: {
+        Args: { p_guest: number; p_id: string; p_mode: string; p_price: number }
+        Returns: Json
+      }
       claim_legacy_artist_by_email: {
         Args: { _profile_id: string }
         Returns: string
       }
+      decide_signup: {
+        Args: { _decision: string; _role?: string; _user_id: string }
+        Returns: Json
+      }
+      delete_own_message: { Args: { p_message_id: string }; Returns: boolean }
+      founding_owner_email: { Args: never; Returns: string }
       fulfill_payment_record: {
         Args: { p_payment_id: string; p_reference: string }
         Returns: Json
       }
+      grant_owner_roles: { Args: { _uid: string }; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -1971,7 +2211,71 @@ export type Database = {
         Args: { target_id: string; target_table: string }
         Returns: undefined
       }
+      is_founding_owner: { Args: { _uid: string }; Returns: boolean }
       is_member_verified: { Args: { p_user_id: string }; Returns: boolean }
+      is_owner_or_super: { Args: never; Returns: boolean }
+      list_admin_access_queue: {
+        Args: { p_orbit_password: string }
+        Returns: {
+          app: string
+          decided_at: string
+          decided_by: string
+          email: string
+          id: string
+          identity: string
+          requested_at: string
+          status: string
+        }[]
+      }
+      list_artwork_submissions_queue: {
+        Args: { p_orbit_password: string; p_status?: string }
+        Returns: {
+          artist_name: string
+          artwork_id: string | null
+          caption: string | null
+          category: string | null
+          context: string | null
+          country_of_origin: string | null
+          created_at: string
+          depth_cm: number | null
+          dominant_palette: string[] | null
+          height_cm: number | null
+          id: string
+          image_path: string | null
+          image_url: string
+          medium: string | null
+          price_amount: number | null
+          price_currency: string
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          size_text: string | null
+          status: string
+          submitted_by: string | null
+          submitter_email: string | null
+          submitter_name: string | null
+          title: string
+          updated_at: string
+          width_cm: number | null
+          year_created: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "artwork_submissions"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      list_signup_approvals: { Args: never; Returns: Json }
+      log_audit_event: {
+        Args: {
+          p_action: string
+          p_detail?: Json
+          p_target_id?: string
+          p_target_table?: string
+        }
+        Returns: undefined
+      }
       place_bid: {
         Args: { p_amount: number; p_lot: string }
         Returns: {
@@ -2014,6 +2318,8 @@ export type Database = {
         }
         Returns: string
       }
+      register_signup: { Args: { _requested_role?: string }; Returns: Json }
+      request_admin_access: { Args: never; Returns: Json }
       resolve_payment_dispute: {
         Args: {
           p_admin_id: string
@@ -2024,7 +2330,14 @@ export type Database = {
         }
         Returns: Json
       }
+      service_gate: { Args: { p_service: string }; Returns: Json }
+      set_member_role: {
+        Args: { _role: string; _user_id: string }
+        Returns: Json
+      }
+      set_require_approvals: { Args: { _on: boolean }; Returns: Json }
       settle_expired_auction_lots: { Args: never; Returns: number }
+      zz_cols_tmp: { Args: never; Returns: Json }
     }
     Enums: {
       app_role: "admin" | "user"

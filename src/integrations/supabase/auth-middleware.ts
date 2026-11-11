@@ -9,7 +9,10 @@ import type { Database } from "./types";
 // construct a RealtimeClient on createClient() even when nothing here
 // subscribes to anything. Pass the ws polyfill as the transport so the
 // client can construct instead of throwing on every authenticated call.
-const SUPABASE_CLIENT_OPTS = { realtime: { transport: ws } };
+// `ws` works at runtime, but its type no longer matches realtime-js's
+// WebSocketLikeConstructor, which breaks createClient<Database>() typing for
+// every query that uses this client. Cast just the transport.
+const SUPABASE_CLIENT_OPTS = { realtime: { transport: ws as unknown as typeof WebSocket } };
 
 export const requireSupabaseAuth = createMiddleware({ type: "function" }).server(
   async ({ next }) => {

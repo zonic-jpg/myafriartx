@@ -10,7 +10,11 @@ import type { Database } from "./types";
 // construct a RealtimeClient on createClient() even when nothing here
 // subscribes to anything. Pass the ws polyfill as the transport so the
 // admin client can construct instead of throwing on every server call.
-const SUPABASE_CLIENT_OPTS = { realtime: { transport: ws } };
+// `ws` is a valid WebSocket transport at runtime, but its type does not match
+// realtime-js's WebSocketLikeConstructor in newer supabase-js releases. That one
+// mismatch makes createClient<Database>() fall back to an untyped overload and
+// every server query then fails to typecheck. Cast just the transport.
+const SUPABASE_CLIENT_OPTS = { realtime: { transport: ws as unknown as typeof WebSocket } };
 
 function createSupabaseAdminClient() {
   const SUPABASE_URL = process.env.SUPABASE_URL;

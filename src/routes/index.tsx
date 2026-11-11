@@ -859,7 +859,7 @@ function Landing() {
     else setGatePromptOpen(true);
   };
 
-  const trackClick = async (entryPoint: "sell_your_work" | "stage_virtually", location: string) => {
+  const trackClick = async (entryPoint: "sell_your_work" | "stage_virtually" | "submit_your_work", location: string) => {
     if (!sessionId) return;
     try {
       await recordClick({
