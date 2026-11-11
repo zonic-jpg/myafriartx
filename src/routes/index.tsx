@@ -918,26 +918,26 @@ function Landing() {
                   e.preventDefault();
                   document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
-                className="hidden px-1 text-black/70 hover:text-black md:inline"
+                className="hidden px-1 text-black/70 hover:text-black lg:inline"
               >
                 Discover
               </Link>
-              <Link to="/auction" className="hidden px-1 text-black/70 hover:text-black md:inline">
+              <Link to="/auction" className="hidden px-1 text-black/70 hover:text-black lg:inline">
                 Auctions
               </Link>
-              <Link to="/lounge" className="hidden px-1 text-black/70 hover:text-black md:inline">
+              <Link to="/lounge" className="hidden px-1 text-black/70 hover:text-black lg:inline">
                 Art Lounge
               </Link>
-              <Link to="/events" className="hidden px-1 text-black/70 hover:text-black md:inline">
+              <Link to="/events" className="hidden px-1 text-black/70 hover:text-black lg:inline">
                 Live events
               </Link>
-              <Link to="/studio" className="hidden px-1 text-black/70 hover:text-black md:inline">
+              <Link to="/studio" className="hidden px-1 text-black/70 hover:text-black lg:inline">
                 Stage a room
               </Link>
-              <Link to="/submit" className="hidden px-1 text-black/70 hover:text-black md:inline">
+              <Link to="/submit" className="hidden px-1 text-black/70 hover:text-black lg:inline">
                 Submit work
               </Link>
-              <details className="relative hidden md:block">
+              <details className="relative hidden lg:block">
                 <summary className="cursor-pointer list-none px-1 text-black/70 hover:text-black">My account ▾</summary>
                 <div className="absolute right-0 z-[70] mt-2 w-44 rounded-md border border-black/10 bg-white py-1 text-sm shadow-lg">
                   <Link to="/notify" className="block px-3 py-2 text-black/80 hover:bg-black/5">NotifyMe</Link>
@@ -948,7 +948,7 @@ function Landing() {
               </details>
               {authed === false && (
                 <>
-                  <Link to="/login" className="hidden px-1 text-black/70 hover:text-black md:inline">
+                  <Link to="/login" className="hidden px-1 text-black/70 hover:text-black lg:inline">
                     Sign in
                   </Link>
                   <Link
