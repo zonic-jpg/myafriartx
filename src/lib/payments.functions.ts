@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { getArtistSubaccountForCheckout } from "@/lib/subaccounts.functions";
+import { settlementChargeNgn } from "@/lib/auction-engine";
 
 const __get_admin = () =>
   import("@/integrations/supabase/client.server").then((m) => m.supabaseAdmin);
@@ -44,16 +45,12 @@ async function resolveAuthoritativeAmountNgn(
     if (!lotId) throw new Error("lot_id required");
     const { data: lot, error } = await admin
       .from("auction_lots")
-      .select("current_bid, leading_bidder")
+      .select("current_bid, leading_bidder, status, payment_id")
       .eq("id", lotId)
       .maybeSingle();
     if (error || !lot) throw new Error("Lot not found");
-    if (lot.leading_bidder && lot.leading_bidder !== userId) {
-      throw new Error("Only the leading bidder may settle this lot");
-    }
-    const amount = Number(lot.current_bid);
-    if (!Number.isFinite(amount) || amount <= 0) throw new Error("Lot amount unavailable");
-    return Math.round(amount);
+    // Only a SOLD lot, only by its winner, only once; hammer + buyer's premium.
+    return settlementChargeNgn(lot, userId);
   }
 
   if (purpose === "service_access") {
@@ -65,7 +62,8 @@ async function resolveAuthoritativeAmountNgn(
       .eq("id", serviceId)
       .maybeSingle();
     const row = svc as { mode?: string; price_ngn?: number } | null;
-    if (!row || row.mode !== "paid" || !(Number(row.price_ngn) > 0)) throw new Error("This service is not for sale");
+    if (!row || row.mode !== "paid" || !(Number(row.price_ngn) > 0))
+      throw new Error("This service is not for sale");
     return Math.round(Number(row.price_ngn));
   }
 

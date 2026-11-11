@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Lot, LotStatus } from "@/lib/auction-engine";
+import { buyersPremium, type Lot, type LotStatus } from "@/lib/auction-engine";
 import { isUsableImageUrl } from "@/lib/cache-bust";
 
 const __get_admin = () =>
@@ -163,9 +163,7 @@ export const getAuctionWinCheckout = createServerFn({ method: "POST" })
     if (lot.status !== "sold") throw new Error("Lot is not sold");
     if (lot.leading_bidder !== context.userId) throw new Error("You did not win this lot");
 
-    const hammer = Number(lot.current_bid);
-    const premium = Math.round(hammer * 0.2);
-    const total = hammer + premium;
+    const { hammer, premium, total } = buyersPremium(Math.round(Number(lot.current_bid)));
 
     return { lotId: lot.id, hammer, premium, total, title: lot.title };
   });

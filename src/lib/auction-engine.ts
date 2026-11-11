@@ -131,3 +131,28 @@ export function countdown(endsAt: number, now = Date.now()): string {
   if (h > 0) return `${h}h ${m}m ${s}s`;
   return `${m}m ${s}s`;
 }
+
+/**
+ * Amount (whole NGN) a winning bidder must pay to settle a lot: hammer price
+ * plus buyer's premium. Single source of truth shared by the checkout summary
+ * and the payment initializer, so what the buyer is shown is what is charged.
+ * Throws with a user-safe message when the lot cannot be settled by this user.
+ */
+export function settlementChargeNgn(
+  lot: {
+    status: string | null;
+    current_bid: number | string | null;
+    leading_bidder: string | null;
+    payment_id: string | null;
+  },
+  userId: string,
+): number {
+  if (lot.status !== "sold") throw new Error("This lot is not ready for settlement");
+  if (!lot.leading_bidder || lot.leading_bidder !== userId) {
+    throw new Error("Only the winning bidder may settle this lot");
+  }
+  if (lot.payment_id) throw new Error("This lot has already been paid for");
+  const hammer = Math.round(Number(lot.current_bid));
+  if (!Number.isFinite(hammer) || hammer <= 0) throw new Error("Lot amount unavailable");
+  return buyersPremium(hammer).total;
+}

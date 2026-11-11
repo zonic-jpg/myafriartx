@@ -6,6 +6,7 @@ import {
   applyBid,
   settle,
   buyersPremium,
+  settlementChargeNgn,
 } from "../src/lib/auction-engine";
 
 const baseLot = {
@@ -68,5 +69,61 @@ describe("auction-engine", () => {
     const { premium, total } = buyersPremium(1_000_000);
     expect(premium).toBe(200_000);
     expect(total).toBe(1_200_000);
+  });
+});
+
+describe("settlementChargeNgn (what the winner is actually charged)", () => {
+  const sold = { status: "sold", current_bid: 1_000_000, leading_bidder: "u1", payment_id: null };
+  it("charges hammer + 20% premium", () => {
+    expect(settlementChargeNgn(sold, "u1")).toBe(1_200_000);
+  });
+  it("matches the checkout summary total for odd amounts (rounding)", () => {
+    for (const hammer of [1, 3, 7, 55_005, 104_999, 333_333, 9_999_999]) {
+      expect(settlementChargeNgn({ ...sold, current_bid: hammer }, "u1")).toBe(
+        buyersPremium(hammer).total,
+      );
+    }
+  });
+  it("accepts numeric strings from the database", () => {
+    expect(settlementChargeNgn({ ...sold, current_bid: "250000" }, "u1")).toBe(300_000);
+  });
+  it("refuses a live lot, a non-winner, a paid lot and bad amounts", () => {
+    expect(() => settlementChargeNgn({ ...sold, status: "live" }, "u1")).toThrow(/not ready/);
+    expect(() => settlementChargeNgn(sold, "u2")).toThrow(/winning bidder/);
+    expect(() => settlementChargeNgn({ ...sold, leading_bidder: null }, "u1")).toThrow(
+      /winning bidder/,
+    );
+    expect(() => settlementChargeNgn({ ...sold, payment_id: "p1" }, "u1")).toThrow(
+      /already been paid/,
+    );
+    expect(() => settlementChargeNgn({ ...sold, current_bid: 0 }, "u1")).toThrow(/unavailable/);
+    expect(() => settlementChargeNgn({ ...sold, current_bid: null }, "u1")).toThrow(/unavailable/);
+    expect(() => settlementChargeNgn({ ...sold, current_bid: "abc" }, "u1")).toThrow(/unavailable/);
+  });
+});
+
+describe("auction math invariants", () => {
+  it("increment ladder boundaries", () => {
+    const cases: Array<[number, number]> = [
+      [0, 5_000],
+      [99_999, 5_000],
+      [100_000, 10_000],
+      [499_999, 10_000],
+      [500_000, 25_000],
+      [999_999, 25_000],
+      [1_000_000, 50_000],
+      [4_999_999, 50_000],
+      [5_000_000, 100_000],
+      [19_999_999, 100_000],
+      [20_000_000, 250_000],
+    ];
+    for (const [bid, inc] of cases) expect(increment(bid)).toBe(inc);
+  });
+  it("premium + hammer always equals total and is an integer", () => {
+    for (let h = 1; h < 2000; h += 7) {
+      const r = buyersPremium(h);
+      expect(Number.isInteger(r.premium)).toBe(true);
+      expect(r.hammer + r.premium).toBe(r.total);
+    }
   });
 });
