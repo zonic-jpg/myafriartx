@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { getMyVerification, submitVerification } from "@/lib/kyc.functions";
 import { ID_TYPES } from "@/lib/kyc-constants";
+import { prepareDocumentForUpload } from "@/components/image-dropzone";
 
 export const Route = createFileRoute("/verification")({
   component: VerificationPage,
@@ -50,17 +51,18 @@ function VerificationPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) return toast.error("Attach a photo or PDF of your ID document.");
-    if (file.size > 8 * 1024 * 1024) return toast.error("Document must be under 8 MB.");
     setBusy(true);
     try {
-      const documentBase64 = await new Promise<string>((res, rej) => {
-        const r = new FileReader();
-        r.onload = () => res(r.result as string);
-        r.onerror = rej;
-        r.readAsDataURL(file);
-      });
+      // Phone photos are resized to fit the upload limit; see prepareDocumentForUpload.
+      const prepared = await prepareDocumentForUpload(file);
       await submitFn({
-        data: { fullName, idType, idReference, documentBase64, filename: file.name },
+        data: {
+          fullName,
+          idType,
+          idReference,
+          documentBase64: prepared.base64,
+          filename: prepared.filename,
+        },
       });
       toast.success("Submitted — our team will review within 1–2 business days.");
       setRecord(await fetchStatus());
@@ -105,8 +107,8 @@ function VerificationPage() {
           <p className="font-medium text-amber-700">Under review</p>
           <p className="mt-1 text-sm text-muted-foreground">
             Submitted{" "}
-            {details?.submitted_at ? new Date(details.submitted_at).toLocaleString() : "recently"}. We
-            typically review within 1–2 business days.
+            {details?.submitted_at ? new Date(details.submitted_at).toLocaleString() : "recently"}.
+            We typically review within 1–2 business days.
           </p>
         </div>
       )}
@@ -158,12 +160,12 @@ function VerificationPage() {
           </label>
           <label className="block">
             <span className="text-sm font-medium">
-              ID document (JPG, PNG, WEBP or PDF, max 8 MB)
+              ID document (a photo, or a PDF up to 3.9 MB)
             </span>
             <input
               required
               type="file"
-              accept=".jpg,.jpeg,.png,.webp,.pdf"
+              accept="image/*,.pdf,application/pdf"
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="mt-1 block w-full text-sm"
             />

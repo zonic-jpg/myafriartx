@@ -24,6 +24,7 @@ import {
 import { getThreadEscrow } from "@/lib/escrow.functions";
 import { initializePayment } from "@/lib/payments.functions";
 import { toast } from "sonner";
+import { fileToUploadBlob } from "@/components/image-dropzone";
 
 const loungeSearchSchema = z.object({
   tab: fallback(z.enum(["sell", "buy", "threads"]), "sell").default("sell"),
@@ -436,11 +437,12 @@ function CreateListingModal({
         const { data: auth } = await supabase.auth.getUser();
         const uid = auth.user?.id;
         if (!uid) throw new Error("Sign in again to upload a photo.");
-        const ext = (imageFile.name.split(".").pop() || "jpg").toLowerCase().slice(0, 5);
-        const path = `${uid}/${crypto.randomUUID()}.${ext}`;
+        // Large phone photos are resized first so the upload is quick and within the bucket limit.
+        const prepared = await fileToUploadBlob(imageFile);
+        const path = `${uid}/${crypto.randomUUID()}.${prepared.ext}`;
         const { error: uploadError } = await supabase.storage
           .from("listings")
-          .upload(path, imageFile, { contentType: imageFile.type || "image/jpeg", upsert: false });
+          .upload(path, prepared.blob, { contentType: prepared.contentType, upsert: false });
         if (uploadError) throw new Error(`Photo upload failed: ${uploadError.message}`);
         const { data: pub } = supabase.storage.from("listings").getPublicUrl(path);
         image_url = pub.publicUrl;
