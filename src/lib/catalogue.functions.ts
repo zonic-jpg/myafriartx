@@ -341,11 +341,25 @@ export const saveAllocations = createServerFn({ method: "POST" })
       throw new Error(`Allocations must sum to 100% (got ${total.toFixed(1)}%).`);
     }
     const table = tableFor(data.scope);
-    await (await __get_admin()).from(table).delete().not("country", "is", null);
-    if (data.rows.length > 0) {
-      const { error } = await (await __get_admin())
-        .from(table)
-        .insert(data.rows.map((r) => ({ country: r.country, percent: r.percent })));
+    const wanted = data.rows.map((r) => ({ country: r.country.trim(), percent: r.percent }));
+    const names = wanted.map((r) => r.country);
+    if (new Set(names.map((n) => n.toLowerCase())).size !== names.length) {
+      throw new Error("Each country can only appear once.");
+    }
+    const admin = await __get_admin();
+    // Save the new allocations first and only then clear the ones that were
+    // taken out, so a failed save can never leave the table empty.
+    const { data: before, error: readError } = await admin.from(table).select("country");
+    if (readError) throw new Error(readError.message);
+    if (wanted.length > 0) {
+      const { error } = await admin.from(table).upsert(wanted, { onConflict: "country" });
+      if (error) throw new Error(error.message);
+    }
+    const stale = ((before ?? []) as { country: string }[])
+      .map((r) => r.country)
+      .filter((c) => !names.includes(c));
+    if (stale.length > 0) {
+      const { error } = await admin.from(table).delete().in("country", stale);
       if (error) throw new Error(error.message);
     }
     return { ok: true };
