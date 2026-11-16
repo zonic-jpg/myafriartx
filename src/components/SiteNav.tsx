@@ -1,6 +1,26 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { recordEntryClick } from "@/lib/entry-clicks.functions";
+
+/** Count clicks on the two entry points the Analytics tab reports, from the site menu too. */
+function trackNavClick(to: string, where: "site_nav" | "site_menu") {
+  const entry = to === "/studio" ? "stage_virtually" : to === "/submit" ? "submit_your_work" : null;
+  if (!entry || typeof window === "undefined") return;
+  try {
+    const KEY = "myafriart_session_id";
+    let id = localStorage.getItem(KEY);
+    if (!id) {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      id = Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+      localStorage.setItem(KEY, id);
+    }
+    void Promise.resolve(recordEntryClick({ data: { entry_point: entry, location: where, session_id: id } })).catch(() => undefined);
+  } catch {
+    /* analytics must never block navigation */
+  }
+}
 
 /**
  * Shared site navigation.
@@ -98,6 +118,7 @@ export function NavDrawer({
               to={l.to}
               onClick={() => {
                 onClose();
+                trackNavClick(l.to, "site_menu");
                 if (l.to === "/" && typeof window !== "undefined" && window.location.pathname === "/") {
                   setTimeout(() => document.getElementById("catalogue")?.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
                 }
@@ -188,7 +209,7 @@ export function SiteNav({
           </div>
           <nav className="hidden items-center gap-5 text-sm md:flex">
             {inline.map((l) => (
-              <Link key={l.to} to={l.to} className={linkCls}>
+              <Link key={l.to} to={l.to} className={linkCls} onClick={() => trackNavClick(l.to, "site_nav")}>
                 {l.label}
               </Link>
             ))}

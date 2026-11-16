@@ -1209,33 +1209,32 @@ function Landing() {
                     const portrait = entry.portraitUrl ?? (entry.artist as { portrait_url?: string | null }).portrait_url ?? null;
                     const card = (
                       <>
-                        <div className="relative aspect-square overflow-hidden bg-muted">
-                          {!portrait && entry.sample?.image_url ? (
+                        {/* The Artists lane shows the person, not one of their pieces: their portrait
+                            when there is one, otherwise a neutral initials badge. Their works are on
+                            the artist page this card opens, and in the Artworks lane below. */}
+                        <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-muted">
+                          {portrait ? (
                             <img
-                              src={bustImageUrl(
-                                entry.sample.image_url,
-                                entry.sample.updated_at ?? entry.sample.id,
-                              )}
-                              alt={`Work by ${entry.artist.name}`}
-                              loading="lazy"
-                              onError={(e) => {
-                                const fallback = localImageForKey(entry.artist.id || entry.artist.name);
-                                if (e.currentTarget.src !== fallback) e.currentTarget.src = fallback;
-                              }}
-                              className="absolute inset-0 h-full w-full object-contain transition"
-                            />
-                          ) : (
-                            <img
-                              src={
-                                portrait ? portrait : artistDefault
-                              }
+                              src={portrait}
                               alt={entry.artist.name}
                               loading="lazy"
                               onError={(e) => {
                                 (e.currentTarget as HTMLImageElement).src = artistDefault;
                               }}
-                              className="absolute inset-0 h-full w-full object-contain transition"
+                              className="absolute inset-0 h-full w-full object-cover transition"
                             />
+                          ) : (
+                            <span
+                              aria-hidden="true"
+                              className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-red-500 font-display text-3xl text-white sm:h-28 sm:w-28"
+                            >
+                              {(entry.artist.name || "?")
+                                .trim()
+                                .split(/\s+/)
+                                .slice(0, 2)
+                                .map((w) => w.charAt(0).toUpperCase())
+                                .join("") || "?"}
+                            </span>
                           )}
                         </div>
                         <div className="p-3">

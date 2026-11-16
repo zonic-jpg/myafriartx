@@ -79,6 +79,12 @@ function AuctionFloor() {
           Timed bidding with reserves, {Math.round(BUYERS_PREMIUM * 100)}% buyer&apos;s premium, and
           and two-minute anti-sniping, so late bids extend the clock. Every bid is recorded instantly.
         </p>
+        {!isLoading && lots.length > 0 && !lots.some((l) => l.status === "live") && (
+          <p className="mt-2 text-sm font-medium">
+            No lots are open for bidding right now. Results of the last sale are shown below; new lots appear here
+            as soon as they open.
+          </p>
+        )}
         {!userId && (
           <p className="mt-2 text-sm">
             <Link to="/login" className="underline">

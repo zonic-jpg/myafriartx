@@ -167,3 +167,153 @@ export const getAuctionWinCheckout = createServerFn({ method: "POST" })
 
     return { lotId: lot.id, hammer, premium, total, title: lot.title };
   });
+
+// ============================================================
+// Admin: schedule and manage lots (so an auction can actually be run)
+// ============================================================
+async function assertAuctionAdmin(userId: string) {
+  const { data } = await (await __get_admin())
+    .from("user_roles")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .maybeSingle();
+  if (!data) throw new Error("Forbidden: admin only");
+}
+
+const MAX_NGN = 10_000_000_000;
+const LotInput = z.object({
+  id: z.string().uuid().optional().nullable(),
+  title: z.string().trim().min(2).max(200),
+  artist: z.string().trim().max(200).optional().nullable(),
+  medium: z.string().trim().max(200).optional().nullable(),
+  description: z.string().trim().max(2000).optional().nullable(),
+  imageUrl: z.string().trim().max(1000).optional().nullable(),
+  startingBid: z.number().int().min(0).max(MAX_NGN),
+  reserve: z.number().int().min(0).max(MAX_NGN),
+  estimateLow: z.number().int().min(0).max(MAX_NGN).optional().nullable(),
+  estimateHigh: z.number().int().min(0).max(MAX_NGN).optional().nullable(),
+  days: z.number().int().min(1).max(30),
+});
+
+export const adminListAuctionLots = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertAuctionAdmin(context.userId);
+    const admin = await __get_admin();
+    await admin.rpc("settle_expired_auction_lots");
+    const { data, error } = await admin
+      .from("auction_lots")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+/** Create a lot and open it for bidding, or edit one that has no bids yet. */
+export const adminSaveAuctionLot = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => LotInput.parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAuctionAdmin(context.userId);
+    const admin = await __get_admin();
+    const image = data.imageUrl && /^https:\/\//i.test(data.imageUrl) ? data.imageUrl : null;
+    if (data.imageUrl && !image) throw new Error("The picture link must start with https://");
+    if (data.estimateLow != null && data.estimateHigh != null && data.estimateHigh < data.estimateLow) {
+      throw new Error("The high estimate must not be below the low estimate.");
+    }
+    const endsAt = new Date(Date.now() + data.days * 24 * 60 * 60 * 1000).toISOString();
+    const fields = {
+      title: data.title,
+      artist: data.artist || null,
+      medium: data.medium || null,
+      description: data.description || null,
+      image_url: image,
+      starting_bid: data.startingBid,
+      reserve: data.reserve,
+      estimate_low: data.estimateLow ?? null,
+      estimate_high: data.estimateHigh ?? null,
+    };
+
+    if (data.id) {
+      const { data: existing, error: readError } = await admin
+        .from("auction_lots")
+        .select("id, bid_count, status")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (readError || !existing) throw new Error("Lot not found");
+      if (Number(existing.bid_count ?? 0) > 0) {
+        throw new Error("This lot already has bids, so it can no longer be edited.");
+      }
+      const { error } = await admin
+        .from("auction_lots")
+        .update({ ...fields, status: "live", ends_at: endsAt })
+        .eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { id: data.id };
+    }
+
+    const { count } = await admin.from("auction_lots").select("id", { count: "exact", head: true });
+    let code = `L-${String((count ?? 0) + 1).padStart(3, "0")}`;
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const { data: row, error } = await admin
+        .from("auction_lots")
+        .insert({ ...fields, code, status: "live", ends_at: endsAt })
+        .select("id")
+        .single();
+      if (!error && row) return { id: row.id };
+      if (error && error.code !== "23505") throw new Error(error.message);
+      code = `L-${String((count ?? 0) + 2 + attempt).padStart(3, "0")}-${Math.random().toString(36).slice(2, 5)}`;
+    }
+    throw new Error("The lot could not be created. Please try again.");
+  });
+
+/** Put an unsold or not-yet-started lot back up for bidding with a fresh clock. */
+export const adminRelistAuctionLot = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), days: z.number().int().min(1).max(30) }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    await assertAuctionAdmin(context.userId);
+    const admin = await __get_admin();
+    const { data: lot, error: readError } = await admin
+      .from("auction_lots")
+      .select("id, status, payment_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (readError || !lot) throw new Error("Lot not found");
+    if (lot.status === "live") throw new Error("This lot is already open for bidding.");
+    if (lot.status === "sold" || lot.payment_id) throw new Error("A sold lot cannot be relisted.");
+    const { error } = await admin
+      .from("auction_lots")
+      .update({
+        status: "live",
+        ends_at: new Date(Date.now() + data.days * 24 * 60 * 60 * 1000).toISOString(),
+        current_bid: 0,
+        bid_count: 0,
+        leading_bidder: null,
+        payment_due_at: null,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** End bidding on a live lot now; it settles as sold (reserve met) or no sale. */
+export const adminCloseAuctionLot = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    await assertAuctionAdmin(context.userId);
+    const admin = await __get_admin();
+    const { error } = await admin
+      .from("auction_lots")
+      .update({ ends_at: new Date().toISOString() })
+      .eq("id", data.id)
+      .eq("status", "live");
+    if (error) throw new Error(error.message);
+    await admin.rpc("settle_expired_auction_lots");
+    return { ok: true };
+  });

@@ -321,12 +321,19 @@ export async function handler(event) {
         sourceUrl = signedSrc?.signedUrl || roomDataUrl;
 
         const savedArtworkIds = (artworkIds.length ? artworkIds : resolvedArts.map((a) => a.id)).filter(isUuid);
+        // Only point the saved render at a style that really exists in the styles table.
+        // (An unknown style id used to make the save fail, so finished renders were never kept.)
+        let savedStyleId = null;
+        if (isUuid(body.styleId)) {
+          const { data: styleRow } = await db.from("styles").select("id").eq("id", body.styleId).maybeSingle();
+          savedStyleId = styleRow?.id || null;
+        }
         const { data: render, error: insErr } = await db
           .from("renders")
           .insert({
             user_id: userId,
             source_image_url: sourcePath,
-            style_id: body.styleId && String(body.styleId).includes("-") ? body.styleId : null,
+            style_id: savedStyleId,
             artwork_ids: savedArtworkIds,
             media_filter: (Array.isArray(body.mediaFilter) ? body.mediaFilter : []).filter((m) => ART_MEDIA.has(m)),
             status: "processing",

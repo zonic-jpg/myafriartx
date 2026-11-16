@@ -36,6 +36,7 @@ import { artistDefault, localImageForKey, localPaneImage } from "@/lib/local-ima
 import { BrokerageAdmin } from "@/components/admin/brokerage-admin";
 import { ServicePricingAdmin } from "@/components/admin/service-pricing-admin";
 import { KycAdmin } from "@/components/admin/kyc-admin";
+import { AuctionsAdmin } from "@/components/admin/auctions-admin";
 import { PayoutsAdmin } from "@/components/admin/payouts-admin";
 import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
@@ -187,6 +188,7 @@ type Tab =
   | "analytics"
   | "brokerage"
   | "collateral"
+  | "auctions"
   | "kyc"
   | "disputes"
   | "pricing"
@@ -196,7 +198,7 @@ type Tab =
 const TAB_IDS: Tab[] = [
   "submissions", "letters", "intake", "studio", "settings", "artworks", "artists", "styles", "renders",
   "panes", "events", "media", "allocation", "lookup", "transactions", "analytics", "brokerage",
-  "collateral", "kyc", "disputes", "pricing", "payouts", "approvals",
+  "collateral", "auctions", "kyc", "disputes", "pricing", "payouts", "approvals",
 ];
 
 function AdminInner({ isOwner }: { isOwner: boolean }) {
@@ -318,6 +320,7 @@ function AdminInner({ isOwner }: { isOwner: boolean }) {
             {tab === "analytics" && <AnalyticsAdmin />}
             {tab === "brokerage" && <BrokerageAdmin />}
             {tab === "collateral" && <CollateralAdminPanel />}
+            {tab === "auctions" && <AuctionsAdmin />}
             {tab === "kyc" && <KycAdmin />}
             {tab === "disputes" && <DisputesAdmin />}
             {tab === "pricing" && <ServicePricingAdmin />}
@@ -1824,8 +1827,11 @@ function AnalyticsAdmin() {
   const totalAll = Object.values(data?.all ?? {}).reduce((s: number, n: number) => s + n, 0);
   const total30 = Object.values(data?.last30 ?? {}).reduce((s: number, n: number) => s + n, 0);
 
-  const stageAll = (data?.all ?? {})["stage_virtually::lounge_header"] ?? 0;
-  const stage30 = (data?.last30 ?? {})["stage_virtually::lounge_header"] ?? 0;
+  // "Stage virtually" is reached from several places (the Lounge and the site menu): count them all.
+  const sumFor = (bucket: Record<string, number> | undefined, entry: string) =>
+    Object.entries(bucket ?? {}).reduce((s, [k, n]) => (k.startsWith(`${entry}::`) ? s + Number(n) : s), 0);
+  const stageAll = sumFor(data?.all, "stage_virtually");
+  const stage30 = sumFor(data?.last30, "stage_virtually");
 
   return (
     <div className="max-w-4xl space-y-6">
