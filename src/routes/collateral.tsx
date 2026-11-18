@@ -86,6 +86,20 @@ function CollateralPage() {
           </p>
         </div>
 
+        {kycStatus === "verified" && (
+          <div className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-4 text-sm">
+            <p className="font-medium text-emerald-900">Identity verified</p>
+            <p className="mt-1 text-emerald-900/80">
+              Your name and ID are on file. You can review or update your identity details at any time.
+            </p>
+            <Link
+              to="/verification"
+              className="mt-2 inline-block rounded-md border border-emerald-700/40 px-3 py-1.5 text-xs font-medium text-emerald-900"
+            >
+              View my identity details
+            </Link>
+          </div>
+        )}
         {kycStatus !== null && kycStatus !== "verified" && (
           <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm">
             <p className="font-medium text-amber-900">Identity verification required</p>

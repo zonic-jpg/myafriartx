@@ -174,6 +174,13 @@ function StudioInner() {
   useEffect(() => {
     sessionStorage.setItem("studio:placement", placementRequest);
   }, [placementRequest]);
+  // Wall size (metres), optional: lets the staging scale pieces to the space the member really has.
+  const [wallWidth, setWallWidth] = useState(() => (typeof window === "undefined" ? "" : sessionStorage.getItem("studio:wallW") || ""));
+  const [wallHeight, setWallHeight] = useState(() => (typeof window === "undefined" ? "" : sessionStorage.getItem("studio:wallH") || ""));
+  useEffect(() => {
+    sessionStorage.setItem("studio:wallW", wallWidth);
+    sessionStorage.setItem("studio:wallH", wallHeight);
+  }, [wallWidth, wallHeight]);
   const [result, setResult] = useState<{ url: string; src: string } | null>(null);
   const [preparingPhoto, setPreparingPhoto] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -209,7 +216,13 @@ function StudioInner() {
         title: a.title,
         medium: a.medium,
         image_url: a.image_url,
+        width_cm: a.width_cm ?? null,
+        height_cm: a.height_cm ?? null,
       }));
+      const metres = (v: string) => {
+        const n = Number(String(v).replace(",", "."));
+        return Number.isFinite(n) && n > 0 ? Math.round(n * 100) : null;
+      };
       return stageRoomClient({
         sourceImageBase64: photo,
         styleId,
@@ -217,13 +230,19 @@ function StudioInner() {
         mediaFilter: media,
         placementRequest,
         artworks,
+        wallWidthCm: metres(wallWidth),
+        wallHeightCm: metres(wallHeight),
       });
     },
     onSuccess: (r) => {
       setResult({ url: r.resultUrl, src: r.sourceUrl });
       setProgressStatus(null);
       setStartedAt(null);
-      toast.success(r.provider === "canvas-preview" ? "Preview staged on wall" : "Render ready");
+      if (r.placed != null && r.requested != null && r.placed < r.requested) {
+        toast.message(`${r.placed} of ${r.requested} artworks were staged — the other picture could not be loaded.`);
+      } else {
+        toast.success(r.provider === "canvas-preview" ? "Preview staged on wall" : "Render ready");
+      }
     },
     onError: (e: any) => {
       const msg = publicMessage(e, "Render failed");
@@ -473,6 +492,42 @@ function StudioInner() {
             )}
           </Field>
           </div>
+
+          <Field label="Wall size (optional)">
+            <div className="grid grid-cols-2 gap-2">
+              <label className="text-xs text-muted-foreground">
+                Width (metres)
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min={0.5}
+                  max={30}
+                  step={0.1}
+                  value={wallWidth}
+                  onChange={(e) => setWallWidth(e.target.value)}
+                  placeholder="e.g. 3.5"
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                />
+              </label>
+              <label className="text-xs text-muted-foreground">
+                Height (metres)
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  min={0.5}
+                  max={10}
+                  step={0.1}
+                  value={wallHeight}
+                  onChange={(e) => setWallHeight(e.target.value)}
+                  placeholder="e.g. 2.7"
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                />
+              </label>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Enter the size of the wall you are staging and the pieces are scaled to fit it.
+            </p>
+          </Field>
 
           <Field label="Placement request">
             <textarea

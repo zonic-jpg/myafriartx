@@ -38,6 +38,7 @@ export const NAV_LINKS: { to: string; label: string }[] = [
   { to: "/notify", label: "NotifyMe" },
   { to: "/renders", label: "My renders" },
   { to: "/collateral", label: "Collateral" },
+  { to: "/verification", label: "My identity (KYC)" },
   { to: "/disputes", label: "Disputes" },
 ];
 
@@ -191,7 +192,7 @@ export function SiteNav({
   const brand = tone === "brand";
   const linkCls = brand ? "text-white/85 hover:text-white" : "text-muted-foreground hover:text-foreground";
   const inline = NAV_LINKS.filter((l) => ["/", "/auction", "/lounge", "/events", "/studio", "/submit"].includes(l.to));
-  const account = NAV_LINKS.filter((l) => ["/notify", "/renders", "/collateral", "/disputes"].includes(l.to));
+  const account = NAV_LINKS.filter((l) => ["/notify", "/renders", "/collateral", "/verification", "/disputes"].includes(l.to));
 
   return (
     <>

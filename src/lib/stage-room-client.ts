@@ -14,8 +14,11 @@ export type StagePayload = {
   styleId: string;
   mediaFilter?: string[];
   placementRequest?: string;
-  artworks?: { id: string; title: string; medium?: string; image_url: string }[];
+  artworks?: { id: string; title: string; medium?: string; image_url: string; width_cm?: number | null; height_cm?: number | null }[];
   stylePrompt?: string;
+  /** Optional size of the wall being staged, so pieces are scaled true to size. */
+  wallWidthCm?: number | null;
+  wallHeightCm?: number | null;
 };
 
 export async function fetchStudioCatalogClient() {
@@ -138,7 +141,14 @@ export async function canvasStagePreview(payload: StagePayload): Promise<{
   if (ok.length) {
     const gap = canvas.width * 0.03;
     const targetW = canvas.width * (n === 1 ? 0.26 : 0.19);
-    const sizes = ok.map((img) => ({ w: targetW, h: (img.naturalHeight / img.naturalWidth) * targetW }));
+    // With a wall width and the piece's real width, draw it true to scale (assuming the wall spans the photo).
+    const loadedArts = arts.filter((_, i) => !!imgs[i]);
+    const wallCm = Number(payload.wallWidthCm) > 0 ? Number(payload.wallWidthCm) : null;
+    const sizes = ok.map((img, i) => {
+      const realW = Number(loadedArts[i]?.width_cm) > 0 ? Number(loadedArts[i]?.width_cm) : null;
+      const w = wallCm && realW ? Math.min(canvas.width * 0.6, Math.max(canvas.width * 0.06, (realW / wallCm) * canvas.width)) : targetW;
+      return { w, h: (img.naturalHeight / img.naturalWidth) * w };
+    });
     const blockW = sizes.reduce((a, z) => a + z.w, 0) + gap * (sizes.length - 1);
     const blockH = Math.max(...sizes.map((z) => z.h));
     const spot = findEmptyWall(room, canvas.width, canvas.height, blockW + 16, blockH + 16);
@@ -194,6 +204,8 @@ export async function stageRoomClient(payload: StagePayload): Promise<{
   resultUrl: string;
   sourceUrl: string;
   provider?: string;
+  placed?: number;
+  requested?: number;
 }> {
   const style = styleById(payload.styleId);
   // Embed the selected artworks' real pixels in the request.
@@ -233,6 +245,8 @@ export async function stageRoomClient(payload: StagePayload): Promise<{
         resultUrl: json.resultUrl,
         sourceUrl: json.sourceUrl || ensureDataUrl(payload.sourceImageBase64),
         provider: json.provider,
+        placed: typeof json.placed === "number" ? json.placed : undefined,
+        requested: typeof json.requested === "number" ? json.requested : undefined,
       };
     }
     // 501 / missing function → canvas preview rather than dead end

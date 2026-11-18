@@ -130,34 +130,36 @@ async function geminiEdit({ prompt, room, artworks, apiKey, model }) {
   return { image: `data:${mime};base64,${b64}`, provider: model };
 }
 
-async function runAiCascade({ prompt, roomDataUrl, artworkUrls }) {
+/**
+ * Load the selected artworks' pictures. Only pieces whose picture actually loaded are
+ * staged, and the same picture is never sent twice — the instructions given to the model
+ * must describe exactly the images it receives. (Listing three artworks while sending two
+ * pictures made the model fill the gap by repeating one of them.)
+ */
+async function loadArtworkImages(arts) {
+  const loaded = [];
   const errors = [];
+  const seen = new Set();
+  for (const a of arts.slice(0, 3)) {
+    const u = String(a?.image_url || "");
+    const inline = u.startsWith("data:") ? parseDataUrl(u) : await fetchAsInline(u);
+    if (!inline) {
+      errors.push(`Could not load the picture for "${String(a?.title || a?.id || "artwork").slice(0, 60)}"`);
+      continue;
+    }
+    const fingerprint = `${inline.data.length}:${inline.data.slice(0, 64)}:${inline.data.slice(-64)}`;
+    if (seen.has(fingerprint)) continue;
+    seen.add(fingerprint);
+    loaded.push({ art: a, inline, dataUrl: u.startsWith("data:") ? u : `data:${inline.mime};base64,${inline.data}` });
+  }
+  return { loaded, errors };
+}
+
+async function runAiCascade({ prompt, roomDataUrl, loaded, errors = [] }) {
   const room = parseDataUrl(roomDataUrl);
   if (!room) return { image: null, provider: null, errors: ["Invalid room image"] };
-
-  const artInlines = [];
-  const artDataUrls = [];
-  for (const u of artworkUrls.slice(0, 3)) {
-    if (u.startsWith("data:")) {
-      const p = parseDataUrl(u);
-      if (p) {
-        artInlines.push(p);
-        artDataUrls.push(u);
-      }
-    } else {
-      const fetched = await fetchAsInline(u);
-      if (fetched) {
-        artInlines.push(fetched);
-        artDataUrls.push(`data:${fetched.mime};base64,${fetched.data}`);
-      } else {
-        errors.push(`Could not fetch artwork ${u.slice(0, 80)}`);
-      }
-    }
-  }
-
-  if (artworkUrls.length && !artInlines.length) {
-    return { image: null, provider: null, errors: [...errors, "None of the selected artwork images could be loaded"], artworkLoadFailed: true };
-  }
+  const artInlines = loaded.map((x) => x.inline);
+  const artDataUrls = loaded.map((x) => x.dataUrl);
 
   const lovableKey = env("AI_API_KEY", "LOVABLE_API_KEY");
   if (lovableKey) {
@@ -270,25 +272,42 @@ export async function handler(event) {
       .trim()
       .slice(0, 500);
 
+    const { loaded, errors: loadErrors } = await loadArtworkImages(resolvedArts);
+    if (!loaded.length) {
+      return respond(422, {
+        error: "We couldn't load the selected artwork pictures, so nothing was staged. Please try again.",
+        provider_errors: loadErrors,
+      });
+    }
+    const n = loaded.length;
+    const cm = (v) => (Number.isFinite(Number(v)) && Number(v) > 0 ? Math.round(Number(v)) : null);
+    const wallW = cm(body.wallWidthCm) && Number(body.wallWidthCm) >= 50 && Number(body.wallWidthCm) <= 3000 ? cm(body.wallWidthCm) : null;
+    const wallH = cm(body.wallHeightCm) && Number(body.wallHeightCm) >= 50 && Number(body.wallHeightCm) <= 1000 ? cm(body.wallHeightCm) : null;
+    const sizeOf = (a) => {
+      const w = cm(a?.width_cm), h = cm(a?.height_cm);
+      return w && h ? `, real size ${w} cm wide x ${h} cm high` : "";
+    };
+
     const prompt = [
-      "You are given several images. IMAGE 1 is the room photograph to edit. The remaining images, in order, are the exact artworks to place: copy each artwork's real composition, colours and subject faithfully, do not redraw or reinterpret them.",
+      `You are given ${n + 1} images. IMAGE 1 is the room photograph to edit. ${n === 1 ? "IMAGE 2 is the one artwork to place" : `IMAGES 2 to ${n + 1} are the ${n} different artworks to place`}: copy each artwork's real composition, colours and proportions exactly as shown; never invent, redraw or substitute an artwork.`,
       "Photorealistic edit of the room photograph (image 1).",
-      "Stage the following artworks (images 2 onward, in this order) on the most suitable empty wall surface(s) in the room:",
-      ...resolvedArts.map((a, i) => `- Artwork ${i + 1}: "${a.title || "Untitled"}" (${a.medium || "art"}).`),
+      `Hang exactly ${n} artwork${n === 1 ? "" : "s"} in the room, on the most suitable empty wall surface(s):`,
+      ...loaded.map((x, i) => `- Artwork ${i + 1} = image ${i + 2} (${x.art.medium || "art"}${sizeOf(x.art)}).`),
+      `Each artwork appears exactly ONCE. The finished picture must show ${n} hung piece${n === 1 ? "" : "s"} in total${n === 1 ? "" : `, each one different`}. Never show the same artwork twice, never add extra pictures, and leave anything already on the walls as it is.`,
+      "Do not write any text anywhere: no titles, captions, labels, signatures, watermarks or lettering on or near the artworks.",
+      wallW || wallH
+        ? `The wall to use is about ${wallW ? `${(wallW / 100).toFixed(1)} m wide` : ""}${wallW && wallH ? " and " : ""}${wallH ? `${(wallH / 100).toFixed(1)} m high` : ""}. Scale every artwork true to its real size against that wall and keep the whole arrangement inside it.`
+        : "Scale each artwork true to its real size where a size is given.",
       placement
         ? `User placement request (placement only): ${placement}`
         : "Choose the strongest wall placement automatically.",
-      "Respect each artwork's real medium and scale (framed piece for paintings/prints/photography ~A2/A1; pedestal only if the piece is literally a sculpture), cast realistic shadows, and match the room's existing white balance and lighting. Stage ONLY the artwork(s) listed above -- do not invent, add, duplicate, or substitute any other artwork, sculpture, pedestal, or decor object that isn't one of them.",
+      "Respect each artwork's real medium (framed piece for paintings/prints/photography; pedestal only if the piece is literally a sculpture), cast realistic shadows, and match the room's lighting.",
       `Decor style direction: ${stylePrompt}.`,
       "Do NOT alter furniture, flooring, ceiling, windows or architecture. Output a single composited image.",
     ].join("\n");
 
     const roomDataUrl = ensureDataUrl(roomB64);
-    const ai = await runAiCascade({
-      prompt,
-      roomDataUrl,
-      artworkUrls: resolvedArts.map((a) => a.image_url),
-    });
+    const ai = await runAiCascade({ prompt, roomDataUrl, loaded, errors: loadErrors });
 
     if (!ai.image && ai.artworkLoadFailed) {
       return respond(422, {
@@ -372,6 +391,8 @@ export async function handler(event) {
       resultUrl,
       sourceUrl,
       provider: ai.provider,
+      placed: n,
+      requested: Math.min(3, Math.max(resolvedArts.length, artworkIds.length)),
     });
   } catch (e) {
     console.error("[stage-room]", e);
