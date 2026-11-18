@@ -1,10 +1,10 @@
 import { createFileRoute, Link, useRouter, type ErrorComponentProps } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { queryOptions, useSuspenseQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { getArtistDetail, bumpView } from "@/lib/catalogue.functions";
 import { useIsAdmin } from "@/hooks/use-is-admin";
-import { artistDefault, localImageForKey } from "@/lib/local-image-assets";
+import { localImageForKey } from "@/lib/local-image-assets";
 import { outreachWebsiteHref } from "@/lib/outreach-artists";
 import { SiteNav } from "@/components/SiteNav";
 
@@ -44,6 +44,7 @@ function ArtistErrorComponent({ error, reset }: ErrorComponentProps) {
 function ArtistDetailPage() {
   const { code } = Route.useParams();
   const { data } = useSuspenseQuery(artistQuery(code));
+  const [portraitFailed, setPortraitFailed] = useState(false);
   const isAdmin = useIsAdmin();
   const bump = useServerFn(bumpView);
 
@@ -73,14 +74,27 @@ function ArtistDetailPage() {
       <main className="mx-auto max-w-5xl space-y-8 px-4 py-8 sm:px-6">
         <section className="grid gap-6 md:grid-cols-[200px,1fr]">
           <div className="aspect-square overflow-hidden rounded-lg border border-border bg-muted">
-            <img
-              src={a.portrait_url || artistDefault}
-              alt={a.name}
-              onError={(e) => {
-                (e.currentTarget as HTMLImageElement).src = artistDefault;
-              }}
-              className="h-full w-full object-contain"
-            />
+            {a.portrait_url && !portraitFailed ? (
+              <img
+                src={a.portrait_url}
+                alt={a.name}
+                onError={() => setPortraitFailed(true)}
+                className="h-full w-full object-contain"
+              />
+            ) : (
+              // No portrait supplied: show the artist's initials, never a stand-in photo of someone else.
+              <div
+                aria-label={a.name}
+                className="flex h-full w-full items-center justify-center bg-gradient-to-br from-purple-600 to-red-500 font-display text-5xl text-white"
+              >
+                {String(a.name || "?")
+                  .trim()
+                  .split(/\s+/)
+                  .slice(0, 2)
+                  .map((w: string) => w.charAt(0).toUpperCase())
+                  .join("")}
+              </div>
+            )}
           </div>
           <div className="space-y-2">
             {isAdmin && (

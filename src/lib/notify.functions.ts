@@ -212,26 +212,44 @@ export async function generateReelForUser(userId: string): Promise<string | null
     .maybeSingle();
   if (!prefs || !prefs.enabled) return null;
 
-  // Build artwork query with joined artist filters.
-  let q = (await __get_admin())
+  // Load the live catalogue, then filter here. A filter only rules an artwork OUT when the
+  // artwork's own value is known and does not match: a piece with no price, or an artist with
+  // no recorded gender or date of birth, is never hidden by a filter it cannot be judged on.
+  const { data: candidates } = await (await __get_admin())
     .from("artworks")
     .select("id, price, currency, medium, artist:artists!inner(id, country, gender, date_of_birth)")
     .eq("is_active", true)
     .eq("lifecycle_status", "in_catalogue")
-    .limit(400);
+    .limit(1000);
 
-  if (prefs.categories?.length) q = q.in("medium", prefs.categories);
-  if (prefs.price_min != null) q = q.gte("price", prefs.price_min);
-  if (prefs.price_max != null) q = q.lte("price", prefs.price_max);
-  if (prefs.countries?.length) q = q.in("artist.country", prefs.countries);
-  if (prefs.genders?.length) q = q.in("artist.gender", prefs.genders);
-
+  const norm = (v: unknown) => String(v ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
+  const cats: string[] = (prefs.categories ?? []).map(norm);
+  const allCats = MEDIA.every((c) => cats.includes(c));
+  const wantCountries: string[] = (prefs.countries ?? []).map(norm).filter(Boolean);
+  const wantGenders: string[] = (prefs.genders ?? []).map(norm);
+  const allGenders = GENDERS.every((g) => wantGenders.includes(g));
   const { oldestBirth, newestBirth } = ageToDob(prefs.artist_age_min, prefs.artist_age_max);
-  if (oldestBirth) q = q.gte("artist.date_of_birth", oldestBirth);
-  if (newestBirth) q = q.lte("artist.date_of_birth", newestBirth);
+  const prefCurrency = norm(prefs.currency);
 
-  const { data: candidates } = await q;
-  const pool = (candidates ?? []).filter((c: any) => c.artist);
+  const pool = (candidates ?? []).filter((c: any) => {
+    const artist = c.artist;
+    if (!artist) return false;
+    const medium = norm(c.medium);
+    if (cats.length && !allCats && medium && !cats.includes(medium)) return false;
+    const sameCurrency = !prefCurrency || !c.currency || norm(c.currency) === prefCurrency;
+    if (c.price != null && sameCurrency) {
+      if (prefs.price_min != null && Number(c.price) < Number(prefs.price_min)) return false;
+      if (prefs.price_max != null && Number(c.price) > Number(prefs.price_max)) return false;
+    }
+    const country = norm(artist.country);
+    if (wantCountries.length && country && !wantCountries.includes(country)) return false;
+    const gender = norm(artist.gender);
+    if (wantGenders.length && !allGenders && gender && !wantGenders.includes(gender)) return false;
+    const dob = artist.date_of_birth ? String(artist.date_of_birth).slice(0, 10) : "";
+    if (dob && oldestBirth && dob < oldestBirth) return false;
+    if (dob && newestBirth && dob > newestBirth) return false;
+    return true;
+  });
   if (pool.length === 0) return null;
 
   // Shuffle and take REEL_ARTWORK_COUNT.

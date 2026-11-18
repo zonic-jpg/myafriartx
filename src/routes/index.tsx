@@ -34,7 +34,7 @@ import {
 import { bustImageUrl, isUsableImageUrl } from "@/lib/cache-bust";
 import { LOCAL_MOCK_ARTWORKS, isMockCatalogueCode } from "@/lib/mock-catalogue";
 import logo from "@/assets/myafriart-logo.png";
-import { MenuButton, NavDrawer } from "@/components/SiteNav";
+import { MenuButton, NavDrawer, signOutAndLeave } from "@/components/SiteNav";
 import { AiChatPanel, type CatalogueEntry, type SponsoredItem } from "@/components/ai-chat-panel";
 
 function paneImageFor(pane: Pick<Pane, "id" | "image">) {
@@ -944,6 +944,15 @@ function Landing() {
                   <Link to="/renders" className="block px-3 py-2 text-black/80 hover:bg-black/5">My renders</Link>
                   <Link to="/collateral" className="block px-3 py-2 text-black/80 hover:bg-black/5">Collateral</Link>
                   <Link to="/disputes" className="block px-3 py-2 text-black/80 hover:bg-black/5">Disputes</Link>
+                  {authed === true && (
+                    <button
+                      type="button"
+                      onClick={signOutAndLeave}
+                      className="block w-full border-t border-black/10 px-3 py-2 text-left text-black/80 hover:bg-black/5"
+                    >
+                      Sign out
+                    </button>
+                  )}
                 </div>
               </details>
               {authed === false && (

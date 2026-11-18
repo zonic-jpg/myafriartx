@@ -864,7 +864,6 @@ export function LetterStudioAdmin() {
             <div style={{ fontFamily: T.serif, fontSize: 20, color: T.accent, transform: "rotate(-3deg)" }}>
               {head.signatory}
             </div>
-            <div style={{ fontWeight: 600 }}>{head.signatory}</div>
             <div style={{ fontFamily: T.sans, fontSize: 11.5, color: T.stone }}>
               {head.signatoryTitle} · {ORG}
             </div>
