@@ -222,6 +222,9 @@ function PieceDetailPage() {
                   Use as collateral
                 </Link>
               </div>
+              {String(p.currency ?? "NGN").toUpperCase() !== "NGN" && (
+                <p className="text-xs text-muted-foreground">Payment is taken in naira, converted from {p.currency} at the day's exchange rate. You will see the naira amount before you pay.</p>
+              )}
               {buyMsg && <p className="text-xs text-destructive">{buyMsg}</p>}
             </div>
           )}

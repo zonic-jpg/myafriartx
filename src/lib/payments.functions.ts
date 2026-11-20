@@ -19,6 +19,34 @@ function ref(): string {
  * This resolver looks up the authoritative price by purpose and also enforces
  * ownership/eligibility where relevant.
  */
+/**
+ * Naira per US dollar for converting USD-priced works at checkout. An admin-set rate
+ * (app_settings key "usd_to_ngn_rate") wins; otherwise the day's published rate is used.
+ * If neither is available the purchase is refused: never guess, never undercharge.
+ */
+async function usdToNgnRate(admin: any): Promise<number> {
+  const sane = (n: unknown) => typeof n === "number" && Number.isFinite(n) && n >= 300 && n <= 20000;
+  try {
+    const { data } = await admin.from("app_settings").select("value").eq("key", "usd_to_ngn_rate").maybeSingle();
+    const v = typeof data?.value === "object" && data?.value !== null ? (data.value as { rate?: unknown }).rate : data?.value;
+    const n = typeof v === "string" ? Number(v) : v;
+    if (sane(n)) return n as number;
+  } catch {
+    /* fall through to the published rate */
+  }
+  try {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    const res = await fetch("https://open.er-api.com/v6/latest/USD", { signal: ctrl.signal });
+    clearTimeout(timer);
+    const j = (await res.json()) as { rates?: { NGN?: unknown } };
+    if (sane(j?.rates?.NGN)) return j.rates!.NGN as number;
+  } catch {
+    /* refused below */
+  }
+  throw new Error("This work is priced in US dollars and the exchange rate is unavailable right now. Please try again shortly.");
+}
+
 async function resolveAuthoritativeAmountNgn(
   admin: any,
   purpose: string,
@@ -30,14 +58,22 @@ async function resolveAuthoritativeAmountNgn(
     if (!artworkId) throw new Error("artwork_id required");
     const { data: art, error } = await admin
       .from("artworks")
-      .select("price, lifecycle_status")
+      .select("price, currency, lifecycle_status")
       .eq("id", artworkId)
       .maybeSingle();
     if (error || !art) throw new Error("Artwork not found");
     if (art.lifecycle_status === "sold") throw new Error("Artwork already sold");
     const price = Number(art.price);
     if (!Number.isFinite(price) || price <= 0) throw new Error("Artwork price unavailable");
-    return Math.round(price);
+    // The charge is always in naira. A work priced in another currency is converted first:
+    // charging the bare number would sell a USD 34,566 work for ₦34,566.
+    const currency = String(art.currency ?? "NGN").trim().toUpperCase();
+    if (currency === "NGN") return Math.round(price);
+    if (currency !== "USD") {
+      throw new Error(`This work is priced in ${currency}, which cannot be paid for online yet. Please use Private sale via Lounge.`);
+    }
+    const rate = await usdToNgnRate(admin);
+    return Math.round(price * rate);
   }
 
   if (purpose === "auction_settlement") {
