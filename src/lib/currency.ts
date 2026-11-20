@@ -61,7 +61,7 @@ const sign = (c: DisplayCurrency) => (c === "NGN" ? "₦" : "$");
 /** A stored price shown in the chosen currency. Converted figures are marked "≈". */
 export function formatPrice(price: number | null | undefined, currency: string | null | undefined, display: DisplayCurrency, usdToNgn: number): string | null {
   const usd = priceInUsd(price, currency, usdToNgn);
-  if (usd === null || typeof price !== "number") return null;
+  if (usd === null || typeof price !== "number" || price <= 0) return null; // an unpriced work shows no price
   if (own(currency) === display) return `${sign(display)}${Math.round(price).toLocaleString()}`;
   const converted = display === "NGN" ? usd * usdToNgn : usd;
   return `≈ ${sign(display)}${Math.round(converted).toLocaleString()}`;
