@@ -105,7 +105,7 @@ function PieceDetailPage() {
             )}
           </div>
           <dl className="grid grid-cols-2 gap-3 text-sm">
-            <Row label="Status" value={p.lifecycle_status} />
+            <Row label="Status" value={p.lifecycle_status === "sold" ? "Sold" : p.lifecycle_status === "in_catalogue" ? "Available" : String(p.lifecycle_status ?? "—").replace(/_/g, " ")} />
             <Row label="Medium" value={p.medium} />
             <Row label="Year" value={p.year ?? "—"} />
             <Row
@@ -151,7 +151,23 @@ function PieceDetailPage() {
             </div>
           )}
 
-          {p.content_source !== "mock" && p.price != null && Number(p.price) > 0 && !p.is_pledged && (
+          {p.lifecycle_status === "sold" && (
+            <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4" role="status">
+              <p className="text-sm font-semibold">This work has been sold</p>
+              <p className="text-sm text-muted-foreground">It is no longer available to buy, sell privately or use as collateral.</p>
+              {p.artist?.short_code && (
+                <Link
+                  to="/artist/$code"
+                  params={{ code: p.artist.short_code }}
+                  className="inline-block rounded-lg border border-border px-4 py-2 text-sm hover:bg-muted"
+                >
+                  See more by {p.artist.name}
+                </Link>
+              )}
+            </div>
+          )}
+
+          {p.lifecycle_status !== "sold" && p.content_source !== "mock" && p.price != null && Number(p.price) > 0 && !p.is_pledged && (
             <div className="space-y-2 rounded-xl border border-border p-4">
               <p className="text-sm font-medium">Acquire this work</p>
               <div className="flex flex-wrap gap-2">
