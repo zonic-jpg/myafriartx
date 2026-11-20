@@ -9,6 +9,7 @@ import { generativeArtworkUri } from "@/lib/local-image-assets";
 import { EnlargeableImage } from "@/components/EnlargeableImage";
 import { useIsAdmin } from "@/hooks/use-is-admin";
 import { SiteNav } from "@/components/SiteNav";
+import { priceWithEquivalent, useLiveUsdToNgn } from "@/lib/currency";
 
 const pieceQuery = (code: string) =>
   queryOptions({
@@ -49,6 +50,7 @@ function PieceDetailPage() {
   const isAdmin = useIsAdmin();
   const bump = useServerFn(bumpView);
   const payFn = useServerFn(initializePayment);
+  const live = useLiveUsdToNgn();
   const [buyMsg, setBuyMsg] = useState("");
   const [buying, setBuying] = useState(false);
 
@@ -110,7 +112,7 @@ function PieceDetailPage() {
             <Row label="Year" value={p.year ?? "—"} />
             <Row
               label="Price"
-              value={p.price != null ? `${p.currency} ${Number(p.price).toLocaleString()}` : "—"}
+              value={p.price != null ? priceWithEquivalent(Number(p.price), p.currency, live.usdToNgn) : "—"}
             />
             <Row label="Views" value={String(p.view_count ?? 0)} />
             <Row

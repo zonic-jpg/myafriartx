@@ -35,6 +35,7 @@ import { bustImageUrl, isUsableImageUrl } from "@/lib/cache-bust";
 import { LOCAL_MOCK_ARTWORKS, isMockCatalogueCode } from "@/lib/mock-catalogue";
 import logo from "@/assets/myafriart-logo.png";
 import { MenuButton, NavDrawer, signOutAndLeave } from "@/components/SiteNav";
+import { formatPrice, priceInUsd, setDisplayCurrency, useDisplayCurrency } from "@/lib/currency";
 import { AiChatPanel, type CatalogueEntry, type SponsoredItem } from "@/components/ai-chat-panel";
 
 function paneImageFor(pane: Pick<Pane, "id" | "image">) {
@@ -365,6 +366,8 @@ function Landing() {
   const [aiQuestion, setAiQuestion] = useState<{ text: string } | null>(null);
   const [currency, setCurrency] = useState<"USD" | "NGN">("USD");
   const [usdToNgn, setUsdToNgn] = useState<number>(FALLBACK_USD_TO_NGN);
+  // Every price on the page follows the visitor's chosen currency and the live rate.
+  useEffect(() => { setDisplayCurrency(currency, usdToNgn); }, [currency, usdToNgn]);
   const [contentSource, setContentSource] = useState<"live" | "mock">("mock");
   const [paneRetryNonce, setPaneRetryNonce] = useState(0);
   const [paneFailedCount, setPaneFailedCount] = useState(0);
@@ -669,8 +672,9 @@ function Landing() {
         return Number.isFinite(y) ? Math.max(0, currentYear - y) : null;
       })
       .filter((n): n is number => n !== null);
+    // Prices are stored in each work's own currency, so they are compared in US dollars.
     const prices = artworks
-      .map((a) => (typeof a.price === "number" ? a.price : null))
+      .map((a) => priceInUsd(typeof a.price === "number" ? a.price : null, a.currency, usdToNgn))
       .filter((n): n is number => n !== null);
     const mergedCountries = Array.from(
       new Set([...AFRICAN_COUNTRIES, ...set(artworks.map((a) => a.artist?.country))]),
@@ -710,7 +714,7 @@ function Landing() {
       ageBounds: [0, Math.max(200, ages.length ? Math.max(...ages) : 0)] as [number, number],
       priceBounds: [0, PRICE_CEILING_USD],
     };
-  }, [artworks, catalogueArtists]);
+  }, [artworks, catalogueArtists, usdToNgn]);
 
   // Counts shown to visitors reflect REAL catalogue only; marked Sample works are
   // reported separately so they never inflate the artist / artwork totals.
@@ -739,8 +743,8 @@ function Landing() {
         if (age < filters.ageRange[0] || age > filters.ageRange[1]) return false;
       }
       if (filters.priceRange) {
-        if (a.price === null || a.price < filters.priceRange[0] || a.price > filters.priceRange[1])
-          return false;
+        const usd = priceInUsd(a.price, a.currency, usdToNgn);
+        if (usd === null || usd < filters.priceRange[0] || usd > filters.priceRange[1]) return false;
       }
       return true;
     };
@@ -758,7 +762,7 @@ function Landing() {
       }
       return true;
     });
-  }, [artworks, filters, scope]);
+  }, [artworks, filters, scope, usdToNgn]);
 
   // Artists lane: unique artists whose own attributes match artist-level
   // filters AND who have at least one artwork passing the artwork-level
@@ -798,8 +802,8 @@ function Landing() {
         if (age < filters.ageRange[0] || age > filters.ageRange[1]) return false;
       }
       if (filters.priceRange) {
-        if (a.price === null || a.price < filters.priceRange[0] || a.price > filters.priceRange[1])
-          return false;
+        const usd = priceInUsd(a.price, a.currency, usdToNgn);
+        if (usd === null || usd < filters.priceRange[0] || usd > filters.priceRange[1]) return false;
       }
       return true;
     };
@@ -852,7 +856,7 @@ function Landing() {
       }
     }
     return Array.from(map.values()).sort((x, y) => x.artist.name.localeCompare(y.artist.name));
-  }, [artworks, catalogueArtists, filters, scope]);
+  }, [artworks, catalogueArtists, filters, scope, usdToNgn]);
 
   const requestLounge = () => {
     if (authed) setLoungeOpen(true);
@@ -1773,10 +1777,8 @@ function ArtworkCard({ artwork }: { artwork: ArtworkRow }) {
     artwork.content_source === "mock" ||
     (typeof artwork.id === "string" && artwork.id.startsWith("local-")) ||
     isMockCatalogueCode(String(artwork.short_code ?? artwork.id ?? ""));
-  const price =
-    typeof artwork.price === "number"
-      ? `${artwork.currency ?? "USD"} ${artwork.price.toLocaleString()}`
-      : null;
+  const shown = useDisplayCurrency();
+  const price = formatPrice(typeof artwork.price === "number" ? artwork.price : null, artwork.currency, shown.currency, shown.usdToNgn);
   const inner = (
     <article className="group flex flex-col overflow-hidden rounded-lg border border-border bg-card transition hover:-translate-y-0.5 hover:shadow-lg">
       <div className="relative aspect-[4/5] overflow-hidden bg-muted">
