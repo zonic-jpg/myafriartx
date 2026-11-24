@@ -16,11 +16,18 @@ export const getArtworkProvenance = createServerFn({ method: "GET" })
   });
 
 export const verifyCertificate = createServerFn({ method: "GET" })
-  .inputValidator((d: unknown) => z.object({ code: z.string().min(6).max(20) }).parse(d))
+  .inputValidator((d: unknown) => z.object({ code: z.string().min(6).max(40) }).parse(d))
   .handler(async ({ data }) => {
     const admin = await import("@/integrations/supabase/client.server").then(
       (m) => m.supabaseAdmin,
     );
+    // Artist certificates carry an MAA- serial and are checked against their signature.
+    if (/^MAA-/i.test(data.code)) {
+      const { data: v, error: e } = await (admin as any).rpc("verify_certificate_serial", { p_serial: data.code });
+      if (e) throw new Error("Verification is unavailable right now. Please try again.");
+      type Plain = Record<string, string | number | boolean | null>;
+      return v ? ({ kind: "artist", ...(v as Plain) } as Plain) : null;
+    }
     const { data: cert, error } = await admin
       .from("certificate_registry")
       .select("*")

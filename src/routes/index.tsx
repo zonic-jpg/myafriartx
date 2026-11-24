@@ -946,7 +946,7 @@ function Landing() {
                 <div className="absolute right-0 z-[70] mt-2 w-44 rounded-md border border-black/10 bg-white py-1 text-sm shadow-lg">
                   <Link to="/notify" className="block px-3 py-2 text-black/80 hover:bg-black/5">NotifyMe</Link>
                   <Link to="/renders" className="block px-3 py-2 text-black/80 hover:bg-black/5">My renders</Link>
-                  <Link to="/collateral" className="block px-3 py-2 text-black/80 hover:bg-black/5">Collateral</Link>
+                  <Link to="/buyback" className="block px-3 py-2 text-black/80 hover:bg-black/5">Sell with buyback</Link>
                   <Link to="/disputes" className="block px-3 py-2 text-black/80 hover:bg-black/5">Disputes</Link>
                   {authed === true && (
                     <button

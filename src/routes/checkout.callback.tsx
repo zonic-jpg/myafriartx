@@ -33,6 +33,9 @@ function CheckoutCallback() {
         <Link to="/" className="underline">
           Return home
         </Link>
+        <Link to="/buyback" className="underline">
+          My buyback deals
+        </Link>
         <Link to="/disputes" className="underline">
           View payments & disputes
         </Link>

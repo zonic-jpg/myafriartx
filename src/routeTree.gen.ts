@@ -19,6 +19,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DisputesRouteImport } from './routes/disputes'
 import { Route as CollateralRouteImport } from './routes/collateral'
+import { Route as BuybackRouteImport } from './routes/buyback'
 import { Route as AuctionRouteImport } from './routes/auction'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
@@ -83,6 +84,11 @@ const DisputesRoute = DisputesRouteImport.update({
 const CollateralRoute = CollateralRouteImport.update({
   id: '/collateral',
   path: '/collateral',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuybackRoute = BuybackRouteImport.update({
+  id: '/buyback',
+  path: '/buyback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuctionRoute = AuctionRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auction': typeof AuctionRoute
+  '/buyback': typeof BuybackRoute
   '/collateral': typeof CollateralRoute
   '/disputes': typeof DisputesRoute
   '/events': typeof EventsRoute
@@ -192,6 +199,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auction': typeof AuctionRoute
+  '/buyback': typeof BuybackRoute
   '/collateral': typeof CollateralRoute
   '/disputes': typeof DisputesRoute
   '/events': typeof EventsRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/auction': typeof AuctionRoute
+  '/buyback': typeof BuybackRoute
   '/collateral': typeof CollateralRoute
   '/disputes': typeof DisputesRoute
   '/events': typeof EventsRoute
@@ -249,6 +258,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auction'
+    | '/buyback'
     | '/collateral'
     | '/disputes'
     | '/events'
@@ -276,6 +286,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auction'
+    | '/buyback'
     | '/collateral'
     | '/disputes'
     | '/events'
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/auction'
+    | '/buyback'
     | '/collateral'
     | '/disputes'
     | '/events'
@@ -331,6 +343,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   AuctionRoute: typeof AuctionRoute
+  BuybackRoute: typeof BuybackRoute
   CollateralRoute: typeof CollateralRoute
   DisputesRoute: typeof DisputesRoute
   EventsRoute: typeof EventsRoute
@@ -423,6 +436,13 @@ declare module '@tanstack/react-router' {
       path: '/collateral'
       fullPath: '/collateral'
       preLoaderRoute: typeof CollateralRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/buyback': {
+      id: '/buyback'
+      path: '/buyback'
+      fullPath: '/buyback'
+      preLoaderRoute: typeof BuybackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auction': {
@@ -550,6 +570,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   AuctionRoute: AuctionRoute,
+  BuybackRoute: BuybackRoute,
   CollateralRoute: CollateralRoute,
   DisputesRoute: DisputesRoute,
   EventsRoute: EventsRoute,

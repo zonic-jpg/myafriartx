@@ -22,6 +22,15 @@ export async function fulfillPaymentByReference(reference: string) {
   });
 
   if (error) throw new Error(error.message);
+  try {
+    const { data: pay } = await admin.from("payments").select("purpose").eq("id", payment.id).maybeSingle();
+    const purpose = (pay as { purpose?: string } | null)?.purpose;
+    if (purpose && purpose.startsWith("buyback_")) {
+      (await import("./zonic-egress.server")).zonicEmit("buyback_fee_paid", { fee: purpose });
+    }
+  } catch {
+    /* reporting never affects fulfilment */
+  }
   return data as { ok: boolean };
 }
 

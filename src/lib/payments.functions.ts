@@ -103,6 +103,45 @@ async function resolveAuthoritativeAmountNgn(
     return Math.round(Number(row.price_ngn));
   }
 
+  // Flat listing fee for a "sell with buyback option" listing: the amount is the one stored on the
+  // seller's own listing when it was created, and only while that listing is still waiting for it.
+  if (purpose === "buyback_fee") {
+    const id = metadata.buyback_id;
+    if (!id) throw new Error("buyback_id required");
+    const { data: o } = await admin
+      .from("buyback_offers" as never)
+      .select("seller_id, status, fee_ngn")
+      .eq("id", id)
+      .maybeSingle();
+    const row = o as { seller_id?: string; status?: string; fee_ngn?: number } | null;
+    if (!row || row.seller_id !== userId) throw new Error("Listing not found");
+    if (row.status !== "awaiting_fee" || !(Number(row.fee_ngn) > 0)) throw new Error("No listing fee is due for this work");
+    return Math.round(Number(row.fee_ngn));
+  }
+
+  // Buyer's flat fee (paid after reserving, before the seller's payment details are shown) and the
+  // seller's flat fee to use the buyback (paid before the buyer's payout details are shown).
+  if (purpose === "buyback_buyer_fee" || purpose === "buyback_exercise_fee") {
+    const id = metadata.buyback_id;
+    if (!id) throw new Error("buyback_id required");
+    const { data: o } = await admin
+      .from("buyback_offers" as never)
+      .select("seller_id, buyer_id, status, buyer_fee_ngn, buyer_fee_paid_at, exercise_fee_ngn, exercise_fee_paid_at, option_expires_at, option_resolved_at")
+      .eq("id", id)
+      .maybeSingle();
+    const row = o as Record<string, any> | null;
+    if (!row) throw new Error("Sale not found");
+    if (purpose === "buyback_buyer_fee") {
+      if (row.buyer_id !== userId || row.status !== "reserved" || row.buyer_fee_paid_at || !(Number(row.buyer_fee_ngn) > 0))
+        throw new Error("No buyer fee is due for this work");
+      return Math.round(Number(row.buyer_fee_ngn));
+    }
+    if (row.seller_id !== userId || row.status !== "sold" || row.exercise_fee_paid_at || row.option_resolved_at || !(Number(row.exercise_fee_ngn) > 0))
+      throw new Error("No buyback fee is due for this work");
+    if (row.option_expires_at && new Date(row.option_expires_at).getTime() < Date.now()) throw new Error("The buyback period has ended");
+    return Math.round(Number(row.exercise_fee_ngn));
+  }
+
   // Fee-based purposes: read the configured fee server-side; never trust client.
   const feeKey =
     purpose === "brokerage_fee"
@@ -215,6 +254,9 @@ export const initializePayment = createServerFn({ method: "POST" })
           "brokerage_fee",
           "collateral_fee",
           "service_access",
+          "buyback_fee",
+          "buyback_buyer_fee",
+          "buyback_exercise_fee",
         ]),
         // Accepted for backward compatibility but IGNORED for pricing — the
         // authoritative amount is resolved server-side below.

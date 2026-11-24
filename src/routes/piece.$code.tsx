@@ -156,7 +156,7 @@ function PieceDetailPage() {
           {p.lifecycle_status === "sold" && (
             <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-4" role="status">
               <p className="text-sm font-semibold">This work has been sold</p>
-              <p className="text-sm text-muted-foreground">It is no longer available to buy, sell privately or use as collateral.</p>
+              <p className="text-sm text-muted-foreground">It is no longer available to buy or sell privately.</p>
               {p.artist?.short_code && (
                 <Link
                   to="/artist/$code"
@@ -218,10 +218,10 @@ function PieceDetailPage() {
                   Private sale via Lounge
                 </Link>
                 <Link
-                  to="/collateral"
+                  to="/buyback"
                   className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-muted"
                 >
-                  Use as collateral
+                  Sell with buyback option
                 </Link>
               </div>
               {String(p.currency ?? "NGN").toUpperCase() !== "NGN" && (

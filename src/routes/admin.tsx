@@ -40,6 +40,7 @@ import { AuctionsAdmin } from "@/components/admin/auctions-admin";
 import { PayoutsAdmin } from "@/components/admin/payouts-admin";
 import { DisputesAdmin } from "@/components/admin/disputes-admin";
 import { adminListCollateral, adminUpdateCollateral } from "@/lib/collateral.functions";
+import { BuybackAdmin, CertificatesAdmin } from "@/components/admin/buyback-admin";
 import { isVerifiedOwner } from "@/lib/foundingOwner";
 import { requestAdminAccess } from "@/lib/signupApproval";
 import { setDiagnosticsAudience } from "@/lib/public-message";
@@ -187,6 +188,8 @@ type Tab =
   | "transactions"
   | "analytics"
   | "brokerage"
+  | "buyback"
+  | "certificates"
   | "collateral"
   | "auctions"
   | "kyc"
@@ -198,7 +201,7 @@ type Tab =
 const TAB_IDS: Tab[] = [
   "submissions", "letters", "intake", "studio", "settings", "artworks", "artists", "styles", "renders",
   "panes", "events", "media", "allocation", "lookup", "transactions", "analytics", "brokerage",
-  "collateral", "auctions", "kyc", "disputes", "pricing", "payouts", "approvals",
+  "buyback", "certificates", "collateral", "auctions", "kyc", "disputes", "pricing", "payouts", "approvals",
 ];
 
 function AdminInner({ isOwner }: { isOwner: boolean }) {
@@ -319,6 +322,8 @@ function AdminInner({ isOwner }: { isOwner: boolean }) {
             {tab === "transactions" && <TransactionsAdmin onLookup={openLookup} />}
             {tab === "analytics" && <AnalyticsAdmin />}
             {tab === "brokerage" && <BrokerageAdmin />}
+            {tab === "buyback" && <BuybackAdmin />}
+            {tab === "certificates" && <CertificatesAdmin />}
             {tab === "collateral" && <CollateralAdminPanel />}
             {tab === "auctions" && <AuctionsAdmin />}
             {tab === "kyc" && <KycAdmin />}
