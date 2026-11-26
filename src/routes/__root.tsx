@@ -5,6 +5,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -119,11 +120,27 @@ function RootShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Thin bar at the top while the next page is loading, so a tap always shows it registered. */
+function NavPending() {
+  const pending = useRouterState({ select: (s) => s.status === "pending" });
+  return (
+    <div
+      aria-hidden="true"
+      style={{
+        position: "fixed", top: 0, left: 0, height: 3, zIndex: 9999, pointerEvents: "none",
+        background: "var(--primary, #b45309)", opacity: pending ? 1 : 0, width: pending ? "92%" : 0,
+        transition: pending ? "width 9s cubic-bezier(0.08, 0.7, 0.2, 1)" : "none",
+      }}
+    />
+  );
+}
+
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary scope="root">
+        <NavPending />
         <ApprovalGate>
           <Outlet />
           <PasswordRecovery brand="MyAfriArt" />
