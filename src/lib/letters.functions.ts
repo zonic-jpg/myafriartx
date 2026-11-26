@@ -47,7 +47,7 @@ export const saveLetterhead = createServerFn({ method: "POST" })
 /**
  * Send a composed letter from MyAfriArt's own domain via Resend.
  * SECURITY: admin-only; the email body is built by the caller but the SENDER is
- * fixed server-side. A missing RESEND_API_KEY returns a clear, non-silent error.
+ * fixed server-side. Without a site key it sends through the send-letter function.
  */
 export const sendLetter = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -71,17 +71,31 @@ export const sendLetter = createServerFn({ method: "POST" })
     await assertAdmin(context.userId);
     const admin = await __get_admin();
 
+    // The site sends through its own key when one is set; otherwise through the project's
+    // send-letter function, which holds the key server-side. Replies go to the letterhead address.
     const key = process.env.RESEND_API_KEY;
-    const from = process.env.LETTERS_FROM ?? process.env.EMAIL_FROM ?? "MyAfriArt <partnerships@myafriart.com>";
-    if (!key) throw new Error("RESEND_API_KEY not configured");
+    const from = process.env.LETTERS_FROM ?? process.env.EMAIL_FROM ?? "MyAfriArt <noreply@zonicme.com.ng>";
+    const { data: lh } = await admin.from("app_settings").select("value").eq("key", "letterhead").maybeSingle();
+    const replyTo = typeof (lh?.value as { email?: unknown } | null)?.email === "string" ? String((lh!.value as { email: string }).email) : undefined;
 
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to: data.to, subject: data.subject, html: data.html }),
-    });
-    const body = await res.json().catch(() => ({}));
-    const ok = res.ok && !body?.error;
+    let ok = false;
+    let body: { id?: string; error?: { message?: string } | string; message?: string } = {};
+    if (key) {
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ from, to: data.to, subject: data.subject, html: data.html, ...(replyTo ? { reply_to: replyTo } : {}) }),
+      });
+      body = await res.json().catch(() => ({}));
+      ok = res.ok && !body?.error;
+    } else {
+      const { data: out, error } = await admin.functions.invoke("send-letter", {
+        body: { to: data.to, subject: data.subject, html: data.html, reply_to: replyTo },
+      });
+      const o = (out ?? {}) as { ok?: boolean; id?: string; error?: string };
+      ok = !error && o.ok === true && !!o.id;
+      body = ok ? { id: o.id } : { error: { message: o.error ?? "The letter could not be sent. Please try again." } };
+    }
 
     await admin.from("letters_sent").insert({
       sent_by: context.userId,
@@ -93,6 +107,6 @@ export const sendLetter = createServerFn({ method: "POST" })
       status: ok ? "sent" : "failed",
     });
 
-    if (!ok) throw new Error(body?.error?.message ?? "Send failed");
+    if (!ok) throw new Error((typeof body?.error === "object" ? body.error?.message : body?.message) ?? "Send failed");
     return { ok: true, id: body.id as string };
   });

@@ -17,7 +17,7 @@ export const DEFAULT_APP_URL = "https://myafriartx.netlify.app";
 export const APPROVALS_PATH = "/admin?tab=approvals";
 export const HOURLY_CAP = 20;
 export const RELAY_URL = "https://nuleyrowkiuxrnlrkrkd.supabase.co/functions/v1/owner-mail-relay";
-const DEFAULT_FROM = "MyAfriArt <partnerships@myafriart.com>";
+const DEFAULT_FROM = "MyAfriArt <noreply@zonicme.com.ng>";
 
 export type NotifyResult = { sent: boolean; reason?: string };
 export type NotifyEnv = { resendKey?: string; from?: string; appUrl?: string };
