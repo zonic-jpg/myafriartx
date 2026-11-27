@@ -236,23 +236,25 @@ function AdminInner({ isOwner }: { isOwner: boolean }) {
       id="root"
       data-auth-role={isOwner ? "owner" : "admin"}
     >
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link to="/" className="font-display text-xl">
-            MyAfriArt
-          </Link>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link to="/studio" className="text-muted-foreground hover:text-foreground">
+      <header className="bg-neutral-900 text-white" data-admin-bar>
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-3">
+          <span className="font-display text-lg">
+            MyAfriArt <span className="ml-1 rounded bg-white/15 px-2 py-0.5 align-middle font-sans text-xs font-semibold uppercase tracking-wide">Admin</span>
+          </span>
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
+            <Link to="/studio" className="text-white/75 hover:text-white">
               Studio
             </Link>
-            <span className="font-medium">Admin</span>
+            <a href="/" target="_blank" rel="noopener noreferrer" className="text-white/75 hover:text-white">
+              View website ↗
+            </a>
             <button
               type="button"
               onClick={() => {
                 void supabase.auth.signOut().catch(() => undefined);
                 window.location.href = "/login";
               }}
-              className="text-muted-foreground hover:text-foreground"
+              className="text-white/75 hover:text-white"
             >
               Sign out
             </button>

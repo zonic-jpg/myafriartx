@@ -147,6 +147,8 @@ function FormHelpers() {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  // The admin area is its own space: the public footer stays on the public site.
+  const inAdmin = useRouterState({ select: (s) => /^\/admin(\/|$)/.test(s.location.pathname) });
   return (
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary scope="root">
@@ -155,7 +157,7 @@ function RootComponent() {
           <Outlet />
           <PasswordRecovery brand="MyAfriArt" />
         </ApprovalGate>
-        <SiteFooter />
+        {!inAdmin && <SiteFooter />}
         <NotifyAutoOpen />
         <Toaster richColors position="top-center" />
       </ErrorBoundary>
