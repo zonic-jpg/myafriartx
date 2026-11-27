@@ -3,7 +3,7 @@
 // Their profile links (/artist/ART-OUT-###) resolve once rows exist in `artists`.
 //
 // Seeding runs in the browser against the signed-in admin's Supabase session
-// (RLS policy `artists_admin_write`), the same way MyYangaX Admin → Blog seeds
+// (RLS policy `artists_admin_write`), the same way MyYanga Admin → Blog seeds
 // its default posts. Migrations seed the same rows server-side; both are
 // idempotent upserts keyed on short_code, so running either or both is safe.
 import { supabase } from "@/integrations/supabase/client";

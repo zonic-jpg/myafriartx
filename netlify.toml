@@ -1,4 +1,4 @@
-# MyAfriArtX — Netlify: static client + serverless stage-room
+# MyAfriArt — Netlify: static client + serverless stage-room
 [build]
   command = "npm run build"
   publish = "dist/client"

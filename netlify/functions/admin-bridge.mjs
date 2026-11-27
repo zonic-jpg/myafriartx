@@ -1,5 +1,5 @@
 /**
- * Netlify Function — owner/admin bridge for MyAfriArtX.
+ * Netlify Function — owner/admin bridge for MyAfriArt.
  * POST /api/admin-bridge  { action, ... }
  *
  * Privileged reads and writes go through this one serverless door using the

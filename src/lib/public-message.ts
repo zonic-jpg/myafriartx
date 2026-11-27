@@ -1,5 +1,5 @@
 /**
- * Visitor-safe error text (Zonic orbit convention, ported from MyYangaX dcd484a).
+ * Visitor-safe error text (Zonic orbit convention, ported from MyYanga dcd484a).
  *
  * Internal auth plumbing leaks otherwise: a missing JWT surfaces as
  * "Unauthorized: No authorization header provided" and an RLS denial as

@@ -82,7 +82,7 @@ export const Route = createFileRoute("/")({
   validateSearch: zodValidator(landingSearchSchema),
   head: () => ({
     meta: [
-      { title: "MyAfriArtX — Discover, Buy, Bid & Stage African Art" },
+      { title: "MyAfriArt — Discover, Buy, Bid & Stage African Art" },
       {
         name: "description",
         content:
@@ -904,7 +904,7 @@ function Landing() {
                   backgroundImage: "linear-gradient(90deg,#7e22ce 0%,#dc2626 55%,#f97316 100%)",
                 }}
               >
-                MyAfriArtX
+                MyAfriArt
               </span>
             </Link>
             </div>

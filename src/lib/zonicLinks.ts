@@ -1,7 +1,7 @@
 /** Cross-app links in the ZonicMe ecosystem (footer). */
 
 export const ZONIC_APPS = [
-  { id: "myyangax", label: "MyYangaX", href: "https://myyangax.netlify.app" },
+  { id: "myyangax", label: "MyYanga", href: "https://myyangax.netlify.app" },
   { id: "myafriartx", label: "MyAfriArt", href: "https://myafriartx.netlify.app" },
   { id: "rubba", label: "Rubba", href: "https://rubbax.netlify.app" },
   { id: "adspotx", label: "AdSpot", href: "https://adspotx.netlify.app" },
