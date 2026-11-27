@@ -1,3 +1,4 @@
+import { useEffect as useFormHelpers } from "react";
 import SiteFooter from "../components/SiteFooter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -16,7 +17,6 @@ import { PasswordRecovery } from "@/components/PasswordRecovery";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import appCss from "../styles.css?url";
-import "../lib/pw-eye.js";
 
 function NotFoundComponent() {
   return (
@@ -105,6 +105,7 @@ function RootShell({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
+        <FormHelpers />
         {children}
         {/* Zonic orbit cross-app analytics — see public/orbit-manifest.json */}
         <script
@@ -134,6 +135,14 @@ function NavPending() {
       }}
     />
   );
+}
+
+/** Loads the shared form helpers (password show/hide, date limits) in the browser only. */
+function FormHelpers() {
+  useFormHelpers(() => {
+    void import("../lib/pw-eye.js");
+  }, []);
+  return null;
 }
 
 function RootComponent() {
