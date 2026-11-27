@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const APP_NAME = "MyAfriArt";
 const APP_ID = "myafriart";
-const APP_URL = "https://myafriartx.netlify.app";
+const APP_URL = "https://myafriart.com";
 const APPROVALS_PATH = "/admin?tab=approvals";
 const OWNER = "oadeagbo@gmail.com";
 const HOURLY_CAP = 20;

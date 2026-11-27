@@ -79,7 +79,7 @@ export const OUTREACH_WORK_SEEDS: OutreachWorkSeed[] = [
     slot: 1,
     title: "Adaeze Okonkwo (public reference)",
     image_url: null,
-    source_url: "https://myafriartx.netlify.app",
+    source_url: "https://myafriart.com",
   },
   {
     artist_short_code: "ART-OUT-011",

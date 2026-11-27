@@ -9,7 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  * Secrets (server env — same ones Letter Studio already uses):
  *   RESEND_API_KEY   required to actually send (absent -> soft-fail, the in-app queue still works)
  *   LETTERS_FROM     optional sender, default "MyAfriArt <noreply@zonicme.com.ng>"
- *   PUBLIC_APP_URL   optional base URL for the link, default https://myafriartx.netlify.app
+ *   PUBLIC_APP_URL   optional base URL for the link, default https://myafriart.com
  *   SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY (already required by the server)
  *
  * The recipient is ALWAYS the founding owner, fixed server-side — callers can

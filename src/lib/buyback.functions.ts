@@ -477,7 +477,7 @@ export const adminIssueCertificateNow = createServerFn({ method: "POST" })
   });
 
 // ---------- certificate download ----------
-const SITE = () => (process.env.PUBLIC_SITE_URL || "https://myafriartx.netlify.app").replace(/\/$/, "");
+const SITE = () => (process.env.PUBLIC_SITE_URL || "https://myafriart.com").replace(/\/$/, "");
 
 /** Public: anyone holding a serial may fetch its PDF. A withdrawn certificate is refused, and the price is never in the data. */
 export const getArtistCertificatePdf = createServerFn({ method: "GET" })

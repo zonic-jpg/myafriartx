@@ -13,7 +13,7 @@
 import { FOUNDING_OWNER_EMAIL } from "./foundingOwner";
 
 export const APP_NAME = "MyAfriArt";
-export const DEFAULT_APP_URL = "https://myafriartx.netlify.app";
+export const DEFAULT_APP_URL = "https://myafriart.com";
 export const APPROVALS_PATH = "/admin?tab=approvals";
 export const HOURLY_CAP = 20;
 export const RELAY_URL = "https://nuleyrowkiuxrnlrkrkd.supabase.co/functions/v1/owner-mail-relay";
