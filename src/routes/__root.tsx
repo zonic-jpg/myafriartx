@@ -16,6 +16,7 @@ import { PasswordRecovery } from "@/components/PasswordRecovery";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 import appCss from "../styles.css?url";
+import "../lib/pw-eye.js";
 
 function NotFoundComponent() {
   return (
