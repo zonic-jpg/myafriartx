@@ -200,8 +200,8 @@ describe("notifyOwnerForUser", () => {
   });
 
   it("falls back to the production URL for a missing/garbage PUBLIC_APP_URL", () => {
-    expect(approvalsLink(undefined)).toBe("https://myafriartx.netlify.app/admin?tab=approvals");
-    expect(approvalsLink("javascript:alert(1)")).toBe("https://myafriartx.netlify.app/admin?tab=approvals");
+    expect(approvalsLink(undefined)).toBe("https://myafriart.com/admin?tab=approvals");
+    expect(approvalsLink("javascript:alert(1)")).toBe("https://myafriart.com/admin?tab=approvals");
   });
 });
 
