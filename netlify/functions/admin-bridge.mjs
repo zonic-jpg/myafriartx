@@ -283,7 +283,7 @@ async function approveSubmission(admin, submission, actorEmail, note) {
 
 async function sendLetter(admin, body, actorEmail) {
   const key = env("RESEND_API_KEY");
-  const from = env("LETTERS_FROM") || env("EMAIL_FROM") || "MyAfriArt <partnerships@myafriart.com>";
+  const from = env("LETTERS_FROM") || env("EMAIL_FROM") || "MyAfriArt <noreply@zonicme.com.ng>";
   const base = {
     sent_by_email: actorEmail,
     audience: body.audience,
@@ -294,14 +294,27 @@ async function sendLetter(admin, body, actorEmail) {
   };
 
   if (!key) {
-    await admin
+    // No key on the site: send through the project's send-letter function, which holds the key server-side.
+    let viaId = null;
+    let viaFailure = null;
+    try {
+      const { data: lh } = await admin.from("app_settings").select("value").eq("key", "letterhead").maybeSingle();
+      const replyTo = typeof lh?.value?.email === "string" ? lh.value.email : undefined;
+      const { data: out, error } = await admin.functions.invoke("send-letter", {
+        body: { to: body.to, subject: base.subject, html: base.body_html, reply_to: replyTo },
+      });
+      if (!error && out?.ok === true && out?.id) viaId = out.id;
+      else viaFailure = out?.error || "The email could not be sent. Please try again.";
+    } catch (e) {
+      viaFailure = "The email could not be sent. Please try again.";
+    }
+    const { data: viaRow } = await admin
       .from("letters_sent")
-      .insert({ ...base, status: "failed", error_message: "RESEND_API_KEY is not configured on Netlify." });
-    return {
-      ok: false,
-      status: "failed",
-      reason: "Email sending is not configured yet — add RESEND_API_KEY on Netlify and redeploy.",
-    };
+      .insert({ ...base, provider_id: viaId, status: viaFailure ? "failed" : "sent", error_message: viaFailure })
+      .select("id, created_at")
+      .maybeSingle();
+    if (viaFailure) return { ok: false, status: "failed", reason: viaFailure, id: viaRow?.id ?? null };
+    return { ok: true, status: "sent", id: viaRow?.id ?? null, providerId: viaId, sentAt: viaRow?.created_at ?? new Date().toISOString() };
   }
 
   let providerId = null;
